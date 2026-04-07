@@ -267,7 +267,9 @@ export default function InboxPage() {
           messages={messages}
           supabase={supabase}
           userId={userId}
-          onMessageSent={() => {}}
+          onMessageSent={async () => {
+            await fetch('/api/inbox/send', { method: 'POST' })
+          }}
           onApproveMessage={handleApproveMessage}
           onRejectMessage={handleRejectMessage}
         />

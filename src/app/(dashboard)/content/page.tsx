@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { PostCard } from '@/components/dashboard/post-card'
 import { PostModal } from '@/components/dashboard/post-modal'
 import { MediaGrid } from '@/components/dashboard/media-grid'
+import { Send } from 'lucide-react'
 
 type CalendarItem = Database['public']['Tables']['content_calendar']['Row']
 
@@ -24,6 +25,7 @@ export default function ContentPage() {
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [editPost, setEditPost] = useState<CalendarItem | null>(null)
+  const [posting, setPosting] = useState(false)
 
   useEffect(() => {
     async function init() {
@@ -84,6 +86,15 @@ export default function ContentPage() {
     setModalOpen(true)
   }
 
+  async function handlePostNow() {
+    setPosting(true)
+    const res = await fetch('/api/post/process', { method: 'POST' })
+    const data = await res.json()
+    console.log('Post result:', data)
+    if (userId) loadPosts(userId)
+    setPosting(false)
+  }
+
   // Group posts by date
   const grouped = posts.reduce<Record<string, PostWithPlatform[]>>((acc, post) => {
     const date = post.scheduled_at
@@ -100,9 +111,15 @@ export default function ContentPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-light">Content</h1>
-        <Button onClick={handleNewPost} className="bg-accent text-white hover:bg-accent-hover">
-          New post
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handlePostNow} disabled={posting} className="text-xs">
+            <Send className="h-3.5 w-3.5 mr-1.5" />
+            {posting ? 'Posting...' : 'Post now'}
+          </Button>
+          <Button onClick={handleNewPost} className="bg-accent text-white hover:bg-accent-hover">
+            New post
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="calendar">
