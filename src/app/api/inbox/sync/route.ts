@@ -79,18 +79,24 @@ export async function POST() {
         console.log('[sync] Sample event:', JSON.stringify(events[0], null, 2))
       }
 
-      if (events.length === 0) {
-        console.log('[sync] No DM events found')
-        continue
-      }
-
-      // Get authenticated user's Twitter ID for direction detection
+      // Get authenticated user's Twitter ID FIRST (needed for direction + contact extraction)
       const meResponse = await fetch('https://api.twitter.com/2/users/me', {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
       const meData = await meResponse.json()
-      const myTwitterId = meData.data?.id
+      const myTwitterId = meData.data?.id as string | undefined
       console.log('[sync] Authenticated as Twitter user:', myTwitterId, meData.data?.username)
+
+      if (!myTwitterId) {
+        console.error('[sync] Could not determine Twitter user ID, skipping account')
+        errors.push(`Account ${account.id}: /users/me returned no ID`)
+        continue
+      }
+
+      if (events.length === 0) {
+        console.log('[sync] No DM events found')
+        continue
+      }
 
       // Group events by dm_conversation_id
       const grouped: Record<string, any[]> = {}
@@ -120,16 +126,15 @@ export async function POST() {
           console.log('[sync] Existing conversation:', conversationId)
         } else {
           // Find the other participant's ID
-          // Try from inbound messages first, then extract from conversation ID (format: "id1-id2")
-          const firstInbound = dmEvents.find((e: any) => e.sender_id !== myTwitterId)
-          let senderId = firstInbound?.sender_id
+          // The dm_conversation_id format is "userId1-userId2" — extract the one that isn't us
+          const convIdParts = dmConvId.split('-')
+          const otherParticipantId = convIdParts.find((p: string) => p !== myTwitterId) ?? null
 
-          if (!senderId) {
-            // Extract from dm_conversation_id — format is "userId1-userId2"
-            const parts = dmConvId.split('-')
-            senderId = parts.find((p: string) => p !== myTwitterId) ?? null
-            console.log('[sync] No inbound messages, extracted participant from conv ID:', senderId)
-          }
+          // Also check inbound messages for sender_id as fallback
+          const firstInbound = dmEvents.find((e: any) => e.sender_id !== myTwitterId)
+          const senderId = otherParticipantId ?? firstInbound?.sender_id ?? null
+
+          console.log('[sync] Other participant ID:', senderId, '(from conv ID:', otherParticipantId, ', from inbound:', firstInbound?.sender_id, ')')
 
           let contactName: string | null = null
           let contactHandle: string | null = null
