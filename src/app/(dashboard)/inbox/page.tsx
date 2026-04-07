@@ -8,6 +8,7 @@ import { ConversationList } from '@/components/inbox/conversation-list'
 import { MessageThread } from '@/components/inbox/message-thread'
 import { ClientSidebar } from '@/components/inbox/client-sidebar'
 import { LeadModal } from '@/components/inbox/lead-modal'
+import { LinkClientModal } from '@/components/inbox/link-client-modal'
 import { MessageSquare } from 'lucide-react'
 
 type Message = Database['public']['Tables']['messages']['Row']
@@ -41,6 +42,7 @@ export default function InboxPage() {
   })
   const [syncing, setSyncing] = useState(false)
   const [leadModalOpen, setLeadModalOpen] = useState(false)
+  const [linkModalOpen, setLinkModalOpen] = useState(false)
   const [leadConvIds, setLeadConvIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
 
@@ -205,6 +207,18 @@ export default function InboxPage() {
     setFilters((prev) => ({ ...prev, [key]: value }))
   }
 
+  async function handleUnlinkClient() {
+    if (!activeConvId) return
+    await supabase
+      .from('conversations')
+      .update({ client_id: null })
+      .eq('id', activeConvId)
+    setConversations((prev) =>
+      prev.map((c) => c.id === activeConvId ? { ...c, client_id: null } : c)
+    )
+    setClient(null)
+  }
+
   if (loading || !userId) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
@@ -251,7 +265,11 @@ export default function InboxPage() {
         </div>
       )}
 
-      <ClientSidebar client={client} />
+      <ClientSidebar
+        client={client}
+        onLinkClient={() => setLinkModalOpen(true)}
+        onUnlinkClient={handleUnlinkClient}
+      />
 
       {activeConvId && (
         <LeadModal
@@ -263,6 +281,24 @@ export default function InboxPage() {
           onCreated={() => {
             if (userId) loadConversations(userId)
             if (activeConvId) setLeadConvIds(prev => new Set([...prev, activeConvId]))
+          }}
+        />
+      )}
+
+      {activeConvId && userId && (
+        <LinkClientModal
+          open={linkModalOpen}
+          onClose={() => setLinkModalOpen(false)}
+          supabase={supabase}
+          userId={userId}
+          conversationId={activeConvId}
+          contactName={activeConv?.contact_name ?? null}
+          contactHandle={activeConv?.contact_handle ?? null}
+          onLinked={(linkedClient) => {
+            setClient(linkedClient)
+            setConversations((prev) =>
+              prev.map((c) => c.id === activeConvId ? { ...c, client_id: linkedClient.id } : c)
+            )
           }}
         />
       )}

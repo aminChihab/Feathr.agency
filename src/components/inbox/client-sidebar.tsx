@@ -2,28 +2,39 @@
 'use client'
 
 import type { Database } from '@/types/database'
-import { Crown } from 'lucide-react'
+import { Crown, Unlink } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 type Client = Database['public']['Tables']['clients']['Row']
 
 interface ClientSidebarProps {
   client: Client | null
+  onLinkClient: () => void
+  onUnlinkClient: () => void
 }
 
-export function ClientSidebar({ client }: ClientSidebarProps) {
+export function ClientSidebar({ client, onLinkClient, onUnlinkClient }: ClientSidebarProps) {
   return (
     <div className="w-[260px] border-l border-border p-4 space-y-4">
       <h3 className="text-xs font-medium uppercase tracking-wider text-text-muted">Client info</h3>
 
       {!client ? (
-        <p className="text-xs text-text-muted">
-          No client linked. Client linking will be available in CRM.
-        </p>
+        <div className="space-y-3">
+          <p className="text-xs text-text-muted">No client linked to this conversation.</p>
+          <Button variant="outline" size="sm" onClick={onLinkClient} className="w-full text-xs">
+            Link to client
+          </Button>
+        </div>
       ) : (
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-medium">{client.name}</p>
-            {client.is_vip && <Crown className="h-3.5 w-3.5 text-status-draft" />}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium">{client.name}</p>
+              {client.is_vip && <Crown className="h-3.5 w-3.5 text-status-draft" />}
+            </div>
+            <button onClick={onUnlinkClient} className="text-text-muted hover:text-text-secondary" title="Unlink client">
+              <Unlink className="h-3.5 w-3.5" />
+            </button>
           </div>
           <div className="space-y-2 text-xs text-text-secondary">
             <div className="flex justify-between">
