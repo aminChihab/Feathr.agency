@@ -212,6 +212,7 @@ export async function POST() {
             direction,
             body: event.text ?? '',
             ai_generated: false,
+            sent_to_platform: true,
             sent_at: sentAt,
           })
 
