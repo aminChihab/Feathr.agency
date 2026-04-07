@@ -39,6 +39,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      agents: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          last_activity_at: string | null
+          last_activity_description: string | null
+          metadata: Json | null
+          name: string
+          profile_id: string
+          slug: string
+          status: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          last_activity_at?: string | null
+          last_activity_description?: string | null
+          metadata?: Json | null
+          name: string
+          profile_id: string
+          slug: string
+          status?: string
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          last_activity_at?: string | null
+          last_activity_description?: string | null
+          metadata?: Json | null
+          name?: string
+          profile_id?: string
+          slug?: string
+          status?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agents_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       analytics: {
         Row: {
           date: string
@@ -804,7 +854,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      seed_agents_for_user: { Args: { user_id: string }; Returns: undefined }
     }
     Enums: {
       content_status: "draft" | "approved" | "scheduled" | "posted" | "failed"
