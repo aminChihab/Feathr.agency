@@ -1,26 +1,42 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  --font-display: 'Cinzel', serif;
+  --font-body: 'Jost', sans-serif;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-bg-base: oklch(0.13 0.005 285);
+  --color-bg-surface: oklch(0.17 0.005 285);
+  --color-bg-elevated: oklch(0.21 0.005 285);
+  --color-bg-overlay: oklch(0.25 0.008 285);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-accent: oklch(0.65 0.2 350);
+  --color-accent-hover: oklch(0.7 0.22 350);
+  --color-accent-muted: oklch(0.45 0.12 350);
+
+  --color-text-primary: oklch(0.95 0 0);
+  --color-text-secondary: oklch(0.7 0 0);
+  --color-text-muted: oklch(0.5 0 0);
+
+  --color-status-draft: oklch(0.75 0.15 85);
+  --color-status-approved: oklch(0.65 0.15 250);
+  --color-status-scheduled: oklch(0.65 0.18 155);
+  --color-status-posted: oklch(0.55 0 0);
+  --color-status-failed: oklch(0.6 0.2 25);
+
+  --color-priority-hot: oklch(0.6 0.2 25);
+  --color-priority-warm: oklch(0.7 0.15 60);
+  --color-priority-cold: oklch(0.5 0 0);
+
+  --color-border: oklch(0.25 0.005 285);
+  --color-border-hover: oklch(0.35 0.01 285);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
 }
