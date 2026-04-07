@@ -1,4 +1,3 @@
-// src/app/api/inbox/sync/route.ts
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
@@ -9,6 +8,8 @@ export async function POST() {
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  console.log('[sync] Starting DM sync for user:', user.id)
 
   // Get connected Twitter accounts
   const { data: accounts } = await supabase
@@ -21,40 +22,64 @@ export async function POST() {
     (a: any) => a.platforms?.slug === 'twitter'
   )
 
+  console.log('[sync] Found', twitterAccounts.length, 'Twitter account(s)')
+
   if (twitterAccounts.length === 0) {
     return NextResponse.json({ synced: 0, message: 'No Twitter accounts connected' })
   }
 
   let totalNewConversations = 0
   let totalNewMessages = 0
+  const errors: string[] = []
 
   for (const account of twitterAccounts) {
     const creds = JSON.parse(account.credentials_encrypted ?? '{}')
     const accessToken = creds.access_token
 
-    if (!accessToken) continue
+    if (!accessToken) {
+      console.log('[sync] Account', account.id, '— no access_token in credentials')
+      errors.push(`Account ${account.id}: no access_token found`)
+      continue
+    }
+
+    console.log('[sync] Fetching DMs for account:', account.id)
 
     try {
       // Fetch DM events from Twitter API v2
-      const dmResponse = await fetch(
-        'https://api.twitter.com/2/dm_events?dm_event.fields=id,text,created_at,dm_conversation_id,sender_id,participant_ids&max_results=100',
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      )
+      const dmUrl = 'https://api.twitter.com/2/dm_events?dm_event.fields=id,text,created_at,dm_conversation_id,sender_id,participant_ids&max_results=100'
+      console.log('[sync] GET', dmUrl)
+
+      const dmResponse = await fetch(dmUrl, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+
+      console.log('[sync] Twitter DM API response:', dmResponse.status, dmResponse.statusText)
 
       if (!dmResponse.ok) {
+        const errorBody = await dmResponse.text()
+        console.error('[sync] Twitter DM API error body:', errorBody)
+
         if (dmResponse.status === 401) {
+          console.log('[sync] Token expired, marking account as expired')
           await supabase
             .from('platform_accounts')
             .update({ status: 'expired' })
             .eq('id', account.id)
+          errors.push(`Account ${account.id}: token expired (401)`)
+        } else {
+          errors.push(`Account ${account.id}: Twitter API ${dmResponse.status} — ${errorBody.slice(0, 200)}`)
         }
         continue
       }
 
       const dmData = await dmResponse.json()
       const events = dmData.data ?? []
+      console.log('[sync] Received', events.length, 'DM event(s)')
+
+      if (events.length === 0) {
+        console.log('[sync] No DM events found')
+        continue
+      }
 
       // Get authenticated user's Twitter ID for direction detection
       const meResponse = await fetch('https://api.twitter.com/2/users/me', {
@@ -62,6 +87,7 @@ export async function POST() {
       })
       const meData = await meResponse.json()
       const myTwitterId = meData.data?.id
+      console.log('[sync] Authenticated as Twitter user:', myTwitterId, meData.data?.username)
 
       // Group events by dm_conversation_id
       const grouped: Record<string, any[]> = {}
@@ -71,7 +97,11 @@ export async function POST() {
         grouped[convId].push(event)
       }
 
+      console.log('[sync] Grouped into', Object.keys(grouped).length, 'conversation(s)')
+
       for (const [dmConvId, dmEvents] of Object.entries(grouped)) {
+        console.log('[sync] Processing conversation:', dmConvId, '—', dmEvents.length, 'event(s)')
+
         // Find or create conversation
         const { data: existingConv } = await supabase
           .from('conversations')
@@ -84,6 +114,7 @@ export async function POST() {
 
         if (existingConv) {
           conversationId = existingConv.id
+          console.log('[sync] Existing conversation:', conversationId)
         } else {
           // Get contact info from first inbound message
           const firstInbound = dmEvents.find((e: any) => e.sender_id !== myTwitterId)
@@ -93,6 +124,7 @@ export async function POST() {
           let contactHandle: string | null = null
 
           if (senderId) {
+            console.log('[sync] Looking up Twitter user:', senderId)
             try {
               const userResponse = await fetch(
                 `https://api.twitter.com/2/users/${senderId}?user.fields=name,username`,
@@ -102,13 +134,16 @@ export async function POST() {
                 const userData = await userResponse.json()
                 contactName = userData.data?.name ?? null
                 contactHandle = userData.data?.username ? `@${userData.data.username}` : null
+                console.log('[sync] Contact:', contactName, contactHandle)
+              } else {
+                console.log('[sync] User lookup failed:', userResponse.status)
               }
-            } catch {
-              // Ignore user lookup failures
+            } catch (e) {
+              console.log('[sync] User lookup error:', e)
             }
           }
 
-          const { data: newConv } = await supabase
+          const { data: newConv, error: convError } = await supabase
             .from('conversations')
             .insert({
               profile_id: user.id,
@@ -123,12 +158,21 @@ export async function POST() {
             .select('id')
             .single()
 
+          if (convError) {
+            console.error('[sync] Failed to create conversation:', convError.message)
+            continue
+          }
           if (!newConv) continue
+
           conversationId = newConv.id
           totalNewConversations++
+          console.log('[sync] Created conversation:', conversationId)
         }
 
         // Insert new messages
+        let newInConv = 0
+        let skippedInConv = 0
+
         for (const event of dmEvents as any[]) {
           const sentAt = event.created_at
 
@@ -140,11 +184,14 @@ export async function POST() {
             .eq('sent_at', sentAt)
             .single()
 
-          if (existingMsg) continue
+          if (existingMsg) {
+            skippedInConv++
+            continue
+          }
 
           const direction = event.sender_id === myTwitterId ? 'outbound' : 'inbound'
 
-          await supabase.from('messages').insert({
+          const { error: msgError } = await supabase.from('messages').insert({
             conversation_id: conversationId,
             direction,
             body: event.text ?? '',
@@ -152,8 +199,15 @@ export async function POST() {
             sent_at: sentAt,
           })
 
-          totalNewMessages++
+          if (msgError) {
+            console.error('[sync] Failed to insert message:', msgError.message)
+          } else {
+            newInConv++
+            totalNewMessages++
+          }
         }
+
+        console.log(`[sync] Conversation ${dmConvId}: ${newInConv} new, ${skippedInConv} skipped`)
 
         // Update last_message_at
         const latestEvent = dmEvents.sort(
@@ -168,13 +222,19 @@ export async function POST() {
         }
       }
     } catch (error) {
-      console.error('Twitter DM sync error:', error)
+      console.error('[sync] Twitter DM sync error:', error)
+      errors.push(`Account ${account.id}: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
-  return NextResponse.json({
+  const result = {
     synced: twitterAccounts.length,
     new_conversations: totalNewConversations,
     new_messages: totalNewMessages,
-  })
+    errors: errors.length > 0 ? errors : undefined,
+  }
+
+  console.log('[sync] Done:', JSON.stringify(result))
+
+  return NextResponse.json(result)
 }
