@@ -7,8 +7,8 @@ import type { Database } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -34,9 +34,33 @@ interface PostModalProps {
   onSaved: () => void
 }
 
+function getSchedulePresets(): { label: string; value: string }[] {
+  const now = new Date()
+
+  const tomorrow = new Date(now)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+
+  const tomorrowMorning = new Date(tomorrow)
+  tomorrowMorning.setHours(9, 0, 0, 0)
+
+  const tomorrowEvening = new Date(tomorrow)
+  tomorrowEvening.setHours(18, 0, 0, 0)
+
+  const nextWeek = new Date(now)
+  nextWeek.setDate(nextWeek.getDate() + 7)
+  nextWeek.setHours(9, 0, 0, 0)
+
+  return [
+    { label: 'Now', value: now.toISOString().slice(0, 16) },
+    { label: 'Tomorrow morning', value: tomorrowMorning.toISOString().slice(0, 16) },
+    { label: 'Tomorrow evening', value: tomorrowEvening.toISOString().slice(0, 16) },
+    { label: 'Next week', value: nextWeek.toISOString().slice(0, 16) },
+  ]
+}
+
 export function PostModal({ open, onClose, supabase, userId, editPost, onSaved }: PostModalProps) {
   const [accounts, setAccounts] = useState<PlatformAccount[]>([])
-  const [platformAccountId, setPlatformAccountId] = useState('')
+  const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([])
   const [caption, setCaption] = useState('')
   const [mediaIds, setMediaIds] = useState<string[]>([])
   const [scheduledAt, setScheduledAt] = useState('')
@@ -57,40 +81,46 @@ export function PostModal({ open, onClose, supabase, userId, editPost, onSaved }
 
   useEffect(() => {
     if (editPost) {
-      setPlatformAccountId(editPost.platform_account_id)
+      setSelectedAccountIds([editPost.platform_account_id])
       setCaption(editPost.caption ?? '')
       setMediaIds((editPost.media_ids as string[]) ?? [])
       setScheduledAt(editPost.scheduled_at ? editPost.scheduled_at.slice(0, 16) : '')
     } else {
-      setPlatformAccountId('')
+      setSelectedAccountIds([])
       setCaption('')
       setMediaIds([])
-      setScheduledAt('')
+      setScheduledAt(new Date().toISOString().slice(0, 16))
     }
   }, [editPost, open])
 
   async function handleSave(status: 'draft' | 'approved') {
-    if (!platformAccountId) return
+    if (selectedAccountIds.length === 0) return
     setSaving(true)
 
-    const data = {
-      profile_id: userId,
-      platform_account_id: platformAccountId,
-      caption: caption || null,
-      media_ids: mediaIds,
-      scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
-      status,
-    }
-
     if (editPost) {
+      // Edit mode: update the single existing post
       await supabase
         .from('content_calendar')
-        .update(data)
+        .update({
+          profile_id: userId,
+          platform_account_id: selectedAccountIds[0],
+          caption: caption || null,
+          media_ids: mediaIds,
+          scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
+          status,
+        })
         .eq('id', editPost.id)
     } else {
-      await supabase
-        .from('content_calendar')
-        .insert(data)
+      // New post: create one row per selected platform
+      const rows = selectedAccountIds.map(accountId => ({
+        profile_id: userId,
+        platform_account_id: accountId,
+        caption: caption || null,
+        media_ids: mediaIds,
+        scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
+        status,
+      }))
+      await supabase.from('content_calendar').insert(rows)
     }
 
     setSaving(false)
@@ -107,19 +137,30 @@ export function PostModal({ open, onClose, supabase, userId, editPost, onSaved }
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Platform</Label>
-            <Select value={platformAccountId} onValueChange={setPlatformAccountId}>
-              <SelectTrigger className="bg-bg-base">
-                <SelectValue placeholder="Select platform" />
-              </SelectTrigger>
-              <SelectContent>
-                {accounts.map((acc) => (
-                  <SelectItem key={acc.id} value={acc.id}>
-                    {acc.platforms?.name ?? 'Unknown'}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Platforms</Label>
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {accounts.map((acc) => (
+                <label
+                  key={acc.id}
+                  className="flex cursor-pointer items-center gap-3 rounded-lg border border-border px-3 py-2 transition-colors hover:bg-bg-elevated"
+                >
+                  <Checkbox
+                    checked={selectedAccountIds.includes(acc.id)}
+                    onCheckedChange={(checked) => {
+                      setSelectedAccountIds(prev =>
+                        checked
+                          ? [...prev, acc.id]
+                          : prev.filter(id => id !== acc.id)
+                      )
+                    }}
+                  />
+                  <div className="flex items-center gap-2">
+                    <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: acc.platforms?.color ?? '#666' }} />
+                    <span className="text-sm">{acc.platforms?.name ?? 'Unknown'}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -145,9 +186,25 @@ export function PostModal({ open, onClose, supabase, userId, editPost, onSaved }
 
           <div className="space-y-2">
             <Label>Schedule</Label>
+            <div className="flex flex-wrap gap-2">
+              {getSchedulePresets().map((preset) => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => setScheduledAt(preset.value)}
+                  className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                    scheduledAt === preset.value
+                      ? 'bg-accent text-white'
+                      : 'bg-bg-elevated text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
             <Input
               type="datetime-local"
-              value={scheduledAt}
+              value={scheduledAt.includes('T') ? scheduledAt.slice(0, 16) : scheduledAt}
               onChange={(e) => setScheduledAt(e.target.value)}
               className="bg-bg-base"
             />
@@ -158,13 +215,13 @@ export function PostModal({ open, onClose, supabase, userId, editPost, onSaved }
             <Button
               variant="outline"
               onClick={() => handleSave('draft')}
-              disabled={!platformAccountId || saving}
+              disabled={selectedAccountIds.length === 0 || saving}
             >
               Save as draft
             </Button>
             <Button
               onClick={() => handleSave('approved')}
-              disabled={!platformAccountId || saving}
+              disabled={selectedAccountIds.length === 0 || saving}
               className="bg-accent text-white hover:bg-accent-hover"
             >
               {saving ? 'Saving...' : 'Approve & schedule'}
