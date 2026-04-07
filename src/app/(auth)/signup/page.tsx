@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -11,7 +10,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const [emailSent, setEmailSent] = useState(false)
   const supabase = createClient()
 
   async function handleSubmit(e: React.FormEvent) {
@@ -27,7 +26,23 @@ export default function SignupPage() {
       return
     }
 
-    router.push('/onboarding')
+    setEmailSent(true)
+    setLoading(false)
+  }
+
+  if (emailSent) {
+    return (
+      <div className="space-y-6 text-center">
+        <h1 className="text-4xl font-light tracking-tight">Check je e-mail</h1>
+        <p className="text-text-secondary">
+          We hebben een bevestigingslink gestuurd naar <span className="text-text-primary">{email}</span>.
+          Klik op de link om je account te activeren.
+        </p>
+        <p className="text-sm text-text-muted">
+          Geen e-mail ontvangen? Check je spam folder.
+        </p>
+      </div>
+    )
   }
 
   return (
