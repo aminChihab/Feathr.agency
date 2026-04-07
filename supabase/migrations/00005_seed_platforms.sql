@@ -1,0 +1,36 @@
+INSERT INTO platforms (slug, name, category, capabilities, auth_type, color) VALUES
+-- Social Media
+('twitter',     'Twitter/X',    'social', '["post","dm","analytics","stories"]', 'oauth',       '#1DA1F2'),
+('instagram',   'Instagram',    'social', '["post","dm","analytics","stories"]', 'oauth',       '#E4405F'),
+('bluesky',     'Bluesky',      'social', '["post","dm"]',                      'api_key',     '#0085FF'),
+('tiktok',      'TikTok',       'social', '["post","analytics"]',               'oauth',       '#000000'),
+('telegram',    'Telegram',     'social', '["post","dm"]',                      'api_key',     '#26A5E4'),
+('reddit',      'Reddit',       'social', '["post"]',                           'oauth',       '#FF4500'),
+('threads',     'Threads',      'social', '["post"]',                           'oauth',       '#000000'),
+-- Content & Income
+('onlyfans',    'OnlyFans',         'content_income', '["post","dm","analytics"]', 'credentials', '#00AFF0'),
+('fansly',      'Fansly',           'content_income', '["post","dm","analytics"]', 'credentials', '#1FA7F2'),
+('loyalfans',   'LoyalFans',        'content_income', '["post","dm","analytics"]', 'credentials', '#FF6B35'),
+('manyvids',    'ManyVids',         'content_income', '["post","analytics"]',      'credentials', '#FF0084'),
+('website',     'Eigen website',    'content_income', '["post"]',                  'api_key',     '#6366F1'),
+-- Directories
+('tryst',             'Tryst.link',         'directory', '["listing","dm","analytics"]', 'credentials', '#D4AF37'),
+('slixa',             'Slixa',              'directory', '["listing"]',                  'credentials', '#1A1A2E'),
+('eurogirlescorts',   'EuroGirlEscorts',    'directory', '["listing"]',                  'credentials', '#C41E3A'),
+('privatedelights',   'Private Delights',   'directory', '["listing"]',                  'credentials', '#8B5CF6'),
+('smooci',            'Smooci',             'directory', '["listing","analytics"]',       'credentials', '#FF69B4'),
+('escort-ireland',    'Escort-Ireland',     'directory', '["listing"]',                  'credentials', '#169B62'),
+('adultwork',         'AdultWork',          'directory', '["listing","dm","analytics"]',  'credentials', '#003366'),
+('escort-directory',  'Escort Directory',   'directory', '["listing"]',                  'credentials', '#9333EA'),
+('erotic-monkey',     'Erotic Monkey',      'directory', '["listing"]',                  'credentials', '#7C3AED'),
+('ter',               'The Erotic Review',  'directory', '["listing"]',                  'credentials', '#1E40AF'),
+('eros',              'Eros',               'directory', '["listing"]',                  'credentials', '#DC2626'),
+('punternet',         'PunterNet',          'directory', '["listing"]',                  'credentials', '#4B5563'),
+('kinky',             'Kinky',              'directory', '["listing"]',                  'credentials', '#EC4899'),
+('sexjobs',           'Sexjobs',            'directory', '["listing"]',                  'credentials', '#EF4444'),
+('hookers-nl',        'Hookers.nl',         'directory', '["listing"]',                  'credentials', '#F97316'),
+('thuisontvangst',    'Thuisontvangst.nl',  'directory', '["listing"]',                  'credentials', '#F59E0B'),
+-- Communication
+('email',     'E-mail',              'communication', '["dm"]', 'credentials', '#6B7280'),
+('whatsapp',  'WhatsApp Business',   'communication', '["dm"]', 'api_key',     '#25D366'),
+('signal',    'Signal',              'communication', '["dm"]', 'manual',      '#3A76F0');
