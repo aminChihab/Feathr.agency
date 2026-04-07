@@ -1,6 +1,7 @@
 // src/components/inbox/conversation-item.tsx
 'use client'
 
+import { Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ConversationItemProps {
@@ -17,6 +18,7 @@ interface ConversationItemProps {
     platform_color: string
   }
   isActive: boolean
+  isClient?: boolean
   onClick: () => void
 }
 
@@ -41,7 +43,7 @@ function relativeTime(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-export function ConversationItem({ conversation, isActive, onClick }: ConversationItemProps) {
+export function ConversationItem({ conversation, isActive, isClient, onClick }: ConversationItemProps) {
   const isNew = conversation.status === 'new'
 
   return (
@@ -64,9 +66,12 @@ export function ConversationItem({ conversation, isActive, onClick }: Conversati
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <p className={cn('truncate text-sm', isNew ? 'font-semibold' : 'font-normal')}>
-              {conversation.contact_name ?? conversation.contact_handle ?? 'Unknown'}
-            </p>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <p className={cn('truncate text-sm', isNew ? 'font-semibold' : 'font-normal')}>
+                {conversation.contact_name ?? conversation.contact_handle ?? 'Unknown'}
+              </p>
+              {isClient && <Users className="h-3 w-3 flex-shrink-0 text-accent" />}
+            </div>
             <span className="text-[10px] text-text-muted flex-shrink-0">
               {conversation.last_message_at ? relativeTime(conversation.last_message_at) : ''}
             </span>

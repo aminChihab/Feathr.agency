@@ -11,13 +11,21 @@ interface InboxFiltersProps {
   type: string
   platform: string
   search: string
+  category: string
   platforms: { id: string; name: string; color: string }[]
   onStatusChange: (v: string) => void
   onPriorityChange: (v: string) => void
   onTypeChange: (v: string) => void
   onPlatformChange: (v: string) => void
   onSearchChange: (v: string) => void
+  onCategoryChange: (v: string) => void
 }
+
+const CATEGORIES = [
+  { value: 'all', label: 'All' },
+  { value: 'leads', label: 'Leads' },
+  { value: 'clients', label: 'Clients' },
+]
 
 const PRIORITIES = [
   { value: 'all', label: 'All' },
@@ -27,8 +35,8 @@ const PRIORITIES = [
 ]
 
 export function InboxFilters({
-  status, priority, type, platform, search, platforms,
-  onStatusChange, onPriorityChange, onTypeChange, onPlatformChange, onSearchChange,
+  status, priority, type, platform, search, category, platforms,
+  onStatusChange, onPriorityChange, onTypeChange, onPlatformChange, onSearchChange, onCategoryChange,
 }: InboxFiltersProps) {
   return (
     <div className="space-y-3 p-3 border-b border-border">
@@ -38,6 +46,23 @@ export function InboxFilters({
         placeholder="Search conversations..."
         className="bg-bg-base h-8 text-xs"
       />
+
+      <div className="flex gap-1">
+        {CATEGORIES.map((c) => (
+          <button
+            key={c.value}
+            onClick={() => onCategoryChange(c.value)}
+            className={cn(
+              'flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] transition-colors',
+              category === c.value
+                ? 'bg-accent text-white'
+                : 'bg-bg-elevated text-text-secondary hover:text-text-primary'
+            )}
+          >
+            {c.label}
+          </button>
+        ))}
+      </div>
 
       <div className="flex gap-1">
         {PRIORITIES.map((p) => (

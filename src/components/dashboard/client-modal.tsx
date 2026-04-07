@@ -10,8 +10,11 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { BookingModal } from './booking-modal'
+import { CalendarPlus } from 'lucide-react'
 
 type Client = Database['public']['Tables']['clients']['Row']
+type Booking = Database['public']['Tables']['bookings']['Row']
 
 interface ClientModalProps {
   open: boolean
@@ -28,6 +31,8 @@ export function ClientModal({ open, onClose, supabase, userId, editClient, onSav
   const [tagsInput, setTagsInput] = useState('')
   const [isVip, setIsVip] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [bookingModalOpen, setBookingModalOpen] = useState(false)
 
   useEffect(() => {
     if (editClient) {
@@ -35,13 +40,24 @@ export function ClientModal({ open, onClose, supabase, userId, editClient, onSav
       setPreferences(editClient.preferences ?? '')
       setTagsInput((editClient.tags ?? []).join(', '))
       setIsVip(editClient.is_vip)
+      loadBookings(editClient.id)
     } else {
       setName('')
       setPreferences('')
       setTagsInput('')
       setIsVip(false)
+      setBookings([])
     }
   }, [editClient, open])
+
+  async function loadBookings(clientId: string) {
+    const { data } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('client_id', clientId)
+      .order('date', { ascending: false })
+    setBookings(data ?? [])
+  }
 
   async function handleSave() {
     if (!name.trim()) return
@@ -86,55 +102,103 @@ export function ClientModal({ open, onClose, supabase, userId, editClient, onSav
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="bg-bg-surface border-border max-w-md">
-        <DialogHeader>
-          <DialogTitle className="font-light">{editClient ? 'Edit client' : 'New client'}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>Name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} className="bg-bg-base" placeholder="Client name or alias" />
-          </div>
-          <div className="space-y-2">
-            <Label>Preferences</Label>
-            <Textarea value={preferences} onChange={(e) => setPreferences(e.target.value)} rows={3} className="bg-bg-base" placeholder="Notes about this client..." />
-          </div>
-          <div className="space-y-2">
-            <Label>Tags</Label>
-            <Input value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} className="bg-bg-base" placeholder="regular, polite, generous (comma-separated)" />
-          </div>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <Checkbox checked={isVip} onCheckedChange={(c) => setIsVip(c === true)} />
-            <span className="text-sm">VIP client</span>
-          </label>
-
-          {editClient && (
-            <div className="rounded-lg bg-bg-base p-3 space-y-1 text-xs text-text-muted">
-              <p>Total bookings: <span className="text-text-primary">{editClient.total_bookings}</span></p>
-              {editClient.last_booking_at && (
-                <p>Last booking: <span className="text-text-primary">{new Date(editClient.last_booking_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span></p>
-              )}
+    <>
+      <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+        <DialogContent className="bg-bg-surface border-border max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-light">{editClient ? 'Edit client' : 'New client'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} className="bg-bg-base" placeholder="Client name or alias" />
             </div>
-          )}
+            <div className="space-y-2">
+              <Label>Preferences</Label>
+              <Textarea value={preferences} onChange={(e) => setPreferences(e.target.value)} rows={3} className="bg-bg-base" placeholder="Notes about this client..." />
+            </div>
+            <div className="space-y-2">
+              <Label>Tags</Label>
+              <Input value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} className="bg-bg-base" placeholder="regular, polite, generous (comma-separated)" />
+            </div>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <Checkbox checked={isVip} onCheckedChange={(c) => setIsVip(c === true)} />
+              <span className="text-sm">VIP client</span>
+            </label>
 
-          <div className="flex justify-between pt-2">
-            {editClient ? (
-              <Button variant="ghost" onClick={handleDelete} disabled={saving} className="text-xs text-status-failed hover:text-status-failed">
-                Delete client
-              </Button>
-            ) : (
-              <div />
+            {editClient && (
+              <>
+                <div className="rounded-lg bg-bg-base p-3 space-y-1 text-xs text-text-muted">
+                  <p>Total bookings: <span className="text-text-primary">{editClient.total_bookings}</span></p>
+                  {editClient.last_booking_at && (
+                    <p>Last booking: <span className="text-text-primary">{new Date(editClient.last_booking_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span></p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Bookings</Label>
+                    <Button variant="ghost" size="sm" onClick={() => setBookingModalOpen(true)} className="h-6 text-xs gap-1">
+                      <CalendarPlus className="h-3 w-3" />
+                      Add booking
+                    </Button>
+                  </div>
+                  {bookings.length === 0 ? (
+                    <p className="text-xs text-text-muted">No bookings yet.</p>
+                  ) : (
+                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                      {bookings.map((b) => (
+                        <div key={b.id} className="flex items-center justify-between rounded bg-bg-base px-3 py-2 text-xs">
+                          <div>
+                            <span className="text-text-primary">
+                              {new Date(b.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                            {b.duration && <span className="ml-2 text-text-muted">{b.duration}</span>}
+                          </div>
+                          {b.revenue_cents > 0 && (
+                            <span className="text-text-secondary">${(b.revenue_cents / 100).toFixed(2)}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
             )}
-            <div className="flex gap-2">
-              <Button variant="ghost" onClick={onClose}>Cancel</Button>
-              <Button onClick={handleSave} disabled={!name.trim() || saving} className="bg-accent text-white hover:bg-accent-hover">
-                {saving ? 'Saving...' : editClient ? 'Save changes' : 'Create client'}
-              </Button>
+
+            <div className="flex justify-between pt-2">
+              {editClient ? (
+                <Button variant="ghost" onClick={handleDelete} disabled={saving} className="text-xs text-status-failed hover:text-status-failed">
+                  Delete client
+                </Button>
+              ) : (
+                <div />
+              )}
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={onClose}>Cancel</Button>
+                <Button onClick={handleSave} disabled={!name.trim() || saving} className="bg-accent text-white hover:bg-accent-hover">
+                  {saving ? 'Saving...' : editClient ? 'Save changes' : 'Create client'}
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      {editClient && (
+        <BookingModal
+          open={bookingModalOpen}
+          onClose={() => setBookingModalOpen(false)}
+          supabase={supabase}
+          userId={userId}
+          clientId={editClient.id}
+          clientName={editClient.name}
+          onSaved={() => {
+            loadBookings(editClient.id)
+            onSaved()
+          }}
+        />
+      )}
+    </>
   )
 }

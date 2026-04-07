@@ -16,6 +16,7 @@ interface ConversationData {
   ai_summary: string | null
   last_message_at: string | null
   platform_account_id: string
+  client_id: string | null
   platform_name: string
   platform_color: string
 }
@@ -30,6 +31,7 @@ interface ConversationListProps {
     type: string
     platform: string
     search: string
+    category: string
   }
   onFilterChange: (key: string, value: string) => void
   platforms: { id: string; name: string; color: string }[]
@@ -42,6 +44,8 @@ export function ConversationList({
 }: ConversationListProps) {
   // Client-side filtering
   const filtered = conversations.filter((c) => {
+    if (filters.category === 'leads' && c.client_id) return false
+    if (filters.category === 'clients' && !c.client_id) return false
     if (filters.status !== 'all' && c.status !== filters.status) return false
     if (filters.priority !== 'all' && c.priority !== filters.priority) return false
     if (filters.type !== 'all' && c.type !== filters.type) return false
@@ -79,6 +83,7 @@ export function ConversationList({
         onTypeChange={(v) => onFilterChange('type', v)}
         onPlatformChange={(v) => onFilterChange('platform', v)}
         onSearchChange={(v) => onFilterChange('search', v)}
+        onCategoryChange={(v) => onFilterChange('category', v)}
       />
 
       <div className="flex-1 overflow-y-auto">
@@ -90,6 +95,7 @@ export function ConversationList({
               key={conv.id}
               conversation={conv}
               isActive={conv.id === activeId}
+              isClient={!!conv.client_id}
               onClick={() => onSelect(conv.id)}
             />
           ))

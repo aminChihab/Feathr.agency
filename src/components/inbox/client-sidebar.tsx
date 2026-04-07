@@ -2,7 +2,7 @@
 'use client'
 
 import type { Database } from '@/types/database'
-import { Crown, Unlink } from 'lucide-react'
+import { CalendarPlus, Crown, Unlink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 type Client = Database['public']['Tables']['clients']['Row']
@@ -11,9 +11,10 @@ interface ClientSidebarProps {
   client: Client | null
   onLinkClient: () => void
   onUnlinkClient: () => void
+  onAddBooking?: () => void
 }
 
-export function ClientSidebar({ client, onLinkClient, onUnlinkClient }: ClientSidebarProps) {
+export function ClientSidebar({ client, onLinkClient, onUnlinkClient, onAddBooking }: ClientSidebarProps) {
   return (
     <div className="w-[260px] border-l border-border p-4 space-y-4">
       <h3 className="text-xs font-medium uppercase tracking-wider text-text-muted">Client info</h3>
@@ -65,6 +66,12 @@ export function ClientSidebar({ client, onLinkClient, onUnlinkClient }: ClientSi
               </div>
             )}
           </div>
+          {onAddBooking && (
+            <Button variant="outline" size="sm" onClick={onAddBooking} className="w-full text-xs">
+              <CalendarPlus className="h-3.5 w-3.5 mr-1.5" />
+              Add booking
+            </Button>
+          )}
         </div>
       )}
     </div>

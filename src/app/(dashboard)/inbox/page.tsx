@@ -7,8 +7,9 @@ import type { Database } from '@/types/database'
 import { ConversationList } from '@/components/inbox/conversation-list'
 import { MessageThread } from '@/components/inbox/message-thread'
 import { ClientSidebar } from '@/components/inbox/client-sidebar'
-import { LeadModal } from '@/components/inbox/lead-modal'
 import { LinkClientModal } from '@/components/inbox/link-client-modal'
+import { BookingModal } from '@/components/dashboard/booking-modal'
+import { computeConversationFields } from '@/lib/conversations'
 import { MessageSquare } from 'lucide-react'
 
 type Message = Database['public']['Tables']['messages']['Row']
@@ -23,6 +24,7 @@ interface ConversationData {
   type: string
   ai_summary: string | null
   last_message_at: string | null
+  created_at: string
   platform_account_id: string
   client_id: string | null
   platform_name: string
@@ -38,28 +40,57 @@ export default function InboxPage() {
   const [client, setClient] = useState<Client | null>(null)
   const [platforms, setPlatforms] = useState<{ id: string; name: string; color: string }[]>([])
   const [filters, setFilters] = useState({
-    status: 'all', priority: 'all', type: 'all', platform: 'all', search: '',
+    status: 'all', priority: 'all', type: 'all', platform: 'all', search: '', category: 'all',
   })
   const [syncing, setSyncing] = useState(false)
-  const [leadModalOpen, setLeadModalOpen] = useState(false)
   const [linkModalOpen, setLinkModalOpen] = useState(false)
-  const [leadConvIds, setLeadConvIds] = useState<Set<string>>(new Set())
+  const [bookingModalOpen, setBookingModalOpen] = useState(false)
   const [loading, setLoading] = useState(true)
 
   const loadConversations = useCallback(async (uid: string) => {
     const { data } = await supabase
       .from('conversations')
-      .select('*, platform_accounts(platforms(name, color))')
+      .select('*, platform_accounts(platforms(name, color, slug))')
       .eq('profile_id', uid)
       .order('last_message_at', { ascending: false })
 
-    setConversations(
-      (data ?? []).map((c: any) => ({
+    const convIds = (data ?? []).map((c: any) => c.id)
+
+    // Get message counts per conversation
+    let countMap: Record<string, number> = {}
+    if (convIds.length > 0) {
+      const { data: msgCounts } = await supabase
+        .from('messages')
+        .select('conversation_id')
+        .in('conversation_id', convIds)
+
+      for (const msg of msgCounts ?? []) {
+        countMap[msg.conversation_id] = (countMap[msg.conversation_id] ?? 0) + 1
+      }
+    }
+
+    const mapped = (data ?? []).map((c: any) => {
+      const computed = computeConversationFields({
+        created_at: c.created_at,
+        last_message_at: c.last_message_at,
+        client_id: c.client_id,
+        status: c.status,
+        message_count: countMap[c.id] ?? 0,
+        platform_slug: c.platform_accounts?.platforms?.slug ?? '',
+        has_lead: false,
+        client_total_bookings: 0,
+      })
+      return {
         ...c,
+        status: computed.status,
+        priority: computed.priority,
+        type: computed.type,
         platform_name: c.platform_accounts?.platforms?.name ?? 'Unknown',
         platform_color: c.platform_accounts?.platforms?.color ?? '#666',
-      }))
-    )
+      }
+    })
+
+    setConversations(mapped)
   }, [supabase])
 
   // Init
@@ -85,13 +116,6 @@ export default function InboxPage() {
       )
 
       await loadConversations(user.id)
-
-      // Load which conversations already have leads
-      const { data: leads } = await supabase
-        .from('leads')
-        .select('conversation_id')
-        .eq('profile_id', user.id)
-      setLeadConvIds(new Set((leads ?? []).map((l: any) => l.conversation_id)))
 
       setLoading(false)
     }
@@ -219,6 +243,19 @@ export default function InboxPage() {
     setClient(null)
   }
 
+  async function handleBookingSaved() {
+    // Reload client data after booking
+    const conv = conversations.find((c) => c.id === activeConvId)
+    if (conv?.client_id) {
+      const { data: clientData } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('id', conv.client_id)
+        .single()
+      setClient(clientData)
+    }
+  }
+
   if (loading || !userId) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
@@ -250,8 +287,6 @@ export default function InboxPage() {
           userId={userId}
           onStatusChange={handleStatusChange}
           onPriorityChange={handlePriorityChange}
-          onMarkAsLead={() => setLeadModalOpen(true)}
-          hasLead={activeConvId ? leadConvIds.has(activeConvId) : false}
           onMessageSent={() => {}}
           onApproveMessage={handleApproveMessage}
           onRejectMessage={handleRejectMessage}
@@ -269,21 +304,8 @@ export default function InboxPage() {
         client={client}
         onLinkClient={() => setLinkModalOpen(true)}
         onUnlinkClient={handleUnlinkClient}
+        onAddBooking={client ? () => setBookingModalOpen(true) : undefined}
       />
-
-      {activeConvId && (
-        <LeadModal
-          open={leadModalOpen}
-          onClose={() => setLeadModalOpen(false)}
-          supabase={supabase}
-          userId={userId}
-          conversationId={activeConvId}
-          onCreated={() => {
-            if (userId) loadConversations(userId)
-            if (activeConvId) setLeadConvIds(prev => new Set([...prev, activeConvId]))
-          }}
-        />
-      )}
 
       {activeConvId && userId && (
         <LinkClientModal
@@ -300,6 +322,18 @@ export default function InboxPage() {
               prev.map((c) => c.id === activeConvId ? { ...c, client_id: linkedClient.id } : c)
             )
           }}
+        />
+      )}
+
+      {client && userId && (
+        <BookingModal
+          open={bookingModalOpen}
+          onClose={() => setBookingModalOpen(false)}
+          supabase={supabase}
+          userId={userId}
+          clientId={client.id}
+          clientName={client.name}
+          onSaved={handleBookingSaved}
         />
       )}
     </div>

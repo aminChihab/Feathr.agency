@@ -8,8 +8,6 @@ import { MessageBubble } from './message-bubble'
 import { ReplyBox } from './reply-box'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Target } from 'lucide-react'
-
 type Message = Database['public']['Tables']['messages']['Row']
 type Conversation = {
   id: string
@@ -28,8 +26,6 @@ interface MessageThreadProps {
   userId: string
   onStatusChange: (status: string) => void
   onPriorityChange: (priority: string) => void
-  onMarkAsLead: () => void
-  hasLead: boolean
   onMessageSent: () => void
   onApproveMessage: (id: string) => void
   onRejectMessage: (id: string) => void
@@ -37,7 +33,7 @@ interface MessageThreadProps {
 
 export function MessageThread({
   conversation, messages, supabase, userId,
-  onStatusChange, onPriorityChange, onMarkAsLead, hasLead,
+  onStatusChange, onPriorityChange,
   onMessageSent, onApproveMessage, onRejectMessage,
 }: MessageThreadProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -78,17 +74,6 @@ export function MessageThread({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {hasLead ? (
-            <span className="flex items-center gap-1 rounded-full bg-accent/15 px-2.5 py-1 text-xs text-accent">
-              <Target className="h-3 w-3" />
-              Lead
-            </span>
-          ) : (
-            <Button variant="outline" size="sm" onClick={onMarkAsLead} className="h-7 text-xs">
-              <Target className="h-3.5 w-3.5 mr-1" />
-              Mark as lead
-            </Button>
-          )}
           <Select value={conversation.status} onValueChange={onStatusChange}>
             <SelectTrigger className="h-7 w-28 bg-bg-base text-[10px]">
               <SelectValue />
