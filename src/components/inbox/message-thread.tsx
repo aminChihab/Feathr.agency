@@ -29,6 +29,7 @@ interface MessageThreadProps {
   onStatusChange: (status: string) => void
   onPriorityChange: (priority: string) => void
   onMarkAsLead: () => void
+  hasLead: boolean
   onMessageSent: () => void
   onApproveMessage: (id: string) => void
   onRejectMessage: (id: string) => void
@@ -36,7 +37,7 @@ interface MessageThreadProps {
 
 export function MessageThread({
   conversation, messages, supabase, userId,
-  onStatusChange, onPriorityChange, onMarkAsLead,
+  onStatusChange, onPriorityChange, onMarkAsLead, hasLead,
   onMessageSent, onApproveMessage, onRejectMessage,
 }: MessageThreadProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -77,10 +78,17 @@ export function MessageThread({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={onMarkAsLead} className="h-7 text-xs">
-            <Target className="h-3.5 w-3.5 mr-1" />
-            Mark as lead
-          </Button>
+          {hasLead ? (
+            <span className="flex items-center gap-1 rounded-full bg-accent/15 px-2.5 py-1 text-xs text-accent">
+              <Target className="h-3 w-3" />
+              Lead
+            </span>
+          ) : (
+            <Button variant="outline" size="sm" onClick={onMarkAsLead} className="h-7 text-xs">
+              <Target className="h-3.5 w-3.5 mr-1" />
+              Mark as lead
+            </Button>
+          )}
           <Select value={conversation.status} onValueChange={onStatusChange}>
             <SelectTrigger className="h-7 w-28 bg-bg-base text-[10px]">
               <SelectValue />

@@ -41,6 +41,7 @@ export default function InboxPage() {
   })
   const [syncing, setSyncing] = useState(false)
   const [leadModalOpen, setLeadModalOpen] = useState(false)
+  const [leadConvIds, setLeadConvIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
 
   const loadConversations = useCallback(async (uid: string) => {
@@ -82,6 +83,14 @@ export default function InboxPage() {
       )
 
       await loadConversations(user.id)
+
+      // Load which conversations already have leads
+      const { data: leads } = await supabase
+        .from('leads')
+        .select('conversation_id')
+        .eq('profile_id', user.id)
+      setLeadConvIds(new Set((leads ?? []).map((l: any) => l.conversation_id)))
+
       setLoading(false)
     }
     init()
@@ -228,6 +237,7 @@ export default function InboxPage() {
           onStatusChange={handleStatusChange}
           onPriorityChange={handlePriorityChange}
           onMarkAsLead={() => setLeadModalOpen(true)}
+          hasLead={activeConvId ? leadConvIds.has(activeConvId) : false}
           onMessageSent={() => {}}
           onApproveMessage={handleApproveMessage}
           onRejectMessage={handleRejectMessage}
@@ -252,6 +262,7 @@ export default function InboxPage() {
           conversationId={activeConvId}
           onCreated={() => {
             if (userId) loadConversations(userId)
+            if (activeConvId) setLeadConvIds(prev => new Set([...prev, activeConvId]))
           }}
         />
       )}
