@@ -1,0 +1,103 @@
+// src/components/inbox/inbox-filters.tsx
+'use client'
+
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
+
+interface InboxFiltersProps {
+  status: string
+  priority: string
+  type: string
+  platform: string
+  search: string
+  platforms: { id: string; name: string; color: string }[]
+  onStatusChange: (v: string) => void
+  onPriorityChange: (v: string) => void
+  onTypeChange: (v: string) => void
+  onPlatformChange: (v: string) => void
+  onSearchChange: (v: string) => void
+}
+
+const PRIORITIES = [
+  { value: 'all', label: 'All' },
+  { value: 'hot', label: 'Hot', color: 'bg-priority-hot' },
+  { value: 'warm', label: 'Warm', color: 'bg-priority-warm' },
+  { value: 'cold', label: 'Cold', color: 'bg-priority-cold' },
+]
+
+export function InboxFilters({
+  status, priority, type, platform, search, platforms,
+  onStatusChange, onPriorityChange, onTypeChange, onPlatformChange, onSearchChange,
+}: InboxFiltersProps) {
+  return (
+    <div className="space-y-3 p-3 border-b border-border">
+      <Input
+        value={search}
+        onChange={(e) => onSearchChange(e.target.value)}
+        placeholder="Search conversations..."
+        className="bg-bg-base h-8 text-xs"
+      />
+
+      <div className="flex gap-1">
+        {PRIORITIES.map((p) => (
+          <button
+            key={p.value}
+            onClick={() => onPriorityChange(p.value)}
+            className={cn(
+              'flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] transition-colors',
+              priority === p.value
+                ? 'bg-accent text-white'
+                : 'bg-bg-elevated text-text-secondary hover:text-text-primary'
+            )}
+          >
+            {p.color && <div className={cn('h-1.5 w-1.5 rounded-full', p.color)} />}
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex gap-2">
+        <Select value={status} onValueChange={onStatusChange}>
+          <SelectTrigger className="bg-bg-base h-7 text-[10px] flex-1">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All status</SelectItem>
+            <SelectItem value="new">New</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="qualified">Qualified</SelectItem>
+            <SelectItem value="archived">Archived</SelectItem>
+            <SelectItem value="spam">Spam</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={type} onValueChange={onTypeChange}>
+          <SelectTrigger className="bg-bg-base h-7 text-[10px] flex-1">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All types</SelectItem>
+            <SelectItem value="booking">Booking</SelectItem>
+            <SelectItem value="fan">Fan</SelectItem>
+            <SelectItem value="returning_client">Returning</SelectItem>
+            <SelectItem value="spam">Spam</SelectItem>
+            <SelectItem value="other">Other</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={platform} onValueChange={onPlatformChange}>
+          <SelectTrigger className="bg-bg-base h-7 text-[10px] flex-1">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All platforms</SelectItem>
+            {platforms.map((p) => (
+              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  )
+}
