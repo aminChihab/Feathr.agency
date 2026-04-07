@@ -1,6 +1,46 @@
-// src/app/api/post/process/route.ts
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+
+async function uploadMediaToTwitter(
+  accessToken: string,
+  supabase: any,
+  storagePath: string,
+  mimeType: string
+): Promise<string | null> {
+  // Download file from Supabase Storage
+  const { data: fileData, error: downloadError } = await supabase.storage
+    .from('media')
+    .download(storagePath)
+
+  if (downloadError || !fileData) {
+    console.error('[post-process] Failed to download media:', storagePath, downloadError?.message)
+    return null
+  }
+
+  // Upload to Twitter
+  const formData = new FormData()
+  formData.append('media', fileData, storagePath.split('/').pop() ?? 'file')
+  formData.append('media_category', 'tweet_image')
+
+  const response = await fetch('https://api.x.com/2/media/upload', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+    },
+    body: formData,
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    console.error('[post-process] Twitter media upload failed:', response.status, errorBody)
+    return null
+  }
+
+  const data = await response.json()
+  const mediaId = data.data?.id ?? data.media_id_string
+  console.log('[post-process] Media uploaded:', mediaId)
+  return mediaId
+}
 
 export async function POST() {
   const supabase = await createClient()
@@ -16,7 +56,7 @@ export async function POST() {
   const now = new Date().toISOString()
   const { data: duePosts } = await supabase
     .from('content_calendar')
-    .select('id, caption, scheduled_at, platform_account_id, platform_accounts(credentials_encrypted, status, platforms(slug))')
+    .select('id, caption, media_ids, scheduled_at, platform_account_id, platform_accounts(credentials_encrypted, status, platforms(slug))')
     .eq('profile_id', user.id)
     .eq('status', 'approved')
     .lte('scheduled_at', now)
@@ -49,10 +89,10 @@ export async function POST() {
       continue
     }
 
-    if (!post.caption) {
-      console.log('[post-process] No caption for post:', post.id)
+    if (!post.caption && (!post.media_ids || (post.media_ids as string[]).length === 0)) {
+      console.log('[post-process] No caption or media for post:', post.id)
       await supabase.from('content_calendar').update({ status: 'failed' }).eq('id', post.id)
-      errors.push(`Post ${post.id}: no caption`)
+      errors.push(`Post ${post.id}: no caption or media`)
       failed++
       continue
     }
@@ -60,13 +100,48 @@ export async function POST() {
     console.log('[post-process] Posting tweet for post:', post.id)
 
     try {
+      // Upload media if present
+      const mediaIds = (post.media_ids as string[]) ?? []
+      const twitterMediaIds: string[] = []
+
+      if (mediaIds.length > 0) {
+        console.log('[post-process] Uploading', mediaIds.length, 'media file(s)')
+
+        // Get media info from content_library
+        const { data: mediaItems } = await supabase
+          .from('content_library')
+          .select('id, storage_path, mime_type')
+          .in('id', mediaIds)
+
+        for (const item of mediaItems ?? []) {
+          const twitterMediaId = await uploadMediaToTwitter(
+            accessToken,
+            supabase,
+            item.storage_path,
+            item.mime_type
+          )
+          if (twitterMediaId) {
+            twitterMediaIds.push(twitterMediaId)
+          }
+        }
+
+        console.log('[post-process] Uploaded', twitterMediaIds.length, 'of', mediaIds.length, 'media')
+      }
+
+      // Build tweet payload
+      const tweetPayload: any = {}
+      if (post.caption) tweetPayload.text = post.caption
+      if (twitterMediaIds.length > 0) {
+        tweetPayload.media = { media_ids: twitterMediaIds }
+      }
+
       const response = await fetch('https://api.x.com/2/tweets', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ text: post.caption }),
+        body: JSON.stringify(tweetPayload),
       })
 
       console.log('[post-process] Twitter API response:', response.status)

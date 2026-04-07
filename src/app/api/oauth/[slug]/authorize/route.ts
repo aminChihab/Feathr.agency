@@ -6,7 +6,7 @@ const OAUTH_CONFIGS: Record<string, { authUrl: string; tokenUrl: string; scopes:
   twitter: {
     authUrl: 'https://twitter.com/i/oauth2/authorize',
     tokenUrl: 'https://api.twitter.com/2/oauth2/token',
-    scopes: ['tweet.read', 'tweet.write', 'users.read', 'dm.read', 'dm.write', 'offline.access'],
+    scopes: ['tweet.read', 'tweet.write', 'users.read', 'dm.read', 'dm.write', 'media.write', 'offline.access'],
     clientIdEnv: 'TWITTER_CLIENT_ID',
   },
 }
