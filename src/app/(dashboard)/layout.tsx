@@ -16,7 +16,7 @@ const navItems = [
   { href: '/listings', label: 'Listings', icon: ListChecks },
   { href: '/clients', label: 'Clients', icon: Users },
   { href: '/touring', label: 'Touring', icon: Plane },
-  { href: '/agents', label: 'Agents', icon: Bot },
+  { href: '/agents', label: 'Assistants', icon: Bot },
   { href: '/settings', label: 'Settings', icon: Settings },
 ]
 
