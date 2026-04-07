@@ -2,6 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { MetricCard } from '@/components/dashboard/metric-card'
 import { StatusBadge } from '@/components/dashboard/status-badge'
+import { MessageSquare, Clock, CalendarDays, Link2 } from 'lucide-react'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -70,10 +71,10 @@ export default async function DashboardPage() {
 
       {/* Metric Cards */}
       <div className="grid grid-cols-4 gap-4">
-        <MetricCard label="New messages" value={messagesRes.count ?? 0} icon="✉" />
-        <MetricCard label="Pending approval" value={draftsRes.count ?? 0} icon="⏳" />
-        <MetricCard label="Scheduled today" value={scheduledRes.count ?? 0} icon="📅" />
-        <MetricCard label="Connected platforms" value={platformsRes.count ?? 0} icon="🔗" />
+        <MetricCard label="New messages" value={messagesRes.count ?? 0} icon={<MessageSquare className="h-5 w-5" />} />
+        <MetricCard label="Pending approval" value={draftsRes.count ?? 0} icon={<Clock className="h-5 w-5" />} />
+        <MetricCard label="Scheduled today" value={scheduledRes.count ?? 0} icon={<CalendarDays className="h-5 w-5" />} />
+        <MetricCard label="Connected platforms" value={platformsRes.count ?? 0} icon={<Link2 className="h-5 w-5" />} />
       </div>
 
       <div className="grid grid-cols-2 gap-8">

@@ -1,19 +1,23 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import {
+  LayoutDashboard, Inbox, CalendarDays, BarChart3, Link2,
+  Search, ListChecks, Users, Plane, Bot, Settings,
+} from 'lucide-react'
 
 const navItems = [
-  { href: '/', label: 'Dashboard', icon: '◆' },
-  { href: '/inbox', label: 'Inbox', icon: '✉' },
-  { href: '/content', label: 'Content', icon: '📅' },
-  { href: '/analytics', label: 'Analytics', icon: '📊' },
-  { href: '/platforms', label: 'Platforms', icon: '🔗' },
-  { href: '/research', label: 'Research', icon: '🔍' },
-  { href: '/listings', label: 'Listings', icon: '📋' },
-  { href: '/clients', label: 'Clients', icon: '👥' },
-  { href: '/touring', label: 'Touring', icon: '✈' },
-  { href: '/agents', label: 'Agents', icon: '🤖' },
-  { href: '/settings', label: 'Settings', icon: '⚙' },
+  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/inbox', label: 'Inbox', icon: Inbox },
+  { href: '/content', label: 'Content', icon: CalendarDays },
+  { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/platforms', label: 'Platforms', icon: Link2 },
+  { href: '/research', label: 'Research', icon: Search },
+  { href: '/listings', label: 'Listings', icon: ListChecks },
+  { href: '/clients', label: 'Clients', icon: Users },
+  { href: '/touring', label: 'Touring', icon: Plane },
+  { href: '/agents', label: 'Agents', icon: Bot },
+  { href: '/settings', label: 'Settings', icon: Settings },
 ]
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -43,7 +47,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               href={item.href}
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-bg-elevated hover:text-text-primary"
             >
-              <span>{item.icon}</span>
+              <item.icon className="h-4 w-4" />
               <span>{item.label}</span>
             </Link>
           ))}
