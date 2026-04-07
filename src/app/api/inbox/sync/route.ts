@@ -75,6 +75,9 @@ export async function POST() {
       const dmData = await dmResponse.json()
       const events = dmData.data ?? []
       console.log('[sync] Received', events.length, 'DM event(s)')
+      if (events.length > 0) {
+        console.log('[sync] Sample event:', JSON.stringify(events[0], null, 2))
+      }
 
       if (events.length === 0) {
         console.log('[sync] No DM events found')
@@ -116,9 +119,17 @@ export async function POST() {
           conversationId = existingConv.id
           console.log('[sync] Existing conversation:', conversationId)
         } else {
-          // Get contact info from first inbound message
+          // Find the other participant's ID
+          // Try from inbound messages first, then extract from conversation ID (format: "id1-id2")
           const firstInbound = dmEvents.find((e: any) => e.sender_id !== myTwitterId)
-          const senderId = firstInbound?.sender_id
+          let senderId = firstInbound?.sender_id
+
+          if (!senderId) {
+            // Extract from dm_conversation_id — format is "userId1-userId2"
+            const parts = dmConvId.split('-')
+            senderId = parts.find((p: string) => p !== myTwitterId) ?? null
+            console.log('[sync] No inbound messages, extracted participant from conv ID:', senderId)
+          }
 
           let contactName: string | null = null
           let contactHandle: string | null = null
