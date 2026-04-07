@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: '◆' },
+  { href: '/', label: 'Dashboard', icon: '◆' },
   { href: '/inbox', label: 'Inbox', icon: '✉' },
   { href: '/content', label: 'Content', icon: '📅' },
   { href: '/analytics', label: 'Analytics', icon: '📊' },
