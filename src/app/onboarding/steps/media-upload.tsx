@@ -75,18 +75,18 @@ export function MediaUpload({ userId, supabase, onNext, onBack }: MediaUploadPro
         .select('id')
         .single()
 
-      // Get preview URL
-      const { data: urlData } = supabase.storage.from('media').getPublicUrl(storagePath)
-      const thumbUrl = thumbnailPath
-        ? supabase.storage.from('media').getPublicUrl(thumbnailPath).data.publicUrl
-        : null
+      // Get signed preview URL (bucket is private)
+      const previewPath = thumbnailPath ?? storagePath
+      const { data: signedData } = await supabase.storage
+        .from('media')
+        .createSignedUrl(previewPath, 3600) // 1 hour
 
       setFiles((prev) => [
         ...prev,
         {
           id: row?.id ?? uuid,
           name: file.name,
-          thumbnailUrl: thumbUrl ?? urlData.publicUrl,
+          thumbnailUrl: signedData?.signedUrl ?? null,
           type: fileType as 'photo' | 'video',
         },
       ])
