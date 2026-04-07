@@ -54,16 +54,10 @@ export function ConversationItem({ conversation, isActive, isClient, onClick }: 
         isActive ? 'bg-bg-elevated' : 'hover:bg-bg-surface'
       )}
     >
-      <div className="flex items-start gap-3">
-        <div className="flex flex-col items-center gap-1 pt-1">
-          <div
-            className="h-2.5 w-2.5 rounded-full flex-shrink-0"
-            style={{ backgroundColor: conversation.platform_color }}
-          />
-          {conversation.priority !== 'cold' && (
-            <div className={cn('h-1.5 w-1.5 rounded-full', PRIORITY_COLORS[conversation.priority])} />
-          )}
-        </div>
+      <div className="flex items-start gap-2">
+        {conversation.priority !== 'cold' && (
+          <div className={cn('h-1.5 w-1.5 rounded-full flex-shrink-0 mt-2', PRIORITY_COLORS[conversation.priority])} />
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0">
@@ -85,7 +79,12 @@ export function ConversationItem({ conversation, isActive, isClient, onClick }: 
             ) : (
               <div />
             )}
-            <span className="text-[10px] text-text-muted flex-shrink-0 ml-2">{conversation.platform_name}</span>
+            <span
+              className="text-[10px] font-medium flex-shrink-0 ml-2"
+              style={{ color: conversation.platform_color }}
+            >
+              {conversation.platform_name}
+            </span>
           </div>
         </div>
       </div>
