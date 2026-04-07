@@ -1,9 +1,13 @@
-import { Button } from '@/components/ui/button'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 
-export default function Home() {
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Button>Test Button</Button>
-    </div>
-  )
+export default async function HomePage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (user) {
+    redirect('/dashboard')
+  }
+
+  redirect('/login')
 }
