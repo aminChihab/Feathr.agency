@@ -1,0 +1,69 @@
+// src/components/dashboard/client-list-item.tsx
+'use client'
+
+import { Crown } from 'lucide-react'
+import type { Database } from '@/types/database'
+
+type Client = Database['public']['Tables']['clients']['Row']
+
+interface ClientListItemProps {
+  client: Client
+  onClick: () => void
+}
+
+function relativeDate(dateStr: string): string {
+  const now = Date.now()
+  const then = new Date(dateStr).getTime()
+  const days = Math.floor((now - then) / 86400000)
+  if (days === 0) return 'Today'
+  if (days === 1) return 'Yesterday'
+  if (days < 30) return `${days}d ago`
+  const months = Math.floor(days / 30)
+  return `${months}mo ago`
+}
+
+export function ClientListItem({ client, onClick }: ClientListItemProps) {
+  const platforms = (client.platforms as { platform: string; handle: string }[]) ?? []
+
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center justify-between rounded-lg border border-border bg-bg-surface px-5 py-4 text-left transition-colors hover:bg-bg-elevated"
+    >
+      <div className="flex items-center gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium">{client.name}</p>
+            {client.is_vip && <Crown className="h-3.5 w-3.5 text-status-draft" />}
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            {client.tags && client.tags.length > 0 && (
+              <div className="flex gap-1">
+                {client.tags.slice(0, 3).map((tag) => (
+                  <span key={tag} className="rounded-full bg-bg-elevated px-2 py-0.5 text-[10px] text-text-muted">
+                    {tag}
+                  </span>
+                ))}
+                {client.tags.length > 3 && (
+                  <span className="text-[10px] text-text-muted">+{client.tags.length - 3}</span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-6 text-xs text-text-muted">
+        <div className="text-right">
+          <p className="text-text-primary">{client.total_bookings}</p>
+          <p>bookings</p>
+        </div>
+        {client.last_booking_at && (
+          <div className="text-right">
+            <p className="text-text-primary">{relativeDate(client.last_booking_at)}</p>
+            <p>last booking</p>
+          </div>
+        )}
+      </div>
+    </button>
+  )
+}
