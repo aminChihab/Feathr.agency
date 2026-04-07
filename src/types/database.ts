@@ -546,6 +546,7 @@ export type Database = {
           id: string
           metadata: Json | null
           sent_at: string
+          sent_to_platform: boolean
         }
         Insert: {
           ai_approved?: boolean | null
@@ -556,6 +557,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           sent_at?: string
+          sent_to_platform?: boolean
         }
         Update: {
           ai_approved?: boolean | null
@@ -566,6 +568,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           sent_at?: string
+          sent_to_platform?: boolean
         }
         Relationships: [
           {
