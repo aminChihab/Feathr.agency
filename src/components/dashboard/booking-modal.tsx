@@ -75,7 +75,7 @@ export function BookingModal({ open, onClose, supabase, userId, clientId, client
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>Date</Label>
-            <Input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} className="bg-bg-base" />
+            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="bg-bg-base" />
           </div>
           <div className="space-y-2">
             <Label>Duration</Label>

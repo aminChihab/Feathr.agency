@@ -67,10 +67,10 @@ export function ConversationItem({ conversation, isActive, isClient, onClick }: 
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0">
+              {isClient && <Users className="h-3 w-3 flex-shrink-0 text-accent" />}
               <p className={cn('truncate text-sm', isNew ? 'font-semibold' : 'font-normal')}>
                 {conversation.contact_name ?? conversation.contact_handle ?? 'Unknown'}
               </p>
-              {isClient && <Users className="h-3 w-3 flex-shrink-0 text-accent" />}
             </div>
             <span className="text-[10px] text-text-muted flex-shrink-0">
               {conversation.last_message_at ? relativeTime(conversation.last_message_at) : ''}
@@ -79,9 +79,14 @@ export function ConversationItem({ conversation, isActive, isClient, onClick }: 
           {conversation.contact_handle && conversation.contact_name && (
             <p className="truncate text-xs text-text-muted">{conversation.contact_handle}</p>
           )}
-          {conversation.ai_summary && (
-            <p className="mt-0.5 truncate text-xs text-text-muted">{conversation.ai_summary}</p>
-          )}
+          <div className="flex items-center justify-between mt-0.5">
+            {conversation.ai_summary ? (
+              <p className="truncate text-xs text-text-muted flex-1">{conversation.ai_summary}</p>
+            ) : (
+              <div />
+            )}
+            <span className="text-[10px] text-text-muted flex-shrink-0 ml-2">{conversation.platform_name}</span>
+          </div>
         </div>
       </div>
     </button>

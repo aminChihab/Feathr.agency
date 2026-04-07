@@ -6,8 +6,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import { MessageBubble } from './message-bubble'
 import { ReplyBox } from './reply-box'
-import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 type Message = Database['public']['Tables']['messages']['Row']
 type Conversation = {
   id: string
@@ -24,8 +23,6 @@ interface MessageThreadProps {
   messages: Message[]
   supabase: SupabaseClient<Database>
   userId: string
-  onStatusChange: (status: string) => void
-  onPriorityChange: (priority: string) => void
   onMessageSent: () => void
   onApproveMessage: (id: string) => void
   onRejectMessage: (id: string) => void
@@ -33,7 +30,6 @@ interface MessageThreadProps {
 
 export function MessageThread({
   conversation, messages, supabase, userId,
-  onStatusChange, onPriorityChange,
   onMessageSent, onApproveMessage, onRejectMessage,
 }: MessageThreadProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -74,28 +70,24 @@ export function MessageThread({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Select value={conversation.status} onValueChange={onStatusChange}>
-            <SelectTrigger className="h-7 w-28 bg-bg-base text-[10px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="new">New</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="qualified">Qualified</SelectItem>
-              <SelectItem value="archived">Archived</SelectItem>
-              <SelectItem value="spam">Spam</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={conversation.priority} onValueChange={onPriorityChange}>
-            <SelectTrigger className="h-7 w-24 bg-bg-base text-[10px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="hot">Hot</SelectItem>
-              <SelectItem value="warm">Warm</SelectItem>
-              <SelectItem value="cold">Cold</SelectItem>
-            </SelectContent>
-          </Select>
+          <span className={cn(
+            'rounded-full px-2.5 py-0.5 text-[10px] font-medium capitalize',
+            conversation.status === 'qualified' ? 'bg-status-scheduled/15 text-status-scheduled' :
+            conversation.status === 'active' ? 'bg-status-approved/15 text-status-approved' :
+            conversation.status === 'new' ? 'bg-status-draft/15 text-status-draft' :
+            conversation.status === 'archived' ? 'bg-bg-elevated text-text-muted' :
+            'bg-status-failed/15 text-status-failed'
+          )}>
+            {conversation.status}
+          </span>
+          <span className={cn(
+            'rounded-full px-2.5 py-0.5 text-[10px] font-medium capitalize',
+            conversation.priority === 'hot' ? 'bg-priority-hot/15 text-priority-hot' :
+            conversation.priority === 'warm' ? 'bg-priority-warm/15 text-priority-warm' :
+            'bg-bg-elevated text-text-muted'
+          )}>
+            {conversation.priority}
+          </span>
         </div>
       </div>
 

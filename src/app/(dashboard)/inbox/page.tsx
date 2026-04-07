@@ -197,24 +197,6 @@ export default function InboxPage() {
     setSyncing(false)
   }
 
-  async function handleStatusChange(status: string) {
-    if (!activeConvId) return
-    type ConvStatus = Database['public']['Enums']['conversation_status']
-    await supabase.from('conversations').update({ status: status as ConvStatus }).eq('id', activeConvId)
-    setConversations((prev) =>
-      prev.map((c) => c.id === activeConvId ? { ...c, status } : c)
-    )
-  }
-
-  async function handlePriorityChange(priority: string) {
-    if (!activeConvId) return
-    type ConvPriority = Database['public']['Enums']['conversation_priority']
-    await supabase.from('conversations').update({ priority: priority as ConvPriority }).eq('id', activeConvId)
-    setConversations((prev) =>
-      prev.map((c) => c.id === activeConvId ? { ...c, priority } : c)
-    )
-  }
-
   async function handleApproveMessage(id: string) {
     await supabase.from('messages').update({ ai_approved: true }).eq('id', id)
     setMessages((prev) =>
@@ -285,8 +267,6 @@ export default function InboxPage() {
           messages={messages}
           supabase={supabase}
           userId={userId}
-          onStatusChange={handleStatusChange}
-          onPriorityChange={handlePriorityChange}
           onMessageSent={() => {}}
           onApproveMessage={handleApproveMessage}
           onRejectMessage={handleRejectMessage}
