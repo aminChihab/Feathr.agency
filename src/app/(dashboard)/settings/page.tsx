@@ -381,9 +381,16 @@ export default function SettingsPage() {
                   </span>
                 ))}
               </div>
-              {researchTerms.length === 0 && (
-                <p className="text-xs text-text-muted">No terms yet. Suggestions: &quot;escort amsterdam&quot;, &quot;#highclassescort&quot;, &quot;#companionship&quot;</p>
-              )}
+              <Button
+                variant="ghost"
+                className="text-xs text-text-muted"
+                onClick={() => {
+                  setResearchTerms(DEFAULT_TERMS)
+                  setCompetitorHandles(DEFAULT_HANDLES)
+                }}
+              >
+                Load suggested defaults
+              </Button>
             </div>
 
             <div className="space-y-4">

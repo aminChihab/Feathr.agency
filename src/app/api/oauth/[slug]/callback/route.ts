@@ -84,8 +84,19 @@ export async function GET(
     { onConflict: 'profile_id,platform_id' }
   )
 
-  // Clear cookie and redirect back
-  const response = NextResponse.redirect(new URL('/onboarding', request.url))
+  // Clear cookie and redirect back to the right page
+  // Check if user is in onboarding or already active
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('status')
+    .eq('id', stateData.userId)
+    .single()
+
+  const redirectPath = (profile?.status === 'active' || profile?.status === 'paused')
+    ? '/platforms'
+    : '/onboarding'
+
+  const response = NextResponse.redirect(new URL(redirectPath, request.url))
   response.cookies.delete('oauth_code_verifier')
   return response
 }
