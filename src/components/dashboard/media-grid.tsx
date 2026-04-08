@@ -27,6 +27,7 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
   const [items, setItems] = useState<MediaItem[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 })
   const [filter, setFilter] = useState<'all' | 'photo' | 'video'>('all')
   const [previewItem, setPreviewItem] = useState<MediaItem | null>(null)
 
@@ -95,49 +96,60 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
     loadItems()
   }, [filter])
 
+  async function uploadSingleFile(file: File) {
+    const uuid = crypto.randomUUID()
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin'
+    const storagePath = `${userId}/${uuid}.${ext}`
+    const fileType = getFileType(file.type)
+
+    const { error: uploadError } = await supabase.storage
+      .from('media')
+      .upload(storagePath, file)
+
+    if (uploadError) return
+
+    let thumbnailPath: string | null = null
+
+    if (fileType === 'photo') {
+      const thumbBlob = await generateImageThumbnail(file)
+      if (thumbBlob) {
+        thumbnailPath = `${userId}/thumbs/${uuid}.jpg`
+        await supabase.storage.from('media').upload(thumbnailPath, thumbBlob)
+      }
+    } else if (fileType === 'video') {
+      const thumbBlob = await generateVideoThumbnail(file)
+      if (thumbBlob) {
+        thumbnailPath = `${userId}/thumbs/${uuid}.jpg`
+        await supabase.storage.from('media').upload(thumbnailPath, thumbBlob)
+      }
+    }
+
+    await supabase.from('content_library').insert({
+      profile_id: userId,
+      storage_path: storagePath,
+      file_name: file.name,
+      file_type: fileType,
+      mime_type: file.type,
+      file_size: file.size,
+      thumbnail_path: thumbnailPath,
+    })
+
+    setUploadProgress((prev) => ({ ...prev, current: prev.current + 1 }))
+  }
+
   async function handleUpload(files: File[]) {
     setUploading(true)
+    setUploadProgress({ current: 0, total: files.length })
 
-    for (const file of files) {
-      const uuid = crypto.randomUUID()
-      const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin'
-      const storagePath = `${userId}/${uuid}.${ext}`
-      const fileType = getFileType(file.type)
-
-      const { error: uploadError } = await supabase.storage
-        .from('media')
-        .upload(storagePath, file)
-
-      if (uploadError) continue
-
-      let thumbnailPath: string | null = null
-
-      if (fileType === 'photo') {
-        const thumbBlob = await generateImageThumbnail(file)
-        if (thumbBlob) {
-          thumbnailPath = `${userId}/thumbs/${uuid}.jpg`
-          await supabase.storage.from('media').upload(thumbnailPath, thumbBlob)
-        }
-      } else if (fileType === 'video') {
-        const thumbBlob = await generateVideoThumbnail(file)
-        if (thumbBlob) {
-          thumbnailPath = `${userId}/thumbs/${uuid}.jpg`
-          await supabase.storage.from('media').upload(thumbnailPath, thumbBlob)
-        }
-      }
-
-      await supabase.from('content_library').insert({
-        profile_id: userId,
-        storage_path: storagePath,
-        file_name: file.name,
-        file_type: fileType,
-        mime_type: file.type,
-        file_size: file.size,
-        thumbnail_path: thumbnailPath,
-      })
+    // Upload 5 files in parallel
+    const concurrency = 5
+    for (let i = 0; i < files.length; i += concurrency) {
+      const batch = files.slice(i, i + concurrency)
+      await Promise.all(batch.map(uploadSingleFile))
     }
 
     setUploading(false)
+    setUploadProgress({ current: 0, total: 0 })
     loadItems()
   }
 
@@ -155,13 +167,28 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
     <div className="space-y-6">
       <FileDropzone
         accept=".jpg,.jpeg,.png,.webp,.mp4,.mov"
+        maxFiles={50}
         maxSizeMB={50}
         onFilesAdded={handleUpload}
       >
-        <p className="text-text-secondary">
-          {uploading ? 'Uploading...' : 'Drag & drop files here, or click to browse'}
-        </p>
-        <p className="text-sm text-text-muted">JPG, PNG, WEBP, MP4, MOV — max 50MB each</p>
+        {uploading ? (
+          <div className="space-y-2">
+            <p className="text-text-secondary">
+              Uploading {uploadProgress.current} of {uploadProgress.total}...
+            </p>
+            <div className="mx-auto h-1.5 w-48 rounded-full bg-bg-elevated">
+              <div
+                className="h-1.5 rounded-full bg-accent transition-all duration-300"
+                style={{ width: `${uploadProgress.total > 0 ? (uploadProgress.current / uploadProgress.total) * 100 : 0}%` }}
+              />
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="text-text-secondary">Drag & drop files here, or click to browse</p>
+            <p className="text-sm text-text-muted">JPG, PNG, WEBP, MP4, MOV — max 50MB each, up to 50 files</p>
+          </>
+        )}
       </FileDropzone>
 
       <div className="flex gap-2">
