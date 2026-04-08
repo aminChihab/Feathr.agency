@@ -10,7 +10,6 @@ function createServiceClient() {
 }
 
 // GET — CRC Challenge Response
-// Twitter sends a crc_token, we respond with HMAC-SHA256 hash using our consumer secret
 export async function GET(request: NextRequest) {
   const crcToken = request.nextUrl.searchParams.get('crc_token')
 
@@ -33,158 +32,194 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ response_token: `sha256=${hmac}` })
 }
 
-// POST — Receive DM events from Twitter
+// POST — Receive events from Twitter (XAA format)
 export async function POST(request: NextRequest) {
   const body = await request.json()
 
-  console.log('[webhook-twitter] Event received:', JSON.stringify(body).slice(0, 500))
-
-  // Twitter sends different event types — we only care about direct_message_events
-  const dmEvents = body.direct_message_events
-  if (!dmEvents || dmEvents.length === 0) {
-    // Could be other event types (tweet, follow, etc.) — ignore for now
-    return NextResponse.json({ ok: true })
-  }
-
-  const forUserId = body.for_user_id
-  if (!forUserId) {
-    console.log('[webhook-twitter] No for_user_id in payload')
-    return NextResponse.json({ ok: true })
-  }
-
-  console.log(`[webhook-twitter] ${dmEvents.length} DM event(s) for Twitter user ${forUserId}`)
+  console.log('[webhook-twitter] Event received:', JSON.stringify(body).slice(0, 1000))
 
   const supabase = createServiceClient()
 
-  // Find the platform account that matches this Twitter user ID
-  // First get the twitter platform id
-  const { data: twitterPlatform, error: platformError } = await supabase
+  // XAA format: { data: { event_type, payload, filter } }
+  const eventData = body.data
+  if (!eventData) {
+    // Legacy Account Activity format — log and skip for now
+    console.log('[webhook-twitter] Legacy format or unknown event, skipping')
+    return NextResponse.json({ ok: true })
+  }
+
+  const eventType = eventData.event_type
+  const payload = eventData.payload
+  const filterUserId = eventData.filter?.user_id
+
+  console.log(`[webhook-twitter] XAA event: ${eventType} for user ${filterUserId}`)
+
+  // Only handle DM/chat events
+  if (!['dm.received', 'dm.sent', 'chat.received', 'chat.sent'].includes(eventType)) {
+    console.log(`[webhook-twitter] Ignoring event type: ${eventType}`)
+    return NextResponse.json({ ok: true })
+  }
+
+  if (!payload) {
+    console.log('[webhook-twitter] No payload in event')
+    return NextResponse.json({ ok: true })
+  }
+
+  // Find the twitter platform and account
+  const { data: twitterPlatform } = await supabase
     .from('platforms')
     .select('id')
     .eq('slug', 'twitter')
     .single()
 
-  console.log('[webhook-twitter] Twitter platform:', twitterPlatform?.id, 'error:', platformError?.message)
-
   if (!twitterPlatform) {
-    console.error('[webhook-twitter] Twitter platform not found in platforms table')
+    console.error('[webhook-twitter] Twitter platform not found')
     return NextResponse.json({ ok: true })
   }
 
-  // Find connected twitter accounts
-  const { data: twitterAccounts, error: accountError } = await supabase
+  const { data: twitterAccounts } = await supabase
     .from('platform_accounts')
     .select('id, profile_id')
     .eq('platform_id', twitterPlatform.id)
     .eq('status', 'connected')
 
-  console.log('[webhook-twitter] Found', (twitterAccounts ?? []).length, 'twitter account(s), error:', accountError?.message)
-
-  // For now use the first one — later match by for_user_id stored in metadata
   const matchedAccount = twitterAccounts?.[0] ?? null
-
   if (!matchedAccount) {
-    console.log('[webhook-twitter] No matching platform account found for user', forUserId)
+    console.log('[webhook-twitter] No matching platform account')
     return NextResponse.json({ ok: true })
   }
 
-  const users = body.users ?? {}
+  // Extract message data from XAA payload
+  const senderId = payload.sender_id?.toString()
+  const recipientId = payload.recipient_id?.toString()
+  const text = payload.text ?? payload.message_text ?? ''
+  const messageId = payload.id ?? eventData.event_uuid
+  const createdAtMs = payload.created_at_msec ?? payload.created_at
+  const createdAt = createdAtMs
+    ? new Date(parseInt(createdAtMs.toString())).toISOString()
+    : new Date().toISOString()
 
-  for (const event of dmEvents) {
-    // Only handle message_create events
-    if (event.type !== 'message_create') continue
+  // Determine direction from event type
+  const isInbound = eventType === 'dm.received' || eventType === 'chat.received'
+  const direction = isInbound ? 'inbound' : 'outbound'
 
-    const messageData = event.message_create
-    const senderId = messageData.sender_id
-    const recipientId = messageData.target?.recipient_id
-    const text = messageData.message_data?.text ?? ''
-    const createdAt = new Date(parseInt(event.created_timestamp)).toISOString()
+  console.log(`[webhook-twitter] ${direction} message from ${senderId} to ${recipientId}: "${text.slice(0, 100)}"`)
 
-    // Determine direction
-    const isInbound = senderId !== forUserId
-    const direction = isInbound ? 'inbound' : 'outbound'
+  // If no text, we might need to fetch it (encrypted chats don't include text in webhook)
+  if (!text) {
+    console.log('[webhook-twitter] No message text in payload — encrypted chat? Skipping for now.')
+    console.log('[webhook-twitter] Full payload:', JSON.stringify(payload))
+    return NextResponse.json({ ok: true })
+  }
 
-    // Build conversation external ID (same format as our sync uses)
-    const participantIds = [senderId, recipientId].sort()
-    const externalThreadId = participantIds.join('-')
-    const otherUserId = isInbound ? senderId : recipientId
+  // Build external thread ID
+  const participants = [senderId, recipientId].filter(Boolean).sort()
+  const externalThreadId = participants.join('-')
+  const otherUserId = isInbound ? senderId : recipientId
 
-    console.log(`[webhook-twitter] DM: ${direction} from ${senderId} to ${recipientId}`)
+  // Find or create conversation
+  const { data: existingConv } = await supabase
+    .from('conversations')
+    .select('id')
+    .eq('profile_id', matchedAccount.profile_id)
+    .eq('external_thread_id', externalThreadId)
+    .single()
 
-    // Find or create conversation
-    const { data: existingConv } = await supabase
-      .from('conversations')
-      .select('id')
-      .eq('profile_id', matchedAccount.profile_id)
-      .eq('external_thread_id', externalThreadId)
-      .single()
+  let conversationId: string
 
-    let conversationId: string
+  if (existingConv) {
+    conversationId = existingConv.id
+    console.log('[webhook-twitter] Existing conversation:', conversationId)
+  } else {
+    // Try to look up the other user's name via Twitter API
+    let contactName: string | null = null
+    let contactHandle: string | null = null
 
-    if (existingConv) {
-      conversationId = existingConv.id
-    } else {
-      // Get contact info from users object in the payload
-      const otherUser = users[otherUserId]
-      const contactName = otherUser?.name ?? null
-      const contactHandle = otherUser?.screen_name ? `@${otherUser.screen_name}` : null
-
-      console.log(`[webhook-twitter] New conversation with ${contactName} ${contactHandle}`)
-
-      const { data: newConv } = await supabase
-        .from('conversations')
-        .insert({
-          profile_id: matchedAccount.profile_id,
-          platform_account_id: matchedAccount.id,
-          external_thread_id: externalThreadId,
-          contact_name: contactName,
-          contact_handle: contactHandle,
-          status: 'new',
-          priority: 'cold',
-          type: 'other',
-        })
-        .select('id')
+    // Get the user's access token to look up the sender
+    if (otherUserId) {
+      const { data: accountWithCreds } = await supabase
+        .from('platform_accounts')
+        .select('credentials_encrypted')
+        .eq('id', matchedAccount.id)
         .single()
 
-      if (!newConv) {
-        console.error('[webhook-twitter] Failed to create conversation')
-        continue
-      }
+      if (accountWithCreds) {
+        const creds = JSON.parse(accountWithCreds.credentials_encrypted ?? '{}')
+        const accessToken = creds.access_token
 
-      conversationId = newConv.id
+        if (accessToken) {
+          try {
+            const userRes = await fetch(
+              `https://api.x.com/2/users/${otherUserId}?user.fields=name,username`,
+              { headers: { Authorization: `Bearer ${accessToken}` } }
+            )
+            if (userRes.ok) {
+              const userData = await userRes.json()
+              contactName = userData.data?.name ?? null
+              contactHandle = userData.data?.username ? `@${userData.data.username}` : null
+              console.log(`[webhook-twitter] Contact: ${contactName} ${contactHandle}`)
+            }
+          } catch {
+            console.log('[webhook-twitter] User lookup failed')
+          }
+        }
+      }
     }
 
-    // Check if message already exists (dedup by timestamp)
-    const { data: existingMsg } = await supabase
-      .from('messages')
+    const { data: newConv } = await supabase
+      .from('conversations')
+      .insert({
+        profile_id: matchedAccount.profile_id,
+        platform_account_id: matchedAccount.id,
+        external_thread_id: externalThreadId,
+        contact_name: contactName,
+        contact_handle: contactHandle,
+        status: 'new',
+        priority: 'cold',
+        type: 'other',
+      })
       .select('id')
-      .eq('conversation_id', conversationId)
-      .eq('sent_at', createdAt)
       .single()
 
-    if (existingMsg) {
-      console.log('[webhook-twitter] Message already exists, skipping')
-      continue
+    if (!newConv) {
+      console.error('[webhook-twitter] Failed to create conversation')
+      return NextResponse.json({ ok: true })
     }
 
-    // Insert message
-    await supabase.from('messages').insert({
-      conversation_id: conversationId,
-      direction,
-      body: text,
-      ai_generated: false,
-      sent_to_platform: true, // came from the platform, already there
-      sent_at: createdAt,
-    })
-
-    // Update conversation last_message_at
-    await supabase
-      .from('conversations')
-      .update({ last_message_at: createdAt })
-      .eq('id', conversationId)
-
-    console.log(`[webhook-twitter] Saved ${direction} message in conversation ${conversationId}`)
+    conversationId = newConv.id
+    console.log('[webhook-twitter] Created conversation:', conversationId)
   }
+
+  // Dedup by message ID or timestamp
+  const { data: existingMsg } = await supabase
+    .from('messages')
+    .select('id')
+    .eq('conversation_id', conversationId)
+    .eq('sent_at', createdAt)
+    .single()
+
+  if (existingMsg) {
+    console.log('[webhook-twitter] Message already exists, skipping')
+    return NextResponse.json({ ok: true })
+  }
+
+  // Insert message
+  await supabase.from('messages').insert({
+    conversation_id: conversationId,
+    direction,
+    body: text,
+    ai_generated: false,
+    sent_to_platform: true,
+    sent_at: createdAt,
+  })
+
+  // Update conversation
+  await supabase
+    .from('conversations')
+    .update({ last_message_at: createdAt })
+    .eq('id', conversationId)
+
+  console.log(`[webhook-twitter] Saved ${direction} message in conversation ${conversationId}`)
 
   return NextResponse.json({ ok: true })
 }
