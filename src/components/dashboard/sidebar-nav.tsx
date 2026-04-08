@@ -3,9 +3,10 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import Image from 'next/image'
 import {
   LayoutDashboard, Inbox, CalendarDays, BarChart3, Link2,
-  Search, ListChecks, Users, Plane, Bot, Settings, Feather,
+  Search, ListChecks, Users, Plane, Bot, Settings,
 } from 'lucide-react'
 
 const navItems = [
@@ -38,9 +39,9 @@ export function SidebarNav({ profileName, email }: SidebarNavProps) {
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-border bg-bg-surface">
       {/* Logo */}
-      <div className="flex h-16 items-center gap-2.5 px-6">
-        <span className="font-display text-xl tracking-wide text-text-primary">Feathr</span>
-        <Feather className="h-5 w-5 text-accent" />
+      <div className="flex h-16 items-center gap-3 px-6">
+        <span className="font-body text-xl font-semibold tracking-wide text-text-primary">Feathr</span>
+        <Image src="/feather-logo.png" alt="Feathr" width={24} height={24} className="h-6 w-6 object-contain" />
       </div>
 
       {/* Navigation */}
