@@ -33,39 +33,27 @@ export async function GET(request: NextRequest) {
 }
 
 // POST — Receive events from Twitter (XAA format)
+// Webhook = instant notification, then we fetch actual message content via API
 export async function POST(request: NextRequest) {
   const body = await request.json()
 
-  console.log('[webhook-twitter] Event received:', JSON.stringify(body).slice(0, 1000))
-
-  const supabase = createServiceClient()
-
-  // XAA format: { data: { event_type, payload, filter } }
   const eventData = body.data
   if (!eventData) {
-    // Legacy Account Activity format — log and skip for now
-    console.log('[webhook-twitter] Legacy format or unknown event, skipping')
     return NextResponse.json({ ok: true })
   }
 
   const eventType = eventData.event_type
-  const payload = eventData.payload
-  const filterUserId = eventData.filter?.user_id
+  console.log(`[webhook-twitter] Event: ${eventType}`)
 
-  console.log(`[webhook-twitter] XAA event: ${eventType} for user ${filterUserId}`)
-
-  // Only handle DM/chat events
-  if (!['dm.received', 'dm.sent', 'chat.received', 'chat.sent'].includes(eventType)) {
+  // Only trigger sync for inbound DM/chat events
+  if (eventType !== 'dm.received' && eventType !== 'chat.received') {
     console.log(`[webhook-twitter] Ignoring event type: ${eventType}`)
     return NextResponse.json({ ok: true })
   }
 
-  if (!payload) {
-    console.log('[webhook-twitter] No payload in event')
-    return NextResponse.json({ ok: true })
-  }
+  const supabase = createServiceClient()
 
-  // Find the twitter platform and account
+  // Find the twitter platform account
   const { data: twitterPlatform } = await supabase
     .from('platforms')
     .select('id')
@@ -79,147 +67,172 @@ export async function POST(request: NextRequest) {
 
   const { data: twitterAccounts } = await supabase
     .from('platform_accounts')
-    .select('id, profile_id')
+    .select('id, profile_id, credentials_encrypted')
     .eq('platform_id', twitterPlatform.id)
     .eq('status', 'connected')
 
-  const matchedAccount = twitterAccounts?.[0] ?? null
-  if (!matchedAccount) {
-    console.log('[webhook-twitter] No matching platform account')
+  if (!twitterAccounts || twitterAccounts.length === 0) {
+    console.log('[webhook-twitter] No connected Twitter accounts')
     return NextResponse.json({ ok: true })
   }
 
-  // Extract message data from XAA payload
-  const senderId = payload.sender_id?.toString()
-  const recipientId = payload.recipient_id?.toString()
-  const text = payload.text ?? payload.message_text ?? ''
-  const messageId = payload.id ?? eventData.event_uuid
-  const createdAtMs = payload.created_at_msec ?? payload.created_at
-  const createdAt = createdAtMs
-    ? new Date(parseInt(createdAtMs.toString())).toISOString()
-    : new Date().toISOString()
+  // For each connected account, fetch latest DMs via API (gives us plaintext)
+  for (const account of twitterAccounts) {
+    const creds = JSON.parse(account.credentials_encrypted ?? '{}')
+    const accessToken = creds.access_token
 
-  // Determine direction from event type
-  const isInbound = eventType === 'dm.received' || eventType === 'chat.received'
-  const direction = isInbound ? 'inbound' : 'outbound'
+    if (!accessToken) continue
 
-  console.log(`[webhook-twitter] ${direction} message from ${senderId} to ${recipientId}: "${text.slice(0, 100)}"`)
+    console.log(`[webhook-twitter] Fetching DMs for account ${account.id}`)
 
-  // If no text, we might need to fetch it (encrypted chats don't include text in webhook)
-  if (!text) {
-    console.log('[webhook-twitter] No message text in payload — encrypted chat? Skipping for now.')
-    console.log('[webhook-twitter] Full payload:', JSON.stringify(payload))
-    return NextResponse.json({ ok: true })
-  }
+    try {
+      // Get authenticated user's Twitter ID
+      const meRes = await fetch('https://api.x.com/2/users/me', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
 
-  // Build external thread ID
-  const participants = [senderId, recipientId].filter(Boolean).sort()
-  const externalThreadId = participants.join('-')
-  const otherUserId = isInbound ? senderId : recipientId
+      if (!meRes.ok) {
+        if (meRes.status === 401) {
+          await supabase.from('platform_accounts').update({ status: 'expired' }).eq('id', account.id)
+          console.log('[webhook-twitter] Token expired, marked account')
+        }
+        continue
+      }
 
-  // Find or create conversation
-  const { data: existingConv } = await supabase
-    .from('conversations')
-    .select('id')
-    .eq('profile_id', matchedAccount.profile_id)
-    .eq('external_thread_id', externalThreadId)
-    .single()
+      const meData = await meRes.json()
+      const myTwitterId = meData.data?.id
 
-  let conversationId: string
+      if (!myTwitterId) continue
 
-  if (existingConv) {
-    conversationId = existingConv.id
-    console.log('[webhook-twitter] Existing conversation:', conversationId)
-  } else {
-    // Try to look up the other user's name via Twitter API
-    let contactName: string | null = null
-    let contactHandle: string | null = null
+      // Fetch recent DM events
+      const dmRes = await fetch(
+        'https://api.x.com/2/dm_events?dm_event.fields=id,text,created_at,dm_conversation_id,sender_id&max_results=20',
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      )
 
-    // Get the user's access token to look up the sender
-    if (otherUserId) {
-      const { data: accountWithCreds } = await supabase
-        .from('platform_accounts')
-        .select('credentials_encrypted')
-        .eq('id', matchedAccount.id)
-        .single()
+      console.log(`[webhook-twitter] DM API response: ${dmRes.status}`)
 
-      if (accountWithCreds) {
-        const creds = JSON.parse(accountWithCreds.credentials_encrypted ?? '{}')
-        const accessToken = creds.access_token
+      if (!dmRes.ok) {
+        const errBody = await dmRes.text()
+        console.error('[webhook-twitter] DM API error:', errBody)
+        continue
+      }
 
-        if (accessToken) {
-          try {
-            const userRes = await fetch(
-              `https://api.x.com/2/users/${otherUserId}?user.fields=name,username`,
-              { headers: { Authorization: `Bearer ${accessToken}` } }
-            )
-            if (userRes.ok) {
-              const userData = await userRes.json()
-              contactName = userData.data?.name ?? null
-              contactHandle = userData.data?.username ? `@${userData.data.username}` : null
-              console.log(`[webhook-twitter] Contact: ${contactName} ${contactHandle}`)
+      const dmData = await dmRes.json()
+      const events = dmData.data ?? []
+
+      console.log(`[webhook-twitter] Fetched ${events.length} DM event(s)`)
+
+      // Group by conversation
+      const grouped: Record<string, any[]> = {}
+      for (const event of events) {
+        const convId = event.dm_conversation_id
+        if (!grouped[convId]) grouped[convId] = []
+        grouped[convId].push(event)
+      }
+
+      for (const [dmConvId, dmEvents] of Object.entries(grouped)) {
+        // Extract other participant from conv ID
+        const convIdParts = dmConvId.split('-')
+        const otherParticipantId = convIdParts.find((p: string) => p !== myTwitterId) ?? null
+
+        // Find or create conversation
+        const { data: existingConv } = await supabase
+          .from('conversations')
+          .select('id')
+          .eq('profile_id', account.profile_id)
+          .eq('external_thread_id', dmConvId)
+          .single()
+
+        let conversationId: string
+
+        if (existingConv) {
+          conversationId = existingConv.id
+        } else {
+          // Look up contact name
+          let contactName: string | null = null
+          let contactHandle: string | null = null
+
+          if (otherParticipantId) {
+            try {
+              const userRes = await fetch(
+                `https://api.x.com/2/users/${otherParticipantId}?user.fields=name,username`,
+                { headers: { Authorization: `Bearer ${accessToken}` } }
+              )
+              if (userRes.ok) {
+                const userData = await userRes.json()
+                contactName = userData.data?.name ?? null
+                contactHandle = userData.data?.username ? `@${userData.data.username}` : null
+              }
+            } catch {
+              // Skip user lookup failures
             }
-          } catch {
-            console.log('[webhook-twitter] User lookup failed')
           }
+
+          const { data: newConv } = await supabase
+            .from('conversations')
+            .insert({
+              profile_id: account.profile_id,
+              platform_account_id: account.id,
+              external_thread_id: dmConvId,
+              contact_name: contactName,
+              contact_handle: contactHandle,
+              status: 'new',
+              priority: 'cold',
+              type: 'other',
+            })
+            .select('id')
+            .single()
+
+          if (!newConv) continue
+          conversationId = newConv.id
+          console.log(`[webhook-twitter] New conversation: ${conversationId} with ${contactName}`)
+        }
+
+        // Insert new messages
+        for (const event of dmEvents as any[]) {
+          const sentAt = event.created_at
+
+          // Dedup
+          const { data: existingMsg } = await supabase
+            .from('messages')
+            .select('id')
+            .eq('conversation_id', conversationId)
+            .eq('sent_at', sentAt)
+            .single()
+
+          if (existingMsg) continue
+
+          const direction = event.sender_id === myTwitterId ? 'outbound' : 'inbound'
+
+          await supabase.from('messages').insert({
+            conversation_id: conversationId,
+            direction,
+            body: event.text ?? '',
+            ai_generated: false,
+            sent_to_platform: true,
+            sent_at: sentAt,
+          })
+
+          console.log(`[webhook-twitter] Saved ${direction} message: "${(event.text ?? '').slice(0, 50)}"`)
+        }
+
+        // Update last_message_at
+        const latest = dmEvents.sort(
+          (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )[0]
+
+        if (latest) {
+          await supabase
+            .from('conversations')
+            .update({ last_message_at: latest.created_at })
+            .eq('id', conversationId)
         }
       }
+    } catch (err) {
+      console.error('[webhook-twitter] Error:', err)
     }
-
-    const { data: newConv } = await supabase
-      .from('conversations')
-      .insert({
-        profile_id: matchedAccount.profile_id,
-        platform_account_id: matchedAccount.id,
-        external_thread_id: externalThreadId,
-        contact_name: contactName,
-        contact_handle: contactHandle,
-        status: 'new',
-        priority: 'cold',
-        type: 'other',
-      })
-      .select('id')
-      .single()
-
-    if (!newConv) {
-      console.error('[webhook-twitter] Failed to create conversation')
-      return NextResponse.json({ ok: true })
-    }
-
-    conversationId = newConv.id
-    console.log('[webhook-twitter] Created conversation:', conversationId)
   }
-
-  // Dedup by message ID or timestamp
-  const { data: existingMsg } = await supabase
-    .from('messages')
-    .select('id')
-    .eq('conversation_id', conversationId)
-    .eq('sent_at', createdAt)
-    .single()
-
-  if (existingMsg) {
-    console.log('[webhook-twitter] Message already exists, skipping')
-    return NextResponse.json({ ok: true })
-  }
-
-  // Insert message
-  await supabase.from('messages').insert({
-    conversation_id: conversationId,
-    direction,
-    body: text,
-    ai_generated: false,
-    sent_to_platform: true,
-    sent_at: createdAt,
-  })
-
-  // Update conversation
-  await supabase
-    .from('conversations')
-    .update({ last_message_at: createdAt })
-    .eq('id', conversationId)
-
-  console.log(`[webhook-twitter] Saved ${direction} message in conversation ${conversationId}`)
 
   return NextResponse.json({ ok: true })
 }
