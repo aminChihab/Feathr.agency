@@ -39,8 +39,8 @@ export function SidebarNav({ profileName, email }: SidebarNavProps) {
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-border bg-bg-surface">
       {/* Logo */}
-      <div className="flex h-16 items-center gap-1 px-6">
-        <span className="font-display text-2xl font-semibold text-text-primary">Feathr</span>
+      <div className="flex h-16 items-center px-6">
+        <span className="font-display text-2xl font-semibold text-text-primary" style={{ marginRight: '-10px' }}>Feathr</span>
         <Image src="/logo.png" alt="Feathr" width={50} height={50} className="h-[50px] w-[50px] object-contain" />
       </div>
 
