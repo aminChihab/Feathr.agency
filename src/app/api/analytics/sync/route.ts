@@ -1,6 +1,7 @@
 // src/app/api/analytics/sync/route.ts
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { decryptCredentials } from '@/lib/crypto'
 
 export async function POST() {
   const supabase = await createClient()
@@ -33,7 +34,7 @@ export async function POST() {
   const today = new Date().toISOString().split('T')[0]
 
   for (const account of twitterAccounts) {
-    const creds = JSON.parse(account.credentials_encrypted ?? '{}')
+    const creds = decryptCredentials(account.credentials_encrypted ?? '{}')
     const accessToken = creds.access_token
 
     if (!accessToken) {

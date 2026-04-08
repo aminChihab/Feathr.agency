@@ -1,6 +1,7 @@
 // src/app/api/inbox/send/route.ts
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { decryptCredentials } from '@/lib/crypto'
 
 export async function POST() {
   const supabase = await createClient()
@@ -51,7 +52,7 @@ export async function POST() {
       continue
     }
 
-    const creds = JSON.parse(account?.credentials_encrypted ?? '{}')
+    const creds = decryptCredentials(account?.credentials_encrypted ?? '{}')
     const accessToken = creds.access_token
     const externalThreadId = conv?.external_thread_id
 

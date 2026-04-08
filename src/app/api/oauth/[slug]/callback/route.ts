@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { encryptCredentials } from '@/lib/crypto'
 
 const OAUTH_CONFIGS: Record<string, { tokenUrl: string; clientIdEnv: string; clientSecretEnv: string }> = {
   twitter: {
@@ -73,16 +74,16 @@ export async function GET(
     return NextResponse.redirect(new URL('/onboarding?error=platform_not_found', request.url))
   }
 
-  // Store the token
-  await supabase.from('platform_accounts').upsert(
+  // Store the token (encrypted)
+  const { data: upsertedAccount } = await supabase.from('platform_accounts').upsert(
     {
       profile_id: stateData.userId,
       platform_id: platform.id,
-      credentials_encrypted: JSON.stringify(tokenData),
+      credentials_encrypted: encryptCredentials(tokenData),
       status: 'connected',
     },
     { onConflict: 'profile_id,platform_id' }
-  )
+  ).select('id').single()
 
   // Subscribe user to webhook for DM events
   if (slug === 'twitter' && process.env.TWITTER_WEBHOOK_ID) {

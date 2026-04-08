@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { decryptCredentials } from '@/lib/crypto'
 import type { Json } from '@/types/database'
 
 interface ScrapedTweet {
@@ -162,7 +163,7 @@ export async function POST() {
     return NextResponse.json({ error: 'No Twitter account connected' }, { status: 400 })
   }
 
-  const creds = JSON.parse(twitterAccount.credentials_encrypted ?? '{}')
+  const creds = decryptCredentials(twitterAccount.credentials_encrypted ?? '{}')
   const accessToken = creds.access_token
 
   if (!accessToken) {

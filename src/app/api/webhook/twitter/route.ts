@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
 import { createClient as createServerClient } from '@supabase/supabase-js'
+import { decryptCredentials } from '@/lib/crypto'
 
 function createServiceClient() {
   return createServerClient(
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
-  const creds = JSON.parse(account.credentials_encrypted ?? '{}')
+  const creds = decryptCredentials(account.credentials_encrypted ?? '{}')
   const accessToken = creds.access_token
   if (!accessToken) {
     console.log('[webhook-twitter] No access token')
