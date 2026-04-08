@@ -269,28 +269,46 @@ async function generateVideoThumbnail(file: File): Promise<Blob | null> {
   return new Promise((resolve) => {
     const video = document.createElement('video')
     const url = URL.createObjectURL(file)
-    video.preload = 'metadata'
+    video.preload = 'auto'
     video.muted = true
     video.playsInline = true
+    video.crossOrigin = 'anonymous'
 
-    video.onloadeddata = () => {
-      // Seek to 1 second (or 0 if shorter)
-      video.currentTime = Math.min(1, video.duration / 2)
+    video.onloadedmetadata = () => {
+      // Seek to 1 second or 10% of duration (whichever is less)
+      video.currentTime = Math.min(1, video.duration * 0.1)
     }
 
     video.onseeked = () => {
-      const canvas = document.createElement('canvas')
-      const maxSize = 600
-      const ratio = Math.min(maxSize / video.videoWidth, maxSize / video.videoHeight, 1)
-      canvas.width = video.videoWidth * ratio
-      canvas.height = video.videoHeight * ratio
-      const ctx = canvas.getContext('2d')!
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-      URL.revokeObjectURL(url)
-      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.85)
+      // Wait a frame for the video to actually render
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          try {
+            const canvas = document.createElement('canvas')
+            const maxSize = 600
+            const vw = video.videoWidth || 640
+            const vh = video.videoHeight || 360
+            const ratio = Math.min(maxSize / vw, maxSize / vh, 1)
+            canvas.width = vw * ratio
+            canvas.height = vh * ratio
+            const ctx = canvas.getContext('2d')!
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+            URL.revokeObjectURL(url)
+            canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.85)
+          } catch {
+            URL.revokeObjectURL(url)
+            resolve(null)
+          }
+        })
+      })
     }
 
     video.onerror = () => { URL.revokeObjectURL(url); resolve(null) }
+
+    // Timeout fallback — if nothing happens in 10 seconds, give up
+    setTimeout(() => { URL.revokeObjectURL(url); resolve(null) }, 10000)
+
     video.src = url
+    video.load()
   })
 }
