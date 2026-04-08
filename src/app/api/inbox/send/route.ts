@@ -14,11 +14,11 @@ export async function POST() {
   console.log('[dm-send] Starting for user:', user.id)
 
   // Get unsent outbound messages with conversation + platform info
+  // Note: ai_generated filter removed (I5) — approved AI-generated messages should also be sent
   const { data: unsentMessages } = await supabase
     .from('messages')
     .select('id, body, conversation_id, conversations(external_thread_id, platform_account_id, platform_accounts(credentials_encrypted, platforms(slug)))')
     .eq('direction', 'outbound')
-    .eq('ai_generated', false)
     .eq('sent_to_platform', false)
 
   // Filter to only messages in conversations owned by this user

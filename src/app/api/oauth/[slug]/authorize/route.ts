@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { randomBytes, createHash } from 'crypto'
+import { randomBytes, createHash, createHmac } from 'crypto'
 
-const OAUTH_CONFIGS: Record<string, { authUrl: string; tokenUrl: string; scopes: string[]; clientIdEnv: string }> = {
+const OAUTH_CONFIGS: Record<string, { authUrl: string; tokenUrl: string; scopes: string[]; clientIdEnv: string; clientSecretEnv: string }> = {
   twitter: {
     authUrl: 'https://twitter.com/i/oauth2/authorize',
     tokenUrl: 'https://api.twitter.com/2/oauth2/token',
     scopes: ['tweet.read', 'tweet.write', 'users.read', 'dm.read', 'dm.write', 'media.write', 'offline.access'],
     clientIdEnv: 'TWITTER_CLIENT_ID',
+    clientSecretEnv: 'TWITTER_CLIENT_SECRET',
   },
 }
 
@@ -37,8 +38,11 @@ export async function GET(
   const codeVerifier = randomBytes(32).toString('base64url')
   const codeChallenge = createHash('sha256').update(codeVerifier).digest('base64url')
 
-  // State
-  const state = Buffer.from(JSON.stringify({ userId: user.id, slug })).toString('base64url')
+  // I6: Sign state with HMAC to prevent CSRF
+  const clientSecret = process.env[config.clientSecretEnv]!
+  const statePayload = JSON.stringify({ userId: user.id, slug })
+  const stateHmac = createHmac('sha256', clientSecret).update(statePayload).digest('hex')
+  const state = Buffer.from(JSON.stringify({ payload: statePayload, sig: stateHmac })).toString('base64url')
 
   const redirectUri = `${process.env.OAUTH_REDIRECT_BASE_URL ?? request.nextUrl.origin}/api/oauth/${slug}/callback`
 

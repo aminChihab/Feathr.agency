@@ -223,6 +223,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert new messages (dedup by sent_at)
+    // TODO(I2): Dedup by external event ID instead of timestamp — requires a migration to add
+    // an `external_id` column to messages. For now, dedup by sent_at is good enough.
     let newCount = 0
     for (const event of events) {
       const sentAt = event.created_at

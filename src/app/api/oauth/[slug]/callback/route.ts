@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createHmac } from 'crypto'
 import { encryptCredentials } from '@/lib/crypto'
 
 const OAUTH_CONFIGS: Record<string, { tokenUrl: string; clientIdEnv: string; clientSecretEnv: string }> = {
@@ -29,16 +30,21 @@ export async function GET(
     return NextResponse.redirect(new URL('/onboarding?error=missing_params', request.url))
   }
 
-  // Decode state
+  const clientId = process.env[config.clientIdEnv]!
+  const clientSecret = process.env[config.clientSecretEnv]!
+
+  // I6: Verify signed state to prevent CSRF
   let stateData: { userId: string; slug: string }
   try {
-    stateData = JSON.parse(Buffer.from(state, 'base64url').toString())
+    const stateObj = JSON.parse(Buffer.from(state, 'base64url').toString())
+    const expectedSig = createHmac('sha256', clientSecret).update(stateObj.payload).digest('hex')
+    if (expectedSig !== stateObj.sig) {
+      return NextResponse.redirect(new URL('/onboarding?error=invalid_state', request.url))
+    }
+    stateData = JSON.parse(stateObj.payload)
   } catch {
     return NextResponse.redirect(new URL('/onboarding?error=invalid_state', request.url))
   }
-
-  const clientId = process.env[config.clientIdEnv]!
-  const clientSecret = process.env[config.clientSecretEnv]!
   const redirectUri = `${process.env.OAUTH_REDIRECT_BASE_URL ?? request.nextUrl.origin}/api/oauth/${slug}/callback`
 
   // Exchange code for token
@@ -84,6 +90,27 @@ export async function GET(
     },
     { onConflict: 'profile_id,platform_id' }
   ).select('id').single()
+
+  // I1: Fetch Twitter user ID and store in metadata for multi-account webhook matching
+  if (slug === 'twitter' && upsertedAccount?.id) {
+    try {
+      const meRes = await fetch('https://api.x.com/2/users/me', {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+      })
+      if (meRes.ok) {
+        const meData = await meRes.json()
+        const twitterUserId = meData.data?.id
+        if (twitterUserId) {
+          await supabase.from('platform_accounts')
+            .update({ metadata: { twitter_user_id: twitterUserId } })
+            .eq('id', upsertedAccount.id)
+          console.log('[oauth-callback] Stored Twitter user ID:', twitterUserId)
+        }
+      }
+    } catch (err) {
+      console.error('[oauth-callback] Failed to fetch Twitter user ID:', err)
+    }
+  }
 
   // Subscribe user to webhook for DM events
   if (slug === 'twitter' && process.env.TWITTER_WEBHOOK_ID) {
