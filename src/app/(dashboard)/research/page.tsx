@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/types/database'
 import { ResearchReportCard } from '@/components/dashboard/research-report-card'
+import { Button } from '@/components/ui/button'
+import { RefreshCw } from 'lucide-react'
 
 type Report = Database['public']['Tables']['research_reports']['Row']
 
@@ -11,6 +13,7 @@ export default function ResearchPage() {
   const supabase = createClient()
   const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(true)
+  const [syncing, setSyncing] = useState(false)
   const [filter, setFilter] = useState<'all' | 'trend' | 'competitor'>('all')
 
   useEffect(() => {
@@ -30,6 +33,25 @@ export default function ResearchPage() {
     load()
   }, [])
 
+  async function handleSync() {
+    setSyncing(true)
+    const res = await fetch('/api/research/sync', { method: 'POST' })
+    const data = await res.json()
+    console.log('[research] Sync result:', data)
+
+    // Reload reports
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data: fresh } = await supabase
+        .from('research_reports')
+        .select('*')
+        .eq('profile_id', user.id)
+        .order('created_at', { ascending: false })
+      setReports(fresh ?? [])
+    }
+    setSyncing(false)
+  }
+
   const filtered = filter === 'all'
     ? reports
     : reports.filter((r) => r.type === filter)
@@ -44,7 +66,13 @@ export default function ResearchPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-light">Research</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-light">Research</h1>
+        <Button variant="outline" onClick={handleSync} disabled={syncing} className="text-xs">
+          <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${syncing ? 'animate-spin' : ''}`} />
+          {syncing ? 'Syncing...' : 'Sync'}
+        </Button>
+      </div>
 
       <div className="flex gap-2">
         {(['all', 'trend', 'competitor'] as const).map((f) => (
