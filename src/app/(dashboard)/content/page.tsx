@@ -123,9 +123,9 @@ export default function ContentPage() {
       </div>
 
       <Tabs defaultValue="calendar">
-        <TabsList className="bg-bg-surface">
-          <TabsTrigger value="calendar">Calendar</TabsTrigger>
-          <TabsTrigger value="library">Library</TabsTrigger>
+        <TabsList className="bg-bg-surface gap-1 p-1">
+          <TabsTrigger value="calendar" className="px-6 data-[state=active]:bg-accent data-[state=active]:text-white">Calendar</TabsTrigger>
+          <TabsTrigger value="library" className="px-6 data-[state=active]:bg-accent data-[state=active]:text-white">Library</TabsTrigger>
         </TabsList>
 
         <TabsContent value="calendar" className="mt-6">
