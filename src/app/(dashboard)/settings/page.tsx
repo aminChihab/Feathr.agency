@@ -71,6 +71,22 @@ export default function SettingsPage() {
   const [voiceDescription, setVoiceDescription] = useState('')
 
   // Research settings
+  const DEFAULT_TERMS = [
+    '"taking bookings" Amsterdam',
+    '"hosting incall" Netherlands',
+    'GFE available',
+    '"dinner date" companion',
+    '"outcall hotel"',
+    'OnlyFans companion Amsterdam',
+    'touring Europe availability',
+    '"high class" companion Netherlands',
+    '#GFE #companion',
+    '"accepting bookings"',
+  ]
+  const DEFAULT_HANDLES = [
+    'QualityEscort', 'escortamster', '247escortgirl', 'DutchEscort',
+    'msveradijkmans', 'luxydutch', 'EllieLeen1', 'OFxxxKaylee', 'AlinaAbramsX',
+  ]
   const [researchTerms, setResearchTerms] = useState<string[]>([])
   const [competitorHandles, setCompetitorHandles] = useState<string[]>([])
   const [newTerm, setNewTerm] = useState('')
@@ -103,8 +119,8 @@ export default function SettingsPage() {
         setVoiceDescription(profileData.voice_description ?? '')
 
         const settings = (profileData.settings as any) ?? {}
-        setResearchTerms(settings.research_terms ?? [])
-        setCompetitorHandles(settings.competitor_handles ?? [])
+        setResearchTerms(settings.research_terms ?? DEFAULT_TERMS)
+        setCompetitorHandles(settings.competitor_handles ?? DEFAULT_HANDLES)
         setNotifNewMessages(settings.notif_new_messages ?? true)
         setNotifDraftReady(settings.notif_draft_ready ?? true)
         setNotifLeadQualified(settings.notif_lead_qualified ?? true)

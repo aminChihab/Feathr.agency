@@ -177,8 +177,33 @@ export async function POST() {
     .single()
 
   const settings = (profile?.settings as any) ?? {}
-  const researchTerms: string[] = settings.research_terms ?? []
-  const competitorHandles: string[] = settings.competitor_handles ?? []
+  const DEFAULT_TERMS = [
+    '"taking bookings" Amsterdam',
+    '"hosting incall" Netherlands',
+    'GFE available',
+    '"dinner date" companion',
+    '"outcall hotel"',
+    'OnlyFans companion Amsterdam',
+    'touring Europe availability',
+    '"high class" companion Netherlands',
+    '#GFE #companion',
+    '"accepting bookings"',
+  ]
+
+  const DEFAULT_HANDLES = [
+    'QualityEscort',
+    'escortamster',
+    '247escortgirl',
+    'DutchEscort',
+    'msveradijkmans',
+    'luxydutch',
+    'EllieLeen1',
+    'OFxxxKaylee',
+    'AlinaAbramsX',
+  ]
+
+  const researchTerms: string[] = settings.research_terms ?? DEFAULT_TERMS
+  const competitorHandles: string[] = settings.competitor_handles ?? DEFAULT_HANDLES
 
   console.log(`[research] Terms: ${researchTerms.join(', ')}`)
   console.log(`[research] Competitors: ${competitorHandles.join(', ')}`)
