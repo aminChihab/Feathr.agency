@@ -36,7 +36,21 @@ export async function GET(request: NextRequest) {
 // Webhook = instant notification with sender_id
 // Then fetch that specific conversation's messages via API for plaintext
 export async function POST(request: NextRequest) {
-  const body = await request.json()
+  const rawBody = await request.text()
+  const signature = request.headers.get('x-twitter-webhooks-signature')
+  const consumerSecret = process.env.TWITTER_CONSUMER_SECRET
+
+  if (signature && consumerSecret) {
+    const expectedSig = 'sha256=' + createHmac('sha256', consumerSecret).update(rawBody).digest('base64')
+    if (signature !== expectedSig) {
+      console.error('[webhook-twitter] Invalid signature')
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+    }
+  } else if (!signature) {
+    console.warn('[webhook-twitter] No signature header — allowing through (testing mode)')
+  }
+
+  const body = JSON.parse(rawBody)
 
   const eventData = body.data
   if (!eventData) {
