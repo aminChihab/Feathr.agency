@@ -84,6 +84,38 @@ export async function GET(
     { onConflict: 'profile_id,platform_id' }
   )
 
+  // Register webhook for platforms that support it
+  if (slug === 'twitter') {
+    const accessToken = tokenData.access_token
+    if (accessToken) {
+      const webhookUrl = `${request.nextUrl.origin}/api/webhook/twitter`
+      console.log('[oauth-callback] Registering Twitter webhook:', webhookUrl)
+
+      try {
+        // Register webhook
+        const registerRes = await fetch(
+          `https://api.x.com/2/webhooks?url=${encodeURIComponent(webhookUrl)}`,
+          { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` } }
+        )
+        const registerData = await registerRes.json()
+        const webhookId = registerData.data?.id ?? registerData.id
+        console.log('[oauth-callback] Webhook register:', registerRes.status, JSON.stringify(registerData))
+
+        // Subscribe user
+        if (webhookId) {
+          const subRes = await fetch(
+            `https://api.x.com/2/account_activity/webhooks/${webhookId}/subscriptions/all`,
+            { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` } }
+          )
+          console.log('[oauth-callback] Webhook subscribe:', subRes.status)
+        }
+      } catch (err) {
+        console.error('[oauth-callback] Webhook registration failed:', err)
+        // Non-blocking — the connection still works, just without webhooks
+      }
+    }
+  }
+
   // Clear cookie and redirect back to the right page
   // Check if user is in onboarding or already active
   const { data: profile } = await supabase
