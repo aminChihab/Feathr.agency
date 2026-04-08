@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
-import { Cinzel, Jost } from 'next/font/google'
+import { Cormorant_Infant, Jost } from 'next/font/google'
 import './globals.css'
 
-const cinzel = Cinzel({
+const cormorant = Cormorant_Infant({
   subsets: ['latin'],
   variable: '--font-display',
   display: 'swap',
+  weight: ['300', '400', '500', '600', '700'],
 })
 
 const jost = Jost({
@@ -25,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="nl" className={`${cinzel.variable} ${jost.variable} dark`}>
+    <html lang="nl" className={`${cormorant.variable} ${jost.variable} dark`}>
       <body className="min-h-screen bg-bg-base text-text-primary antialiased">
         {children}
       </body>
