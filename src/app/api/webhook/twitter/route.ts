@@ -123,13 +123,24 @@ export async function POST(request: NextRequest) {
 
       console.log(`[webhook-twitter] Fetched ${events.length} DM event(s)`)
 
+      // Log first event to see the structure
+      if (events.length > 0) {
+        console.log('[webhook-twitter] Sample event:', JSON.stringify(events[0]))
+      }
+
       // Group by conversation
       const grouped: Record<string, any[]> = {}
       for (const event of events) {
         const convId = event.dm_conversation_id
+        if (!convId) {
+          console.log('[webhook-twitter] Event missing dm_conversation_id:', JSON.stringify(event).slice(0, 200))
+          continue
+        }
         if (!grouped[convId]) grouped[convId] = []
         grouped[convId].push(event)
       }
+
+      console.log(`[webhook-twitter] Grouped into ${Object.keys(grouped).length} conversation(s)`)
 
       for (const [dmConvId, dmEvents] of Object.entries(grouped)) {
         // Extract other participant from conv ID
