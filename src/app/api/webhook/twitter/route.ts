@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
-import { createClient } from '@/lib/supabase/server'
+import { createClient as createServerClient } from '@supabase/supabase-js'
+
+function createServiceClient() {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 // GET — CRC Challenge Response
 // Twitter sends a crc_token, we respond with HMAC-SHA256 hash using our consumer secret
@@ -47,7 +54,7 @@ export async function POST(request: NextRequest) {
 
   console.log(`[webhook-twitter] ${dmEvents.length} DM event(s) for Twitter user ${forUserId}`)
 
-  const supabase = await createClient()
+  const supabase = createServiceClient()
 
   // Find the platform account that matches this Twitter user ID
   // We need to find it by checking stored credentials for the twitter user id
