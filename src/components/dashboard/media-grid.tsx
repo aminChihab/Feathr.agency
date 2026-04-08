@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import { FileDropzone } from '@/components/ui/file-dropzone'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
-import { Play, X } from 'lucide-react'
+import { Play, X, ChevronLeft, ChevronRight } from 'lucide-react'
 
 type MediaItem = Database['public']['Tables']['content_library']['Row'] & {
   signedUrl: string | null
@@ -29,6 +29,28 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
   const [uploading, setUploading] = useState(false)
   const [filter, setFilter] = useState<'all' | 'photo' | 'video'>('all')
   const [previewItem, setPreviewItem] = useState<MediaItem | null>(null)
+
+  const navigatePreview = useCallback((direction: 'prev' | 'next') => {
+    if (!previewItem) return
+    const currentIndex = items.findIndex((i) => i.id === previewItem.id)
+    if (currentIndex === -1) return
+    const newIndex = direction === 'next'
+      ? (currentIndex + 1) % items.length
+      : (currentIndex - 1 + items.length) % items.length
+    setPreviewItem(items[newIndex])
+  }, [previewItem, items])
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!previewItem) return
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'ArrowRight') navigatePreview('next')
+      else if (e.key === 'ArrowLeft') navigatePreview('prev')
+      else if (e.key === 'Escape') setPreviewItem(null)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [previewItem, navigatePreview])
 
   async function loadItems() {
     let query = supabase
@@ -214,25 +236,54 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
         <DialogContent className="bg-bg-surface border-border max-w-4xl p-0 overflow-hidden">
           {previewItem && (
             <div className="relative">
-              {previewItem.file_type === 'photo' ? (
-                <img
-                  src={previewItem.fullUrl ?? previewItem.signedUrl ?? ''}
-                  alt={previewItem.file_name}
-                  className="w-full max-h-[80vh] object-contain bg-black"
-                />
-              ) : previewItem.file_type === 'video' ? (
-                <video
-                  src={previewItem.fullUrl ?? ''}
-                  controls
-                  autoPlay
-                  className="w-full max-h-[80vh] bg-black"
-                />
-              ) : null}
-              <div className="p-4">
-                <p className="text-sm text-text-primary">{previewItem.file_name}</p>
-                <p className="text-xs text-text-muted">
-                  {previewItem.file_type} · {(previewItem.file_size / 1024 / 1024).toFixed(1)} MB
-                </p>
+              {/* Media content */}
+              <div className="relative bg-black min-h-[300px] flex items-center justify-center">
+                {previewItem.file_type === 'photo' ? (
+                  <img
+                    src={previewItem.fullUrl ?? previewItem.signedUrl ?? ''}
+                    alt={previewItem.file_name}
+                    className="w-full max-h-[80vh] object-contain"
+                  />
+                ) : previewItem.file_type === 'video' ? (
+                  <video
+                    key={previewItem.id}
+                    src={previewItem.fullUrl ?? ''}
+                    controls
+                    autoPlay
+                    className="w-full max-h-[80vh]"
+                  />
+                ) : null}
+
+                {/* Navigation buttons — fixed position on sides */}
+                {items.length > 1 && (
+                  <>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); navigatePreview('prev') }}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-2 text-white transition-opacity hover:bg-black/80"
+                    >
+                      <ChevronLeft className="h-6 w-6" />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); navigatePreview('next') }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-2 text-white transition-opacity hover:bg-black/80"
+                    >
+                      <ChevronRight className="h-6 w-6" />
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Info bar */}
+              <div className="flex items-center justify-between p-4">
+                <div>
+                  <p className="text-sm text-text-primary">{previewItem.file_name}</p>
+                  <p className="text-xs text-text-muted">
+                    {previewItem.file_type} · {(previewItem.file_size / 1024 / 1024).toFixed(1)} MB
+                  </p>
+                </div>
+                <span className="text-xs text-text-muted">
+                  {items.findIndex((i) => i.id === previewItem.id) + 1} / {items.length}
+                </span>
               </div>
             </div>
           )}
