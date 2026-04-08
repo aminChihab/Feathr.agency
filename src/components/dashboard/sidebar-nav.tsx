@@ -41,7 +41,7 @@ export function SidebarNav({ profileName, email }: SidebarNavProps) {
       {/* Logo */}
       <div className="flex h-20 items-center gap-3 px-6">
         <span className="font-display text-2xl font-semibold text-text-primary">Feathr</span>
-        <Image src="/feather-logo.png" alt="Feathr" width={96} height={96} className="h-12 w-12 object-contain mix-blend-screen" />
+        <Image src="/logo.png" alt="Feathr" width={192} height={192} className="h-24 w-24 object-contain" />
       </div>
 
       {/* Navigation */}
