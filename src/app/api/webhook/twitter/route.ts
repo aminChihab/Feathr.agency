@@ -57,28 +57,31 @@ export async function POST(request: NextRequest) {
   const supabase = createServiceClient()
 
   // Find the platform account that matches this Twitter user ID
-  // We need to find it by checking stored credentials for the twitter user id
-  const { data: allTwitterAccounts } = await supabase
+  // First get the twitter platform id
+  const { data: twitterPlatform, error: platformError } = await supabase
+    .from('platforms')
+    .select('id')
+    .eq('slug', 'twitter')
+    .single()
+
+  console.log('[webhook-twitter] Twitter platform:', twitterPlatform?.id, 'error:', platformError?.message)
+
+  if (!twitterPlatform) {
+    console.error('[webhook-twitter] Twitter platform not found in platforms table')
+    return NextResponse.json({ ok: true })
+  }
+
+  // Find connected twitter accounts
+  const { data: twitterAccounts, error: accountError } = await supabase
     .from('platform_accounts')
-    .select('id, profile_id, credentials_encrypted, platforms!inner(slug)')
+    .select('id, profile_id')
+    .eq('platform_id', twitterPlatform.id)
     .eq('status', 'connected')
 
-  const twitterAccounts = (allTwitterAccounts ?? []).filter(
-    (a: any) => a.platforms?.slug === 'twitter'
-  )
+  console.log('[webhook-twitter] Found', (twitterAccounts ?? []).length, 'twitter account(s), error:', accountError?.message)
 
-  // Find the account matching this Twitter user ID
-  let matchedAccount: { id: string; profile_id: string } | null = null
-
-  for (const account of twitterAccounts) {
-    const creds = JSON.parse(account.credentials_encrypted ?? '{}')
-    // The for_user_id tells us which subscribed user this event is for
-    // We store the twitter user info during OAuth — check if we have it
-    // For now, if there's only one twitter account, use that
-    // TODO: store twitter_user_id in platform_accounts.metadata during OAuth
-    matchedAccount = { id: account.id, profile_id: account.profile_id }
-    break
-  }
+  // For now use the first one — later match by for_user_id stored in metadata
+  const matchedAccount = twitterAccounts?.[0] ?? null
 
   if (!matchedAccount) {
     console.log('[webhook-twitter] No matching platform account found for user', forUserId)
