@@ -1,13 +1,15 @@
-// src/components/dashboard/media-grid.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import { FileDropzone } from '@/components/ui/file-dropzone'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Play, X } from 'lucide-react'
 
 type MediaItem = Database['public']['Tables']['content_library']['Row'] & {
   signedUrl: string | null
+  fullUrl: string | null
 }
 
 interface MediaGridProps {
@@ -26,6 +28,7 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [filter, setFilter] = useState<'all' | 'photo' | 'video'>('all')
+  const [previewItem, setPreviewItem] = useState<MediaItem | null>(null)
 
   async function loadItems() {
     let query = supabase
@@ -43,11 +46,22 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
     if (data) {
       const withUrls = await Promise.all(
         data.map(async (item) => {
-          const path = item.thumbnail_path ?? item.storage_path
-          const { data: signed } = await supabase.storage
+          // For grid: use thumbnail if available, otherwise full file
+          const thumbPath = item.thumbnail_path ?? item.storage_path
+          const { data: thumbSigned } = await supabase.storage
             .from('media')
-            .createSignedUrl(path, 3600)
-          return { ...item, signedUrl: signed?.signedUrl ?? null }
+            .createSignedUrl(thumbPath, 3600)
+
+          // For preview: always use full file
+          const { data: fullSigned } = await supabase.storage
+            .from('media')
+            .createSignedUrl(item.storage_path, 3600)
+
+          return {
+            ...item,
+            signedUrl: thumbSigned?.signedUrl ?? null,
+            fullUrl: fullSigned?.signedUrl ?? null,
+          }
         })
       )
       setItems(withUrls)
@@ -75,8 +89,15 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
       if (uploadError) continue
 
       let thumbnailPath: string | null = null
+
       if (fileType === 'photo') {
-        const thumbBlob = await generateThumbnailBlob(file)
+        const thumbBlob = await generateImageThumbnail(file)
+        if (thumbBlob) {
+          thumbnailPath = `${userId}/thumbs/${uuid}.jpg`
+          await supabase.storage.from('media').upload(thumbnailPath, thumbBlob)
+        }
+      } else if (fileType === 'video') {
+        const thumbBlob = await generateVideoThumbnail(file)
         if (thumbBlob) {
           thumbnailPath = `${userId}/thumbs/${uuid}.jpg`
           await supabase.storage.from('media').upload(thumbnailPath, thumbBlob)
@@ -105,6 +126,7 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
       await supabase.storage.from('media').remove([thumbnailPath])
     }
     setItems((prev) => prev.filter((i) => i.id !== id))
+    if (previewItem?.id === id) setPreviewItem(null)
   }
 
   return (
@@ -145,22 +167,39 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
       ) : (
         <div className="grid grid-cols-4 gap-3">
           {items.map((item) => (
-            <div key={item.id} className="group relative aspect-square rounded-lg border border-border overflow-hidden">
+            <div
+              key={item.id}
+              className="group relative aspect-square rounded-lg border border-border overflow-hidden cursor-pointer"
+              onClick={() => setPreviewItem(item)}
+            >
               {item.signedUrl ? (
                 <img src={item.signedUrl} alt={item.file_name} className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-bg-elevated text-2xl">
-                  {item.file_type === 'video' ? '🎬' : '📷'}
+                <div className="flex h-full w-full items-center justify-center bg-bg-elevated">
+                  <Play className="h-8 w-8 text-text-muted" />
                 </div>
               )}
+
+              {/* Video play icon overlay */}
+              {item.file_type === 'video' && item.signedUrl && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="rounded-full bg-black/50 p-2">
+                    <Play className="h-5 w-5 text-white" fill="white" />
+                  </div>
+                </div>
+              )}
+
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
                 <p className="truncate text-xs text-white">{item.file_name}</p>
               </div>
               <button
-                onClick={() => handleDelete(item.id, item.storage_path, item.thumbnail_path)}
-                className="absolute right-1 top-1 rounded-full bg-black/60 px-2 py-0.5 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDelete(item.id, item.storage_path, item.thumbnail_path)
+                }}
+                className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
               >
-                ✕
+                <X className="h-3.5 w-3.5" />
               </button>
               <span className="absolute left-1 top-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white uppercase">
                 {item.file_type}
@@ -169,27 +208,89 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
           ))}
         </div>
       )}
+
+      {/* Preview lightbox */}
+      <Dialog open={!!previewItem} onOpenChange={(open) => !open && setPreviewItem(null)}>
+        <DialogContent className="bg-bg-surface border-border max-w-4xl p-0 overflow-hidden">
+          {previewItem && (
+            <div className="relative">
+              {previewItem.file_type === 'photo' ? (
+                <img
+                  src={previewItem.fullUrl ?? previewItem.signedUrl ?? ''}
+                  alt={previewItem.file_name}
+                  className="w-full max-h-[80vh] object-contain bg-black"
+                />
+              ) : previewItem.file_type === 'video' ? (
+                <video
+                  src={previewItem.fullUrl ?? ''}
+                  controls
+                  autoPlay
+                  className="w-full max-h-[80vh] bg-black"
+                />
+              ) : null}
+              <div className="p-4">
+                <p className="text-sm text-text-primary">{previewItem.file_name}</p>
+                <p className="text-xs text-text-muted">
+                  {previewItem.file_type} · {(previewItem.file_size / 1024 / 1024).toFixed(1)} MB
+                </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
 
-async function generateThumbnailBlob(file: File): Promise<Blob | null> {
+// Generate high-quality image thumbnail (600px instead of 200px)
+async function generateImageThumbnail(file: File): Promise<Blob | null> {
   if (!file.type.startsWith('image/')) return null
   return new Promise((resolve) => {
     const img = new Image()
     const url = URL.createObjectURL(file)
     img.onload = () => {
       const canvas = document.createElement('canvas')
-      const size = 200
-      const ratio = Math.min(size / img.width, size / img.height)
+      const maxSize = 600
+      const ratio = Math.min(maxSize / img.width, maxSize / img.height, 1)
       canvas.width = img.width * ratio
       canvas.height = img.height * ratio
       const ctx = canvas.getContext('2d')!
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
       URL.revokeObjectURL(url)
-      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.7)
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.85)
     }
     img.onerror = () => { URL.revokeObjectURL(url); resolve(null) }
     img.src = url
+  })
+}
+
+// Generate video thumbnail from first frame
+async function generateVideoThumbnail(file: File): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    const video = document.createElement('video')
+    const url = URL.createObjectURL(file)
+    video.preload = 'metadata'
+    video.muted = true
+    video.playsInline = true
+
+    video.onloadeddata = () => {
+      // Seek to 1 second (or 0 if shorter)
+      video.currentTime = Math.min(1, video.duration / 2)
+    }
+
+    video.onseeked = () => {
+      const canvas = document.createElement('canvas')
+      const maxSize = 600
+      const ratio = Math.min(maxSize / video.videoWidth, maxSize / video.videoHeight, 1)
+      canvas.width = video.videoWidth * ratio
+      canvas.height = video.videoHeight * ratio
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+      URL.revokeObjectURL(url)
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.85)
+    }
+
+    video.onerror = () => { URL.revokeObjectURL(url); resolve(null) }
+    video.src = url
   })
 }
