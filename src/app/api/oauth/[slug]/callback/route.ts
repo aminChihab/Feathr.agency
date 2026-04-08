@@ -84,53 +84,26 @@ export async function GET(
     { onConflict: 'profile_id,platform_id' }
   )
 
-  // Register webhook for platforms that support it
-  if (slug === 'twitter') {
-    const webhookUrl = `${request.nextUrl.origin}/api/webhook/twitter`
-    console.log('[oauth-callback] Registering Twitter webhook:', webhookUrl)
+  // Subscribe user to webhook for DM events
+  if (slug === 'twitter' && process.env.TWITTER_WEBHOOK_ID) {
+    const userToken = tokenData.access_token
+    const webhookId = process.env.TWITTER_WEBHOOK_ID
+
+    console.log('[oauth-callback] Subscribing user to webhook:', webhookId)
 
     try {
-      // Step 1: Get App-Only Bearer Token (required for webhook registration)
-      const bearerRes = await fetch('https://api.twitter.com/oauth2/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
-        },
-        body: 'grant_type=client_credentials',
-      })
-      const bearerData = await bearerRes.json()
-      const appToken = bearerData.access_token
-      console.log('[oauth-callback] App bearer token:', bearerRes.status)
+      const subRes = await fetch(
+        `https://api.x.com/2/account_activity/webhooks/${webhookId}/subscriptions/all`,
+        { method: 'POST', headers: { Authorization: `Bearer ${userToken}` } }
+      )
+      console.log('[oauth-callback] Webhook subscribe:', subRes.status)
 
-      if (appToken) {
-        // Step 2: Register webhook with App-Only token
-        const registerRes = await fetch(
-          `https://api.x.com/2/webhooks?url=${encodeURIComponent(webhookUrl)}`,
-          { method: 'POST', headers: { Authorization: `Bearer ${appToken}` } }
-        )
-        const registerData = await registerRes.json()
-        const webhookId = registerData.data?.id ?? registerData.id
-        console.log('[oauth-callback] Webhook register:', registerRes.status, JSON.stringify(registerData))
-
-        // Step 3: Subscribe user with their OAuth 2.0 user token
-        if (webhookId) {
-          const userToken = tokenData.access_token
-          const subRes = await fetch(
-            `https://api.x.com/2/account_activity/webhooks/${webhookId}/subscriptions/all`,
-            { method: 'POST', headers: { Authorization: `Bearer ${userToken}` } }
-          )
-          console.log('[oauth-callback] Webhook subscribe:', subRes.status)
-
-          if (!subRes.ok) {
-            const subBody = await subRes.text()
-            console.log('[oauth-callback] Subscribe error:', subBody)
-          }
-        }
+      if (!subRes.ok) {
+        const subBody = await subRes.text()
+        console.log('[oauth-callback] Subscribe error:', subBody)
       }
     } catch (err) {
-      console.error('[oauth-callback] Webhook registration failed:', err)
-      // Non-blocking — the connection still works, just without webhooks
+      console.error('[oauth-callback] Webhook subscription failed:', err)
     }
   }
 
