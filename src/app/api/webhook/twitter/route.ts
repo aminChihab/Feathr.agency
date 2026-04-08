@@ -11,9 +11,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Missing crc_token' }, { status: 400 })
   }
 
-  const consumerSecret = process.env.TWITTER_CLIENT_SECRET
+  const consumerSecret = process.env.TWITTER_CONSUMER_SECRET
   if (!consumerSecret) {
-    console.error('[webhook-twitter] Missing TWITTER_CLIENT_SECRET')
+    console.error('[webhook-twitter] Missing TWITTER_CONSUMER_SECRET')
     return NextResponse.json({ error: 'Server config error' }, { status: 500 })
   }
 
