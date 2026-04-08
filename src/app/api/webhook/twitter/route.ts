@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
 import { createClient as createServerClient } from '@supabase/supabase-js'
-import { decryptCredentials } from '@/lib/crypto'
+import { getValidTwitterToken } from '@/lib/twitter'
 
 function createServiceClient() {
   return createServerClient(
@@ -90,39 +90,54 @@ export async function POST(request: NextRequest) {
 
   const { data: twitterAccounts } = await supabase
     .from('platform_accounts')
-    .select('id, profile_id, credentials_encrypted')
+    .select('id, profile_id, credentials_encrypted, metadata')
     .eq('platform_id', twitterPlatform.id)
     .eq('status', 'connected')
 
-  const account = twitterAccounts?.[0]
-  if (!account) {
-    console.log('[webhook-twitter] No connected Twitter account')
+  if (!twitterAccounts || twitterAccounts.length === 0) {
+    console.log('[webhook-twitter] No connected Twitter accounts')
     return NextResponse.json({ ok: true })
   }
 
-  const creds = decryptCredentials(account.credentials_encrypted ?? '{}')
-  const accessToken = creds.access_token
+  // I1: Match account by Twitter user ID stored in metadata
+  // The recipient of the DM is the account whose twitter_user_id matches the event
+  // For now, find the account whose metadata.twitter_user_id is NOT the sender
+  // (i.e. the account that received the message)
+  // Fall back to first account if metadata not yet populated
+  const account = twitterAccounts.find(
+    (a: any) => (a.metadata as any)?.twitter_user_id && (a.metadata as any).twitter_user_id !== senderId
+  ) ?? twitterAccounts[0]
+
+  if (!account) {
+    console.log('[webhook-twitter] No matching Twitter account for event')
+    return NextResponse.json({ ok: true })
+  }
+
+  // Use auto-refresh token helper (C3)
+  const accessToken = await getValidTwitterToken(account.credentials_encrypted ?? '{}', account.id)
   if (!accessToken) {
-    console.log('[webhook-twitter] No access token')
+    console.log('[webhook-twitter] No valid access token')
     return NextResponse.json({ ok: true })
   }
 
   try {
-    // Get our Twitter user ID
-    const meRes = await fetch('https://api.x.com/2/users/me', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    })
+    // Get our Twitter user ID from metadata or from API
+    let myTwitterId: string | null = (account.metadata as any)?.twitter_user_id ?? null
 
-    if (!meRes.ok) {
-      if (meRes.status === 401) {
-        await supabase.from('platform_accounts').update({ status: 'expired' }).eq('id', account.id)
+    if (!myTwitterId) {
+      const meRes = await fetch('https://api.x.com/2/users/me', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+
+      if (!meRes.ok) {
+        console.error('[webhook-twitter] /users/me failed:', meRes.status)
+        return NextResponse.json({ ok: true })
       }
-      console.error('[webhook-twitter] /users/me failed:', meRes.status)
-      return NextResponse.json({ ok: true })
+
+      const meData = await meRes.json()
+      myTwitterId = meData.data?.id ?? null
     }
 
-    const meData = await meRes.json()
-    const myTwitterId = meData.data?.id
     if (!myTwitterId) return NextResponse.json({ ok: true })
 
     // Fetch messages for this specific conversation
