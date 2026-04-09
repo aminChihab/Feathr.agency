@@ -29,6 +29,7 @@ interface ConversationData {
   client_id: string | null
   platform_name: string
   platform_color: string
+  platform_slug: string
 }
 
 export default function InboxPage() {
@@ -87,6 +88,7 @@ export default function InboxPage() {
         type: computed.type,
         platform_name: c.platform_accounts?.platforms?.name ?? 'Unknown',
         platform_color: c.platform_accounts?.platforms?.color ?? '#666',
+        platform_slug: c.platform_accounts?.platforms?.slug ?? '',
       }
     })
 
@@ -268,7 +270,12 @@ export default function InboxPage() {
           supabase={supabase}
           userId={userId}
           onMessageSent={async () => {
-            await fetch('/api/inbox/send', { method: 'POST' })
+            const slug = activeConv?.platform_slug
+            if (slug === 'instagram') {
+              await fetch('/api/instagram/send', { method: 'POST' })
+            } else {
+              await fetch('/api/inbox/send', { method: 'POST' })
+            }
           }}
           onApproveMessage={handleApproveMessage}
           onRejectMessage={handleRejectMessage}
