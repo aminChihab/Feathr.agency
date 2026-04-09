@@ -178,8 +178,8 @@ export async function POST(request: NextRequest) {
         conversationId = newConv.id
       }
 
-      // Dedup by timestamp
-      const sentAt = new Date(timestamp * 1000).toISOString()
+      // Dedup by timestamp — Instagram sends milliseconds, not seconds
+      const sentAt = new Date(timestamp > 9999999999 ? timestamp : timestamp * 1000).toISOString()
       const { data: existingMsg } = await supabase
         .from('messages')
         .select('id')
