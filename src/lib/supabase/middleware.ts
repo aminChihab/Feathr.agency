@@ -27,7 +27,7 @@ export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname
 
   // Public routes that don't require auth
-  const publicRoutes = ['/login', '/signup', '/features', '/pricing', '/waitlist']
+  const publicRoutes = ['/login', '/signup', '/features', '/pricing', '/waitlist', '/privacy', '/terms']
   const isPublicRoute = publicRoutes.some(route => path === route) || path.startsWith('/_next') || path.startsWith('/api/webhook')
 
   // Not logged in on a protected route → redirect to login
