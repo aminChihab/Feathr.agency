@@ -98,9 +98,14 @@ export async function POST(request: NextRequest) {
 
       const text = message.text ?? ''
       const isInbound = senderId !== igAccountId
-      const direction = isInbound ? 'inbound' : 'outbound'
 
-      console.log(`[webhook-instagram] ${direction} message from ${senderId}: "${text.slice(0, 50)}"`)
+      // Skip outbound messages — we already saved them when the user sent them from the inbox
+      if (!isInbound) {
+        console.log(`[webhook-instagram] Skipping outbound echo: "${text.slice(0, 50)}"`)
+        continue
+      }
+
+      console.log(`[webhook-instagram] Inbound message from ${senderId}: "${text.slice(0, 50)}"`)
 
       // Build external thread ID
       const participants = [senderId, recipientId].filter(Boolean).sort()
