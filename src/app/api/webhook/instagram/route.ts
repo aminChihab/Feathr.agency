@@ -123,6 +123,41 @@ export async function POST(request: NextRequest) {
 
       if (existingConv) {
         conversationId = existingConv.id
+
+        // Update contact name if missing
+        const { data: convData } = await supabase
+          .from('conversations')
+          .select('contact_name')
+          .eq('id', conversationId)
+          .single()
+
+        if (convData && !convData.contact_name) {
+          const { decryptCredentials } = await import('@/lib/crypto')
+          const { data: acctCreds } = await supabase
+            .from('platform_accounts')
+            .select('credentials_encrypted')
+            .eq('id', account.id)
+            .single()
+
+          if (acctCreds) {
+            const creds = decryptCredentials(acctCreds.credentials_encrypted ?? '{}')
+            if (creds.access_token) {
+              try {
+                const userRes = await fetch(
+                  `https://graph.instagram.com/v25.0/${senderId}?fields=name,username&access_token=${creds.access_token}`
+                )
+                if (userRes.ok) {
+                  const userData = await userRes.json()
+                  await supabase.from('conversations').update({
+                    contact_name: userData.name ?? null,
+                    contact_handle: userData.username ? `@${userData.username}` : null,
+                  }).eq('id', conversationId)
+                  console.log(`[webhook-instagram] Updated contact: ${userData.name} @${userData.username}`)
+                }
+              } catch { /* skip */ }
+            }
+          }
+        }
       } else {
         console.log(`[webhook-instagram] New conversation with ${senderId}`)
 
