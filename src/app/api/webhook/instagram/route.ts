@@ -197,7 +197,7 @@ export async function POST(request: NextRequest) {
       // Insert message
       const { error: insertError } = await supabase.from('messages').insert({
         conversation_id: conversationId,
-        direction,
+        direction: 'inbound' as const,
         body: text,
         ai_generated: false,
         sent_to_platform: true,
@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
         .update({ last_message_at: sentAt })
         .eq('id', conversationId)
 
-      console.log(`[webhook-instagram] Saved ${direction} message in conversation ${conversationId}`)
+      console.log(`[webhook-instagram] Saved inbound message in conversation ${conversationId}`)
     }
   }
 
