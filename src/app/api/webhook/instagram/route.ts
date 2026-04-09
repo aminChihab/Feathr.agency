@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
       if (existingMsg) continue
 
       // Insert message
-      await supabase.from('messages').insert({
+      const { error: insertError } = await supabase.from('messages').insert({
         conversation_id: conversationId,
         direction,
         body: text,
@@ -198,6 +198,11 @@ export async function POST(request: NextRequest) {
         sent_to_platform: true,
         sent_at: sentAt,
       })
+
+      if (insertError) {
+        console.error('[webhook-instagram] Insert error:', insertError.message, insertError.code)
+        continue
+      }
 
       // Update conversation
       await supabase
