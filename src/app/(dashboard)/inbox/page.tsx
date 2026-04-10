@@ -273,6 +273,8 @@ export default function InboxPage() {
             const slug = activeConv?.platform_slug
             if (slug === 'instagram') {
               await fetch('/api/instagram/send', { method: 'POST' })
+            } else if (slug === 'whatsapp') {
+              await fetch('/api/whatsapp/send', { method: 'POST' })
             } else {
               await fetch('/api/inbox/send', { method: 'POST' })
             }
