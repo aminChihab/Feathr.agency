@@ -30,6 +30,12 @@ interface PostWithPlatform extends CalendarItem {
   platform_color: string
 }
 
+interface MediaThumb {
+  id: string
+  url: string
+  file_type: string
+}
+
 // ─── Calendar helpers ────────────────────────────────────────────────────────
 
 /** Returns an array of 7 Date objects for the week containing `date` (Mon→Sun). */
@@ -239,10 +245,11 @@ function MonthView({ year, month, posts, today, onDayClick, selectedDay }: Month
 interface DayDetailProps {
   day: Date
   posts: PostWithPlatform[]
+  mediaThumbs: Record<string, MediaThumb>
   onEdit: (id: string) => void
 }
 
-function DayDetail({ day, posts, onEdit }: DayDetailProps) {
+function DayDetail({ day, posts, mediaThumbs, onEdit }: DayDetailProps) {
   const dayPosts = postsForDay(posts, day)
   const label = day.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 
@@ -259,6 +266,15 @@ function DayDetail({ day, posts, onEdit }: DayDetailProps) {
                 <span className="h-2 w-2 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: post.platform_color }} />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm break-words whitespace-pre-wrap">{post.caption || 'No caption'}</p>
+                  {post.media_ids && (post.media_ids as string[]).length > 0 && (
+                    <div className="flex gap-1.5 mt-2">
+                      {(post.media_ids as string[]).map((mediaId) => {
+                        const thumb = mediaThumbs[mediaId]
+                        if (!thumb) return <div key={mediaId} className="h-12 w-12 rounded bg-bg-base border border-border animate-pulse" />
+                        return <img key={mediaId} src={thumb.url} alt="" className="h-12 w-12 rounded object-cover border border-border" />
+                      })}
+                    </div>
+                  )}
                   <p className="text-xs text-text-muted mt-1">{post.platform_name} · {post.scheduled_at ? new Date(post.scheduled_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '—'}</p>
                 </div>
               </div>
@@ -280,12 +296,13 @@ function DayDetail({ day, posts, onEdit }: DayDetailProps) {
 
 interface ApprovalQueueProps {
   drafts: PostWithPlatform[]
+  mediaThumbs: Record<string, MediaThumb>
   onApprove: (id: string) => void
   onEdit: (id: string) => void
   onReject: (id: string) => void
 }
 
-function ApprovalQueue({ drafts, onApprove, onEdit, onReject }: ApprovalQueueProps) {
+function ApprovalQueue({ drafts, mediaThumbs, onApprove, onEdit, onReject }: ApprovalQueueProps) {
   return (
     <div className="rounded-lg border border-border bg-bg-surface">
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
@@ -337,6 +354,26 @@ function ApprovalQueue({ drafts, onApprove, onEdit, onReject }: ApprovalQueuePro
                   {post.caption || 'No caption'}
                 </p>
 
+                {/* Media thumbnails */}
+                {post.media_ids && (post.media_ids as string[]).length > 0 && (
+                  <div className="flex gap-2 mb-4 overflow-x-auto">
+                    {(post.media_ids as string[]).map((mediaId) => {
+                      const thumb = mediaThumbs[mediaId]
+                      if (!thumb) return (
+                        <div key={mediaId} className="h-20 w-20 rounded-lg bg-bg-base border border-border flex-shrink-0 animate-pulse" />
+                      )
+                      return (
+                        <img
+                          key={mediaId}
+                          src={thumb.url}
+                          alt=""
+                          className="h-20 w-20 rounded-lg object-cover border border-border flex-shrink-0"
+                        />
+                      )
+                    })}
+                  </div>
+                )}
+
                 {/* Action buttons */}
                 <div className="flex items-center gap-2">
                   <Button
@@ -385,6 +422,7 @@ export default function ContentPage() {
   const [editPost, setEditPost] = useState<CalendarItem | null>(null)
   const [posting, setPosting] = useState(false)
   const [suggesting, setSuggesting] = useState(false)
+  const [mediaThumbs, setMediaThumbs] = useState<Record<string, MediaThumb>>({})
 
   // Calendar state
   const today = new Date()
@@ -419,6 +457,38 @@ export default function ContentPage() {
 
     setPosts(mapped)
     setLoading(false)
+
+    // Load media thumbnails for posts with media_ids
+    const allMediaIds = new Set<string>()
+    mapped.forEach((p) => {
+      const ids = p.media_ids as string[] | null
+      if (ids) ids.forEach((id) => allMediaIds.add(id))
+    })
+
+    if (allMediaIds.size > 0) {
+      loadMediaThumbs(Array.from(allMediaIds))
+    }
+  }
+
+  async function loadMediaThumbs(mediaIds: string[]) {
+    const { data: items } = await supabase
+      .from('content_library')
+      .select('id, file_type, storage_path, thumbnail_path')
+      .in('id', mediaIds)
+
+    if (!items) return
+
+    const thumbs: Record<string, MediaThumb> = {}
+    for (const item of items) {
+      const path = item.thumbnail_path ?? item.storage_path
+      const { data: signed } = await supabase.storage
+        .from('media')
+        .createSignedUrl(path, 3600)
+      if (signed?.signedUrl) {
+        thumbs[item.id] = { id: item.id, url: signed.signedUrl, file_type: item.file_type }
+      }
+    }
+    setMediaThumbs((prev) => ({ ...prev, ...thumbs }))
   }
 
   async function handleApprove(id: string) {
@@ -575,6 +645,7 @@ export default function ContentPage() {
       ) : (
         <ApprovalQueue
           drafts={aiDrafts}
+          mediaThumbs={mediaThumbs}
           onApprove={handleApprove}
           onEdit={handleEdit}
           onReject={handleDelete}
@@ -651,6 +722,7 @@ export default function ContentPage() {
                 <DayDetail
                   day={selectedDay}
                   posts={posts}
+                  mediaThumbs={mediaThumbs}
                   onEdit={handleEdit}
                 />
               )}
