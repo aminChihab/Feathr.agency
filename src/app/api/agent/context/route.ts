@@ -111,21 +111,30 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(30)
 
-    // Get media library with descriptions (no signed URLs needed — Media Analyst describes them)
+    // Collect all media IDs already used in posts
+    const usedMediaIds = new Set<string>()
+    for (const post of recentPosts ?? []) {
+      const ids = (post as any).media_ids as string[] | null
+      if (ids) ids.forEach((id: string) => usedMediaIds.add(id))
+    }
+
+    // Get media library with descriptions — exclude already-used media
     const { data: mediaItems } = await supabase
       .from('content_library')
       .select('id, file_name, file_type, tags, metadata')
       .eq('profile_id', profileId)
       .order('created_at', { ascending: false })
-      .limit(20)
+      .limit(50)
 
-    const media = (mediaItems ?? []).map((item) => ({
-      id: item.id,
-      file_name: item.file_name,
-      file_type: item.file_type,
-      tags: item.tags,
-      description: (item.metadata as any)?.description ?? null,
-    }))
+    const media = (mediaItems ?? [])
+      .filter((item) => !usedMediaIds.has(item.id))
+      .map((item) => ({
+        id: item.id,
+        file_name: item.file_name,
+        file_type: item.file_type,
+        tags: item.tags,
+        description: (item.metadata as any)?.description ?? null,
+      }))
 
     return NextResponse.json({
       profile: {
