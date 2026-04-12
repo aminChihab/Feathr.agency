@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import { FileDropzone } from '@/components/ui/file-dropzone'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
-import { Play, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Play, X, ChevronLeft, ChevronRight, Search, Image, Video, LayoutGrid, Eye, Trash2, Upload } from 'lucide-react'
 
 type MediaItem = Database['public']['Tables']['content_library']['Row'] & {
   signedUrl: string | null
@@ -23,12 +23,41 @@ function getFileType(mime: string): 'photo' | 'video' | 'audio' {
   return 'photo'
 }
 
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+const TAG_COLORS = [
+  'bg-accent/15 text-accent border border-accent/30',
+  'bg-blue-500/15 text-blue-400 border border-blue-500/30',
+  'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
+  'bg-purple-500/15 text-purple-400 border border-purple-500/30',
+  'bg-amber-500/15 text-amber-400 border border-amber-500/30',
+]
+
+function tagColor(tag: string): string {
+  let hash = 0
+  for (let i = 0; i < tag.length; i++) hash = (hash * 31 + tag.charCodeAt(i)) | 0
+  return TAG_COLORS[Math.abs(hash) % TAG_COLORS.length]
+}
+
 export function MediaGrid({ supabase, userId }: MediaGridProps) {
   const [items, setItems] = useState<MediaItem[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 })
   const [filter, setFilter] = useState<'all' | 'photo' | 'video'>('all')
+  const [search, setSearch] = useState('')
   const [previewItem, setPreviewItem] = useState<MediaItem | null>(null)
 
   const navigatePreview = useCallback((direction: 'prev' | 'next') => {
@@ -69,13 +98,11 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
     if (data) {
       const withUrls = await Promise.all(
         data.map(async (item) => {
-          // For grid: use thumbnail if available, otherwise full file
           const thumbPath = item.thumbnail_path ?? item.storage_path
           const { data: thumbSigned } = await supabase.storage
             .from('media')
             .createSignedUrl(thumbPath, 3600)
 
-          // For preview: always use full file
           const { data: fullSigned } = await supabase.storage
             .from('media')
             .createSignedUrl(item.storage_path, 3600)
@@ -94,7 +121,28 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
 
   useEffect(() => {
     loadItems()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter])
+
+  const filteredItems = useMemo(() => {
+    if (!search.trim()) return items
+    const q = search.toLowerCase()
+    return items.filter((item) => {
+      const desc = (item.metadata as { description?: string } | null)?.description ?? ''
+      const tags = (item.tags ?? []).join(' ')
+      return (
+        item.file_name.toLowerCase().includes(q) ||
+        desc.toLowerCase().includes(q) ||
+        tags.toLowerCase().includes(q)
+      )
+    })
+  }, [items, search])
+
+  const counts = useMemo(() => {
+    const photos = items.filter((i) => i.file_type === 'photo').length
+    const videos = items.filter((i) => i.file_type === 'video').length
+    return { total: items.length, photos, videos }
+  }, [items])
 
   async function uploadSingleFile(file: File) {
     const uuid = crypto.randomUUID()
@@ -141,7 +189,6 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
     setUploading(true)
     setUploadProgress({ current: 0, total: files.length })
 
-    // Upload 5 files in parallel
     const concurrency = 5
     for (let i = 0; i < files.length; i += concurrency) {
       const batch = files.slice(i, i + concurrency)
@@ -163,168 +210,362 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
     if (previewItem?.id === id) setPreviewItem(null)
   }
 
+  const progressPct = uploadProgress.total > 0
+    ? (uploadProgress.current / uploadProgress.total) * 100
+    : 0
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+
+      {/* Upload zone */}
       <FileDropzone
         accept=".jpg,.jpeg,.png,.webp,.mp4,.mov"
         maxFiles={50}
         maxSizeMB={50}
         onFilesAdded={handleUpload}
+        className="group relative overflow-hidden rounded-xl border-2 border-dashed border-border bg-bg-surface transition-all duration-200 hover:border-accent/60 hover:bg-accent/5"
       >
         {uploading ? (
-          <div className="space-y-2">
-            <p className="text-text-secondary">
-              Uploading {uploadProgress.current} of {uploadProgress.total}...
-            </p>
-            <div className="mx-auto h-1.5 w-48 rounded-full bg-bg-elevated">
+          <div className="flex flex-col items-center gap-3 py-2">
+            <div className="flex items-center gap-2 text-sm text-text-secondary">
+              <Upload className="h-4 w-4 animate-bounce text-accent" />
+              Uploading {uploadProgress.current} of {uploadProgress.total} files...
+            </div>
+            <div className="w-64 h-1.5 rounded-full bg-bg-elevated overflow-hidden">
               <div
-                className="h-1.5 rounded-full bg-accent transition-all duration-300"
-                style={{ width: `${uploadProgress.total > 0 ? (uploadProgress.current / uploadProgress.total) * 100 : 0}%` }}
+                className="h-full rounded-full bg-accent transition-all duration-300 ease-out"
+                style={{ width: `${progressPct}%` }}
               />
             </div>
+            <span className="text-xs text-text-muted">{Math.round(progressPct)}% complete</span>
           </div>
         ) : (
-          <>
-            <p className="text-text-secondary">Drag & drop files here, or click to browse</p>
-            <p className="text-sm text-text-muted">JPG, PNG, WEBP, MP4, MOV — max 50MB each, up to 50 files</p>
-          </>
+          <div className="flex flex-col items-center gap-2 py-2">
+            <div className="rounded-full bg-bg-elevated p-3 transition-transform duration-200 group-hover:scale-110">
+              <Upload className="h-5 w-5 text-accent" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-text-primary">Drop files here or click to browse</p>
+              <p className="text-xs text-text-muted mt-0.5">JPG, PNG, WEBP, MP4, MOV — max 50MB each, up to 50 files</p>
+            </div>
+          </div>
         )}
       </FileDropzone>
 
-      <div className="flex gap-2">
-        {(['all', 'photo', 'video'] as const).map((f) => (
+      {/* Toolbar: filters + search + count */}
+      <div className="flex items-center gap-3 flex-wrap">
+        {/* Type filters */}
+        <div className="flex items-center gap-1.5 rounded-lg bg-bg-elevated p-1">
           <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`rounded-full px-3 py-1 text-xs transition-colors ${
-              filter === f
-                ? 'bg-accent text-white'
-                : 'bg-bg-elevated text-text-secondary hover:text-text-primary'
+            onClick={() => setFilter('all')}
+            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+              filter === 'all'
+                ? 'bg-accent text-white shadow-sm'
+                : 'text-text-secondary hover:text-text-primary'
             }`}
           >
-            {f === 'all' ? 'All' : f === 'photo' ? 'Photos' : 'Videos'}
+            <LayoutGrid className="h-3 w-3" />
+            All
           </button>
-        ))}
+          <button
+            onClick={() => setFilter('photo')}
+            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+              filter === 'photo'
+                ? 'bg-accent text-white shadow-sm'
+                : 'text-text-secondary hover:text-text-primary'
+            }`}
+          >
+            <Image className="h-3 w-3" />
+            Photos
+          </button>
+          <button
+            onClick={() => setFilter('video')}
+            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+              filter === 'video'
+                ? 'bg-accent text-white shadow-sm'
+                : 'text-text-secondary hover:text-text-primary'
+            }`}
+          >
+            <Video className="h-3 w-3" />
+            Videos
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="relative flex-1 min-w-48">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-muted" />
+          <input
+            type="text"
+            placeholder="Search by name, description, tags..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-lg bg-bg-elevated border border-border pl-9 pr-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/60 transition-colors"
+          />
+        </div>
+
+        {/* Count */}
+        {!loading && (
+          <p className="text-xs text-text-muted shrink-0">
+            {search ? (
+              <>{filteredItems.length} of {counts.total} items</>
+            ) : (
+              <>{counts.total} items{counts.photos > 0 && ` · ${counts.photos} photo${counts.photos !== 1 ? 's' : ''}`}{counts.videos > 0 && ` · ${counts.videos} video${counts.videos !== 1 ? 's' : ''}`}</>
+            )}
+          </p>
+        )}
       </div>
 
+      {/* Grid */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
+        <div className="flex items-center justify-center py-16">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
         </div>
-      ) : items.length === 0 ? (
-        <p className="text-center text-text-muted py-12">No media yet. Upload some files to get started.</p>
+      ) : filteredItems.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+          <div className="rounded-full bg-bg-elevated p-4">
+            <Image className="h-6 w-6 text-text-muted" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-text-secondary">
+              {search ? 'No results found' : 'No media yet'}
+            </p>
+            <p className="text-xs text-text-muted mt-1">
+              {search ? 'Try a different search term' : 'Upload some files to get started'}
+            </p>
+          </div>
+        </div>
       ) : (
-        <div className="grid grid-cols-4 gap-3">
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="group relative aspect-square rounded-lg border border-border overflow-hidden cursor-pointer"
-              onClick={() => setPreviewItem(item)}
-            >
-              {item.signedUrl ? (
-                <img src={item.signedUrl} alt={item.file_name} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-bg-elevated">
-                  <Play className="h-8 w-8 text-text-muted" />
-                </div>
-              )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredItems.map((item) => {
+            const description = (item.metadata as { description?: string } | null)?.description
+            const tags = item.tags ?? []
+            const hasDescription = !!description
 
-              {/* Video play icon overlay */}
-              {item.file_type === 'video' && item.signedUrl && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="rounded-full bg-black/50 p-2">
-                    <Play className="h-5 w-5 text-white" fill="white" />
+            return (
+              <div
+                key={item.id}
+                className="group relative flex flex-col rounded-xl border border-border bg-bg-surface overflow-hidden transition-all duration-200 hover:border-border-hover hover:shadow-lg hover:shadow-black/20"
+              >
+                {/* Thumbnail */}
+                <div
+                  className="relative aspect-video cursor-pointer overflow-hidden bg-bg-elevated"
+                  onClick={() => setPreviewItem(item)}
+                >
+                  {item.signedUrl ? (
+                    <img
+                      src={item.signedUrl}
+                      alt={item.file_name}
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      {item.file_type === 'video' ? (
+                        <Play className="h-10 w-10 text-text-muted" />
+                      ) : (
+                        <Image className="h-10 w-10 text-text-muted" />
+                      )}
+                    </div>
+                  )}
+
+                  {/* Video play overlay */}
+                  {item.file_type === 'video' && item.signedUrl && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="rounded-full bg-black/50 p-2.5 backdrop-blur-sm transition-transform duration-200 group-hover:scale-110">
+                        <Play className="h-5 w-5 text-white" fill="white" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Hover actions overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setPreviewItem(item) }}
+                      className="flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-2 text-xs font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/25"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      View
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDelete(item.id, item.storage_path, item.thumbnail_path)
+                      }}
+                      className="flex items-center gap-1.5 rounded-lg bg-red-500/20 px-3 py-2 text-xs font-medium text-red-400 backdrop-blur-sm transition-colors hover:bg-red-500/30"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Delete
+                    </button>
+                  </div>
+
+                  {/* Badges: top-left file type, top-right analysis status */}
+                  <div className="absolute left-2 top-2 flex items-center gap-1.5">
+                    <span className="rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white backdrop-blur-sm">
+                      {item.file_type}
+                    </span>
+                  </div>
+                  <div className="absolute right-2 top-2">
+                    <span
+                      title={hasDescription ? 'AI analysis complete' : 'Pending analysis'}
+                      className={`block h-2.5 w-2.5 rounded-full border-2 border-bg-surface ${
+                        hasDescription ? 'bg-emerald-400' : 'bg-amber-400'
+                      }`}
+                    />
                   </div>
                 </div>
-              )}
 
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
-                <p className="truncate text-xs text-white">{item.file_name}</p>
+                {/* Card body */}
+                <div className="flex flex-col gap-2 p-3">
+                  {/* File name */}
+                  <p className="truncate text-sm font-medium text-text-primary" title={item.file_name}>
+                    {item.file_name}
+                  </p>
+
+                  {/* AI description */}
+                  <p className={`text-xs leading-relaxed ${
+                    hasDescription
+                      ? 'text-text-secondary line-clamp-2'
+                      : 'italic text-text-muted'
+                  }`}>
+                    {description ?? 'Pending analysis...'}
+                  </p>
+
+                  {/* Tags */}
+                  {tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {tags.slice(0, 5).map((tag) => (
+                        <span
+                          key={tag}
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${tagColor(tag)}`}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {tags.length > 5 && (
+                        <span className="rounded-full border border-border px-2 py-0.5 text-[10px] text-text-muted">
+                          +{tags.length - 5}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleDelete(item.id, item.storage_path, item.thumbnail_path)
-                }}
-                className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-              <span className="absolute left-1 top-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white uppercase">
-                {item.file_type}
-              </span>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
       {/* Preview lightbox */}
       <Dialog open={!!previewItem} onOpenChange={(open) => !open && setPreviewItem(null)}>
         <DialogContent className="bg-bg-surface border-border max-w-4xl p-0 overflow-hidden">
-          {previewItem && (
-            <div className="relative">
-              {/* Media content */}
-              <div className="relative bg-black min-h-[300px] flex items-center justify-center">
-                {previewItem.file_type === 'photo' ? (
-                  <img
-                    src={previewItem.fullUrl ?? previewItem.signedUrl ?? ''}
-                    alt={previewItem.file_name}
-                    className="w-full max-h-[80vh] object-contain"
-                  />
-                ) : previewItem.file_type === 'video' ? (
-                  <video
-                    key={previewItem.id}
-                    src={previewItem.fullUrl ?? ''}
-                    controls
-                    autoPlay
-                    className="w-full max-h-[80vh]"
-                  />
-                ) : null}
+          {previewItem && (() => {
+            const description = (previewItem.metadata as { description?: string } | null)?.description
+            const tags = previewItem.tags ?? []
+            const hasDescription = !!description
 
-                {/* Navigation buttons — fixed position on sides */}
-                {items.length > 1 && (
-                  <>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); navigatePreview('prev') }}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-2 text-white transition-opacity hover:bg-black/80"
-                    >
-                      <ChevronLeft className="h-6 w-6" />
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); navigatePreview('next') }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-2 text-white transition-opacity hover:bg-black/80"
-                    >
-                      <ChevronRight className="h-6 w-6" />
-                    </button>
-                  </>
-                )}
-              </div>
+            return (
+              <div className="flex flex-col">
+                {/* Media */}
+                <div className="relative bg-black min-h-[280px] flex items-center justify-center">
+                  {previewItem.file_type === 'photo' ? (
+                    <img
+                      src={previewItem.fullUrl ?? previewItem.signedUrl ?? ''}
+                      alt={previewItem.file_name}
+                      className="w-full max-h-[70vh] object-contain"
+                    />
+                  ) : previewItem.file_type === 'video' ? (
+                    <video
+                      key={previewItem.id}
+                      src={previewItem.fullUrl ?? ''}
+                      controls
+                      autoPlay
+                      className="w-full max-h-[70vh]"
+                    />
+                  ) : null}
 
-              {/* Info bar */}
-              <div className="flex items-center justify-between p-4">
-                <div>
-                  <p className="text-sm text-text-primary">{previewItem.file_name}</p>
-                  <p className="text-xs text-text-muted">
-                    {previewItem.file_type} · {(previewItem.file_size / 1024 / 1024).toFixed(1)} MB
-                  </p>
+                  {/* Nav arrows */}
+                  {items.length > 1 && (
+                    <>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); navigatePreview('prev') }}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-2.5 text-white backdrop-blur-sm transition-colors hover:bg-black/80"
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); navigatePreview('next') }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-2.5 text-white backdrop-blur-sm transition-colors hover:bg-black/80"
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </button>
+                    </>
+                  )}
+
+                  {/* Counter badge */}
+                  <div className="absolute bottom-3 right-3 rounded-full bg-black/60 px-2.5 py-1 text-xs text-white backdrop-blur-sm">
+                    {items.findIndex((i) => i.id === previewItem.id) + 1} / {items.length}
+                  </div>
                 </div>
-                <span className="text-xs text-text-muted">
-                  {items.findIndex((i) => i.id === previewItem.id) + 1} / {items.length}
-                </span>
+
+                {/* Info bar */}
+                <div className="flex flex-col gap-3 p-4">
+                  {/* Row 1: name + type badge + size + date */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-text-primary">{previewItem.file_name}</p>
+                      <div className="mt-1 flex items-center gap-3 text-xs text-text-muted">
+                        <span className="uppercase font-medium text-text-secondary">{previewItem.file_type}</span>
+                        <span>{formatFileSize(previewItem.file_size)}</span>
+                        <span>{formatDate(previewItem.created_at)}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span
+                        className={`h-2 w-2 rounded-full ${hasDescription ? 'bg-emerald-400' : 'bg-amber-400'}`}
+                      />
+                      <span className="text-xs text-text-muted">
+                        {hasDescription ? 'Analyzed' : 'Pending'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Row 2: AI description */}
+                  <div className="rounded-lg bg-bg-elevated px-3 py-2.5">
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">AI Description</p>
+                    <p className={`text-sm leading-relaxed ${
+                      hasDescription ? 'text-text-secondary' : 'italic text-text-muted'
+                    }`}>
+                      {description ?? 'Pending analysis...'}
+                    </p>
+                  </div>
+
+                  {/* Row 3: tags */}
+                  {tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className={`rounded-full px-2.5 py-1 text-xs font-medium ${tagColor(tag)}`}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
         </DialogContent>
       </Dialog>
     </div>
   )
 }
 
-// Generate high-quality image thumbnail (600px instead of 200px)
+// Generate high-quality image thumbnail (600px)
 async function generateImageThumbnail(file: File): Promise<Blob | null> {
   if (!file.type.startsWith('image/')) return null
   return new Promise((resolve) => {
-    const img = new Image()
+    const img = new globalThis.Image()
     const url = URL.createObjectURL(file)
     img.onload = () => {
       const canvas = document.createElement('canvas')
@@ -353,12 +594,10 @@ async function generateVideoThumbnail(file: File): Promise<Blob | null> {
     video.crossOrigin = 'anonymous'
 
     video.onloadedmetadata = () => {
-      // Seek to 1 second or 10% of duration (whichever is less)
       video.currentTime = Math.min(1, video.duration * 0.1)
     }
 
     video.onseeked = () => {
-      // Wait a frame for the video to actually render
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           try {
@@ -382,8 +621,6 @@ async function generateVideoThumbnail(file: File): Promise<Blob | null> {
     }
 
     video.onerror = () => { URL.revokeObjectURL(url); resolve(null) }
-
-    // Timeout fallback — if nothing happens in 10 seconds, give up
     setTimeout(() => { URL.revokeObjectURL(url); resolve(null) }, 10000)
 
     video.src = url
