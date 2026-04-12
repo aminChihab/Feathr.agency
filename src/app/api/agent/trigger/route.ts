@@ -102,8 +102,9 @@ export async function POST(request: NextRequest) {
     })
 
     if (!loginRes.ok) {
-      console.error('[trigger] Paperclip login failed:', loginRes.status)
-      return NextResponse.json({ error: 'Paperclip auth failed' }, { status: 500 })
+      const errBody = await loginRes.text()
+      console.error('[trigger] Paperclip login failed:', loginRes.status, 'URL:', `${paperclipUrl}/api/auth/sign-in/email`, 'Body:', errBody.slice(0, 200))
+      return NextResponse.json({ error: 'Paperclip auth failed', status: loginRes.status, detail: errBody.slice(0, 200) }, { status: 500 })
     }
 
     const sessionCookie = loginRes.headers.get('set-cookie')
