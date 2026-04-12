@@ -243,6 +243,22 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
     setUploading(false)
     setUploadProgress({ current: 0, total: 0 })
     loadItems()
+
+    // Trigger Media Analyst agent for newly uploaded media
+    try {
+      await fetch('/api/agent/trigger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agent: 'media-analyst',
+          profile_id: userId,
+          title: `Analyze ${files.length} newly uploaded media`,
+          description: `Analyze all unanalyzed media for profile_id: ${userId}`,
+        }),
+      })
+    } catch {
+      // Non-blocking — upload succeeded even if trigger fails
+    }
   }
 
   function handleDuplicateDecision(uploadAll: boolean) {
