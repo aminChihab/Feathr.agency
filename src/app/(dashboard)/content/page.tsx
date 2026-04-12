@@ -504,10 +504,17 @@ export default function ContentPage() {
   if (!userId) return null
 
   return (
-    <div className="space-y-6">
-      {/* Page header */}
+    <Tabs defaultValue="content" className="space-y-6">
+      {/* Top-level tabs as page header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-light">Content</h1>
+        <TabsList className="bg-transparent p-0 gap-6">
+          <TabsTrigger value="content" className="px-0 pb-2 text-3xl font-light rounded-none border-b-2 data-[state=active]:border-accent data-[state=active]:text-text-primary data-[state=inactive]:border-transparent data-[state=inactive]:text-text-muted data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+            Content
+          </TabsTrigger>
+          <TabsTrigger value="media" className="px-0 pb-2 text-3xl font-light rounded-none border-b-2 data-[state=active]:border-accent data-[state=active]:text-text-primary data-[state=inactive]:border-transparent data-[state=inactive]:text-text-muted data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+            Media
+          </TabsTrigger>
+        </TabsList>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={handlePostNow} disabled={posting} className="text-xs">
             <Send className="h-3.5 w-3.5 mr-1.5" />
@@ -520,7 +527,10 @@ export default function ContentPage() {
         </div>
       </div>
 
-      {/* Approval Queue — always visible at top */}
+      {/* ── Content Tab ────────────────────────────────────────────────── */}
+      <TabsContent value="content" className="mt-0 space-y-6">
+
+      {/* Approval Queue */}
       {loading ? (
         <div className="flex items-center justify-center py-8">
           <div className="h-7 w-7 animate-spin rounded-full border-2 border-accent border-t-transparent" />
@@ -534,21 +544,8 @@ export default function ContentPage() {
         />
       )}
 
-      {/* Calendar + Library tabs */}
-      <Tabs defaultValue="calendar">
-        <TabsList className="bg-bg-surface gap-1 p-1">
-          <TabsTrigger value="calendar" className="px-6 data-[state=active]:bg-accent data-[state=active]:text-white">
-            <CalendarIcon className="h-3.5 w-3.5 mr-1.5" />
-            Calendar
-          </TabsTrigger>
-          <TabsTrigger value="library" className="px-6 data-[state=active]:bg-accent data-[state=active]:text-white">
-            <Grid3X3 className="h-3.5 w-3.5 mr-1.5" />
-            Library
-          </TabsTrigger>
-        </TabsList>
-
-        {/* ── Calendar Tab ─────────────────────────────────────────────── */}
-        <TabsContent value="calendar" className="mt-6 space-y-4">
+      {/* Calendar controls */}
+      <div className="space-y-4">
           {/* Calendar controls */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -638,13 +635,14 @@ export default function ContentPage() {
               </div>
             ))}
           </div>
-        </TabsContent>
+      </div>
 
-        {/* ── Library Tab ──────────────────────────────────────────────── */}
-        <TabsContent value="library" className="mt-6">
-          <MediaGrid supabase={supabase} userId={userId} />
-        </TabsContent>
-      </Tabs>
+      </TabsContent>
+
+      {/* ── Media Tab ────────────────────────────────────────────────── */}
+      <TabsContent value="media" className="mt-0">
+        <MediaGrid supabase={supabase} userId={userId} />
+      </TabsContent>
 
       <PostModal
         open={modalOpen}
@@ -654,6 +652,6 @@ export default function ContentPage() {
         editPost={editPost}
         onSaved={() => { if (userId) loadPosts(userId) }}
       />
-    </div>
+    </Tabs>
   )
 }

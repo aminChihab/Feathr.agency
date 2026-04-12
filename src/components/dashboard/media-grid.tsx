@@ -59,6 +59,8 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
   const [filter, setFilter] = useState<'all' | 'photo' | 'video'>('all')
   const [search, setSearch] = useState('')
   const [previewItem, setPreviewItem] = useState<MediaItem | null>(null)
+  const [duplicates, setDuplicates] = useState<{ file: File; existing: MediaItem }[]>([])
+  const [pendingFiles, setPendingFiles] = useState<File[]>([])
 
   const navigatePreview = useCallback((direction: 'prev' | 'next') => {
     if (!previewItem) return
@@ -185,7 +187,34 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
     setUploadProgress((prev) => ({ ...prev, current: prev.current + 1 }))
   }
 
-  async function handleUpload(files: File[]) {
+  async function handleFilesSelected(files: File[]) {
+    // Check for duplicates by file name and size
+    const found: { file: File; existing: MediaItem }[] = []
+    const clean: File[] = []
+
+    for (const file of files) {
+      const match = items.find(
+        (item) => item.file_name === file.name && item.file_size === file.size
+      )
+      if (match) {
+        found.push({ file, existing: match })
+      } else {
+        clean.push(file)
+      }
+    }
+
+    if (found.length > 0) {
+      setDuplicates(found)
+      setPendingFiles(clean)
+    } else {
+      await doUpload(files)
+    }
+  }
+
+  async function doUpload(files: File[]) {
+    if (files.length === 0) return
+    setDuplicates([])
+    setPendingFiles([])
     setUploading(true)
     setUploadProgress({ current: 0, total: files.length })
 
@@ -198,6 +227,15 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
     setUploading(false)
     setUploadProgress({ current: 0, total: 0 })
     loadItems()
+  }
+
+  function handleDuplicateDecision(uploadAll: boolean) {
+    if (uploadAll) {
+      const allFiles = [...pendingFiles, ...duplicates.map((d) => d.file)]
+      doUpload(allFiles)
+    } else {
+      doUpload(pendingFiles)
+    }
   }
 
   async function handleDelete(id: string, storagePath: string, thumbnailPath: string | null) {
@@ -222,7 +260,7 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
         accept=".jpg,.jpeg,.png,.webp,.mp4,.mov"
         maxFiles={50}
         maxSizeMB={50}
-        onFilesAdded={handleUpload}
+        onFilesAdded={handleFilesSelected}
         className="group relative overflow-hidden rounded-xl border-2 border-dashed border-border bg-bg-surface transition-all duration-200 hover:border-accent/60 hover:bg-accent/5"
       >
         {uploading ? (
@@ -251,6 +289,44 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
           </div>
         )}
       </FileDropzone>
+
+      {/* Duplicate warning */}
+      {duplicates.length > 0 && (
+        <div className="rounded-lg border border-status-draft/50 bg-status-draft/5 p-4 space-y-3">
+          <p className="text-sm font-medium text-status-draft">
+            {duplicates.length} possible duplicate{duplicates.length > 1 ? 's' : ''} found
+          </p>
+          <div className="space-y-2">
+            {duplicates.map((d, i) => (
+              <div key={i} className="flex items-center gap-3 text-xs">
+                <span className="text-text-primary">{d.file.name}</span>
+                <span className="text-text-muted">({formatFileSize(d.file.size)})</span>
+                <span className="text-text-muted">— matches existing file</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleDuplicateDecision(true)}
+              className="rounded-lg bg-accent px-3 py-1.5 text-xs text-white hover:bg-accent-hover"
+            >
+              Upload anyway ({duplicates.length + pendingFiles.length} files)
+            </button>
+            <button
+              onClick={() => handleDuplicateDecision(false)}
+              className="rounded-lg bg-bg-elevated px-3 py-1.5 text-xs text-text-secondary hover:text-text-primary"
+            >
+              Skip duplicates ({pendingFiles.length} files)
+            </button>
+            <button
+              onClick={() => { setDuplicates([]); setPendingFiles([]) }}
+              className="rounded-lg px-3 py-1.5 text-xs text-text-muted hover:text-text-primary"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Toolbar: filters + search + count */}
       <div className="flex items-center gap-3 flex-wrap">
