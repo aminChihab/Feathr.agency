@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     .select('id, file_name, file_type, mime_type, storage_path, thumbnail_path, tags, metadata')
     .eq('profile_id', profileId)
     .order('created_at', { ascending: false })
-    .limit(20)
+    .limit(100)
 
   // Filter to items without a description
   const unanalyzed = (items ?? []).filter((item) => {
@@ -39,7 +39,19 @@ export async function GET(request: NextRequest) {
     return !meta?.description
   })
 
-  // Generate signed URLs
+  // Also return all items with descriptions for content matching context
+  const analyzed = (items ?? []).filter((item) => {
+    const meta = item.metadata as any
+    return !!meta?.description
+  }).map((item) => ({
+    id: item.id,
+    file_name: item.file_name,
+    file_type: item.file_type,
+    description: (item.metadata as any)?.description,
+    tags: item.tags,
+  }))
+
+  // Generate signed URLs for unanalyzed items
   const media = await Promise.all(
     unanalyzed.map(async (item) => {
       const urls: { id: string; file_name: string; file_type: string; image_urls: string[] } = {
@@ -50,24 +62,31 @@ export async function GET(request: NextRequest) {
       }
 
       if (item.file_type === 'photo') {
-        // Single signed URL for photos
+        // Full resolution signed URL for photos
         const { data: signed } = await supabase.storage
           .from('media')
           .createSignedUrl(item.storage_path, 3600)
         if (signed?.signedUrl) urls.image_urls.push(signed.signedUrl)
-      } else if (item.file_type === 'video' && item.thumbnail_path) {
-        // Thumbnail for videos
+      } else if (item.file_type === 'video') {
+        // For videos: provide the full video URL so agent can extract multiple frames
         const { data: signed } = await supabase.storage
           .from('media')
-          .createSignedUrl(item.thumbnail_path, 3600)
+          .createSignedUrl(item.storage_path, 3600)
         if (signed?.signedUrl) urls.image_urls.push(signed.signedUrl)
+        // Also include thumbnail if available
+        if (item.thumbnail_path) {
+          const { data: thumbSigned } = await supabase.storage
+            .from('media')
+            .createSignedUrl(item.thumbnail_path, 3600)
+          if (thumbSigned?.signedUrl) urls.image_urls.push(thumbSigned.signedUrl)
+        }
       }
 
       return urls
     })
   )
 
-  return NextResponse.json({ media })
+  return NextResponse.json({ media, already_analyzed: analyzed })
 }
 
 // POST /api/agent/media — Save media descriptions
