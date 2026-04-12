@@ -61,20 +61,29 @@ export async function POST(request: NextRequest) {
             .from('media')
             .createSignedUrl(item.storage_path, 7200) // 2 hours
           if (signed?.signedUrl) {
-            description += `image: ${signed.signedUrl}\n`
+            const head = await fetch(signed.signedUrl, { method: 'HEAD' })
+            if (head.ok) description += `image: ${signed.signedUrl}\n`
           }
         } else if (item.file_type === 'video') {
           const meta = item.metadata as any
           const framePaths: string[] = meta?.frame_paths ?? []
+          let frameCount = 0
 
           if (framePaths.length > 0) {
-            description += `video_frames:\n`
-            for (let f = 0; f < framePaths.length; f++) {
+            const validFrames: string[] = []
+            for (const fp of framePaths) {
               const { data: signed } = await supabase.storage
                 .from('media')
-                .createSignedUrl(framePaths[f], 7200)
+                .createSignedUrl(fp, 7200)
               if (signed?.signedUrl) {
-                description += `  frame_${f + 1}: ${signed.signedUrl}\n`
+                const head = await fetch(signed.signedUrl, { method: 'HEAD' })
+                if (head.ok) validFrames.push(signed.signedUrl)
+              }
+            }
+            if (validFrames.length > 0) {
+              description += `video_frames:\n`
+              for (let f = 0; f < validFrames.length; f++) {
+                description += `  frame_${f + 1}: ${validFrames[f]}\n`
               }
             }
           } else if (item.thumbnail_path) {
@@ -82,7 +91,8 @@ export async function POST(request: NextRequest) {
               .from('media')
               .createSignedUrl(item.thumbnail_path, 7200)
             if (signed?.signedUrl) {
-              description += `thumbnail: ${signed.signedUrl}\n`
+              const head = await fetch(signed.signedUrl, { method: 'HEAD' })
+              if (head.ok) description += `thumbnail: ${signed.signedUrl}\n`
             }
           }
         }
@@ -109,6 +119,8 @@ export async function POST(request: NextRequest) {
 
     const sessionCookie = loginRes.headers.get('set-cookie')
     const cookieValue = sessionCookie?.split(';')[0] ?? ''
+
+    console.log(`[trigger] Using agentId=${agentId}, companyId=${paperclipCompanyId}`)
 
     // Create issue with status todo
     const issueRes = await fetch(`${paperclipUrl}/api/companies/${paperclipCompanyId}/issues`, {

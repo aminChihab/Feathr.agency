@@ -66,26 +66,36 @@ export async function GET(request: NextRequest) {
         const { data: signed } = await supabase.storage
           .from('media')
           .createSignedUrl(item.storage_path, 3600)
-        if (signed?.signedUrl) urls.image_urls.push(signed.signedUrl)
+        if (signed?.signedUrl) {
+          // Verify file exists with HEAD request
+          const head = await fetch(signed.signedUrl, { method: 'HEAD' })
+          if (head.ok) urls.image_urls.push(signed.signedUrl)
+        }
       } else if (item.file_type === 'video') {
         // For videos: provide 5 frame thumbnails stored at upload time
         const meta = item.metadata as any
         const framePaths: string[] = meta?.frame_paths ?? []
 
         if (framePaths.length > 0) {
-          // Use pre-generated frames
+          // Use pre-generated frames, verify each exists
           for (const framePath of framePaths) {
             const { data: signed } = await supabase.storage
               .from('media')
               .createSignedUrl(framePath, 3600)
-            if (signed?.signedUrl) urls.image_urls.push(signed.signedUrl)
+            if (signed?.signedUrl) {
+              const head = await fetch(signed.signedUrl, { method: 'HEAD' })
+              if (head.ok) urls.image_urls.push(signed.signedUrl)
+            }
           }
         } else if (item.thumbnail_path) {
           // Fallback to single thumbnail
           const { data: signed } = await supabase.storage
             .from('media')
             .createSignedUrl(item.thumbnail_path, 3600)
-          if (signed?.signedUrl) urls.image_urls.push(signed.signedUrl)
+          if (signed?.signedUrl) {
+            const head = await fetch(signed.signedUrl, { method: 'HEAD' })
+            if (head.ok) urls.image_urls.push(signed.signedUrl)
+          }
         }
       }
 
