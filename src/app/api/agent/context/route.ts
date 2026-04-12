@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
     // Get recent posts to avoid repetition
     const { data: recentPosts } = await supabase
       .from('content_calendar')
-      .select('caption, platform_accounts(platforms(name))')
+      .select('caption, media_ids, platform_accounts(platforms(name))')
       .eq('profile_id', profileId)
       .in('status', ['posted', 'approved', 'draft'])
       .order('created_at', { ascending: false })
