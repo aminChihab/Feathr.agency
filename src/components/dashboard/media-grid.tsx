@@ -146,7 +146,7 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
     return { total: items.length, photos, videos }
   }, [items])
 
-  async function uploadSingleFile(file: File) {
+  async function uploadSingleFile(file: File): Promise<string | null> {
     const uuid = crypto.randomUUID()
     const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin'
     const storagePath = `${userId}/${uuid}.${ext}`
@@ -156,7 +156,7 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
       .from('media')
       .upload(storagePath, file)
 
-    if (uploadError) return
+    if (uploadError) return null
 
     let thumbnailPath: string | null = null
     let videoFramePaths: string[] = []
@@ -189,7 +189,7 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
       videoFramePaths = framePaths
     }
 
-    await supabase.from('content_library').insert({
+    const { data: inserted } = await supabase.from('content_library').insert({
       profile_id: userId,
       storage_path: storagePath,
       file_name: file.name,
@@ -198,9 +198,11 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
       file_size: file.size,
       thumbnail_path: thumbnailPath,
       metadata: videoFramePaths.length > 0 ? { frame_paths: videoFramePaths } : {},
-    })
+    }).select('id').single()
 
     setUploadProgress((prev) => ({ ...prev, current: prev.current + 1 }))
+
+    return inserted?.id ?? null
   }
 
   async function handleFilesSelected(files: File[]) {
@@ -234,30 +236,35 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
     setUploading(true)
     setUploadProgress({ current: 0, total: files.length })
 
+    const uploadedIds: string[] = []
+
     const concurrency = 5
     for (let i = 0; i < files.length; i += concurrency) {
       const batch = files.slice(i, i + concurrency)
-      await Promise.all(batch.map(uploadSingleFile))
+      const results = await Promise.all(batch.map((f) => uploadSingleFile(f)))
+      results.forEach((id) => { if (id) uploadedIds.push(id) })
     }
 
     setUploading(false)
     setUploadProgress({ current: 0, total: 0 })
     loadItems()
 
-    // Trigger Media Analyst agent for newly uploaded media
-    try {
-      await fetch('/api/agent/trigger', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          agent: 'media-analyst',
-          profile_id: userId,
-          title: `Analyze ${files.length} newly uploaded media`,
-          description: `Analyze all unanalyzed media for profile_id: ${userId}`,
-        }),
-      })
-    } catch {
-      // Non-blocking — upload succeeded even if trigger fails
+    // Trigger Media Analyst agent with the specific media IDs
+    if (uploadedIds.length > 0) {
+      try {
+        await fetch('/api/agent/trigger', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            agent: 'media-analyst',
+            profile_id: userId,
+            title: `Analyze ${uploadedIds.length} newly uploaded media`,
+            media_ids: uploadedIds,
+          }),
+        })
+      } catch {
+        // Non-blocking
+      }
     }
   }
 

@@ -1,22 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient as createServerClient } from '@supabase/supabase-js'
+
+function createServiceClient() {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 // POST /api/agent/trigger — Create a task in Paperclip for an agent
-// Body: { agent: "media-analyst" | "research" | "content-writer", profile_id: "uuid", title: "...", description: "..." }
+// Body: { agent: "media-analyst" | "research" | "content-writer", profile_id: "uuid", title?: "...", media_ids?: string[] }
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  const expectedSecret = process.env.AGENT_SECRET
-
-  if (!expectedSecret || authHeader !== `Bearer ${expectedSecret}`) {
-    // Also allow calls from the app itself (no auth for internal use)
-    // Check if it's a server-side call via cookie
-    const cookie = request.headers.get('cookie')
-    if (!cookie && !authHeader) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-  }
-
   const body = await request.json()
-  const { agent, profile_id, title, description } = body
+  const { agent, profile_id, title, media_ids } = body
 
   if (!agent || !profile_id) {
     return NextResponse.json({ error: 'Missing agent and profile_id' }, { status: 400 })
@@ -32,7 +28,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Paperclip not configured' }, { status: 500 })
   }
 
-  // Agent slug to ID mapping
   const agentMap: Record<string, string> = {
     'media-analyst': process.env.PAPERCLIP_MEDIA_ANALYST_ID ?? '',
     'research': process.env.PAPERCLIP_RESEARCH_AGENT_ID ?? '',
@@ -42,6 +37,57 @@ export async function POST(request: NextRequest) {
   const agentId = agentMap[agent]
   if (!agentId) {
     return NextResponse.json({ error: `Unknown agent: ${agent}` }, { status: 400 })
+  }
+
+  // Build task description based on agent type
+  let description = `profile_id: ${profile_id}\n`
+
+  if (agent === 'media-analyst' && media_ids?.length) {
+    const supabase = createServiceClient()
+
+    // Get media items and generate signed URLs
+    const { data: items } = await supabase
+      .from('content_library')
+      .select('id, file_name, file_type, storage_path, thumbnail_path, metadata')
+      .in('id', media_ids)
+
+    if (items) {
+      for (const item of items) {
+        description += `\n--- Media: ${item.file_name} (${item.file_type}) ---\n`
+        description += `media_id: ${item.id}\n`
+
+        if (item.file_type === 'photo') {
+          const { data: signed } = await supabase.storage
+            .from('media')
+            .createSignedUrl(item.storage_path, 7200) // 2 hours
+          if (signed?.signedUrl) {
+            description += `image: ${signed.signedUrl}\n`
+          }
+        } else if (item.file_type === 'video') {
+          const meta = item.metadata as any
+          const framePaths: string[] = meta?.frame_paths ?? []
+
+          if (framePaths.length > 0) {
+            description += `video_frames:\n`
+            for (let f = 0; f < framePaths.length; f++) {
+              const { data: signed } = await supabase.storage
+                .from('media')
+                .createSignedUrl(framePaths[f], 7200)
+              if (signed?.signedUrl) {
+                description += `  frame_${f + 1}: ${signed.signedUrl}\n`
+              }
+            }
+          } else if (item.thumbnail_path) {
+            const { data: signed } = await supabase.storage
+              .from('media')
+              .createSignedUrl(item.thumbnail_path, 7200)
+            if (signed?.signedUrl) {
+              description += `thumbnail: ${signed.signedUrl}\n`
+            }
+          }
+        }
+      }
+    }
   }
 
   try {
@@ -55,15 +101,15 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({ email: paperclipEmail, password: paperclipPassword }),
     })
 
-    const sessionCookie = loginRes.headers.get('set-cookie')
-    const cookieValue = sessionCookie?.split(';')[0] ?? ''
-
     if (!loginRes.ok) {
       console.error('[trigger] Paperclip login failed:', loginRes.status)
       return NextResponse.json({ error: 'Paperclip auth failed' }, { status: 500 })
     }
 
-    // Create issue
+    const sessionCookie = loginRes.headers.get('set-cookie')
+    const cookieValue = sessionCookie?.split(';')[0] ?? ''
+
+    // Create issue with status todo
     const issueRes = await fetch(`${paperclipUrl}/api/companies/${paperclipCompanyId}/issues`, {
       method: 'POST',
       headers: {
@@ -73,8 +119,9 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         title: title ?? `Analyze media for ${profile_id}`,
-        body: description ?? `profile_id: ${profile_id}`,
+        body: description,
         assigneeAgentId: agentId,
+        status: 'todo',
         priority: 'medium',
       }),
     })
