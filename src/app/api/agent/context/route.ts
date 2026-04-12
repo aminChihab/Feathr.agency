@@ -111,11 +111,21 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(30)
 
-    // Get media library summary
-    const { count: mediaCount } = await supabase
+    // Get media library with descriptions (no signed URLs needed — Media Analyst describes them)
+    const { data: mediaItems } = await supabase
       .from('content_library')
-      .select('id', { count: 'exact', head: true })
+      .select('id, file_name, file_type, tags, metadata')
       .eq('profile_id', profileId)
+      .order('created_at', { ascending: false })
+      .limit(20)
+
+    const media = (mediaItems ?? []).map((item) => ({
+      id: item.id,
+      file_name: item.file_name,
+      file_type: item.file_type,
+      tags: item.tags,
+      description: (item.metadata as any)?.description ?? null,
+    }))
 
     return NextResponse.json({
       profile: {
@@ -127,7 +137,7 @@ export async function GET(request: NextRequest) {
       research_reports: reports ?? [],
       platforms: platforms ?? [],
       recent_posts: recentPosts ?? [],
-      media_count: mediaCount ?? 0,
+      media,
     })
   }
 

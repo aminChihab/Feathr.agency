@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
   const errors = []
 
   for (const draft of drafts) {
-    const { platform_slug, caption, scheduled_at } = draft
+    const { platform_slug, caption, scheduled_at, media_ids } = draft
 
     if (!platform_slug || !caption) {
       errors.push(`Missing platform_slug or caption in draft`)
@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
         profile_id,
         platform_account_id: account.id,
         caption,
+        media_ids: media_ids ?? [],
         scheduled_at: scheduled_at ?? null,
         status: 'draft',
         ai_generated: true,
