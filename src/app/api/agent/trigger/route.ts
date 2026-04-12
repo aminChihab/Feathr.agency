@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
     'media-analyst': process.env.PAPERCLIP_MEDIA_ANALYST_ID ?? '',
     'research': process.env.PAPERCLIP_RESEARCH_AGENT_ID ?? '',
     'content-writer': process.env.PAPERCLIP_CONTENT_WRITER_ID ?? '',
+    'chat-analyzer': process.env.PAPERCLIP_CHAT_ANALYZER_ID ?? '',
   }
 
   const agentId = agentMap[agent]

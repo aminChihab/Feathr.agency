@@ -1,0 +1,95 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient as createServerClient } from '@supabase/supabase-js'
+
+function createServiceClient() {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
+
+// GET /api/agent/voice?profile_id=xxx — Get current voice description + chat files
+export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get('authorization')
+  const expectedSecret = process.env.AGENT_SECRET
+
+  if (!expectedSecret || authHeader !== `Bearer ${expectedSecret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const profileId = request.nextUrl.searchParams.get('profile_id')
+  if (!profileId) {
+    return NextResponse.json({ error: 'profile_id required' }, { status: 400 })
+  }
+
+  const supabase = createServiceClient()
+
+  // Get current voice
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('voice_description')
+    .eq('id', profileId)
+    .single()
+
+  // Get chat history files
+  const { data: files } = await supabase.storage
+    .from('chat-history')
+    .list(profileId, { limit: 50 })
+
+  // Read chat file contents
+  const chatTexts: { file: string; content: string }[] = []
+  let totalChars = 0
+  const MAX_CHARS = 80000
+
+  for (const file of files ?? []) {
+    if (totalChars >= MAX_CHARS) break
+    if (!file.name.endsWith('.txt')) continue
+
+    const { data: blob } = await supabase.storage
+      .from('chat-history')
+      .download(`${profileId}/${file.name}`)
+
+    if (blob) {
+      const text = await blob.text()
+      const trimmed = text.slice(0, MAX_CHARS - totalChars)
+      chatTexts.push({ file: file.name, content: trimmed })
+      totalChars += trimmed.length
+    }
+  }
+
+  return NextResponse.json({
+    current_voice: profile?.voice_description ?? null,
+    chat_files: chatTexts,
+    total_chars: totalChars,
+  })
+}
+
+// POST /api/agent/voice — Save updated voice description
+export async function POST(request: NextRequest) {
+  const authHeader = request.headers.get('authorization')
+  const expectedSecret = process.env.AGENT_SECRET
+
+  if (!expectedSecret || authHeader !== `Bearer ${expectedSecret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const body = await request.json()
+  const { profile_id, voice_description } = body
+
+  if (!profile_id || !voice_description) {
+    return NextResponse.json({ error: 'Missing profile_id or voice_description' }, { status: 400 })
+  }
+
+  const supabase = createServiceClient()
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ voice_description })
+    .eq('id', profile_id)
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json({ ok: true })
+}

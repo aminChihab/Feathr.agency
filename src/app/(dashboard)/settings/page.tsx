@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import Link from 'next/link'
 import {
   User, Mic, Link2, Calendar, Bell, Shield, CreditCard, Search,
+  Upload, FileText, Trash2, Sparkles, Loader2,
 } from 'lucide-react'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
@@ -69,6 +70,11 @@ export default function SettingsPage() {
   const [city, setCity] = useState('')
   const [goals, setGoals] = useState<string[]>([])
   const [voiceDescription, setVoiceDescription] = useState('')
+
+  // Chat history files
+  const [chatFiles, setChatFiles] = useState<{ name: string; path: string }[]>([])
+  const [uploadingChats, setUploadingChats] = useState(false)
+  const [analyzingVoice, setAnalyzingVoice] = useState(false)
 
   // Research settings
   const DEFAULT_TERMS = [
@@ -142,6 +148,14 @@ export default function SettingsPage() {
         }))
       )
 
+      // Load chat history files
+      const { data: chatData } = await supabase.storage
+        .from('chat-history')
+        .list(user.id, { limit: 50 })
+      if (chatData) {
+        setChatFiles(chatData.map((f) => ({ name: f.name, path: `${user.id}/${f.name}` })))
+      }
+
       setLoading(false)
     }
     load()
@@ -167,6 +181,55 @@ export default function SettingsPage() {
     }).eq('id', userId)
     setSaving(false)
     flashSaved()
+  }
+
+  async function handleChatUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!userId || !e.target.files) return
+    setUploadingChats(true)
+    const newFiles = Array.from(e.target.files)
+    for (const file of newFiles) {
+      if (chatFiles.length >= 20) break
+      const path = `${userId}/${file.name}`
+      const { error } = await supabase.storage
+        .from('chat-history')
+        .upload(path, file, { upsert: true })
+      if (!error) {
+        setChatFiles((prev) => [...prev, { name: file.name, path }])
+      }
+    }
+    setUploadingChats(false)
+    e.target.value = ''
+  }
+
+  async function removeChatFile(path: string) {
+    await supabase.storage.from('chat-history').remove([path])
+    setChatFiles((prev) => prev.filter((f) => f.path !== path))
+  }
+
+  async function analyzeVoice() {
+    if (!userId) return
+    setAnalyzingVoice(true)
+    try {
+      const res = await fetch('/api/agent/trigger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agent: 'chat-analyzer',
+          profile_id: userId,
+          title: 'Analyze chat history and update voice profile',
+        }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        console.log('[voice] Triggered chat analyzer:', data.identifier)
+      } else {
+        console.error('[voice] Failed to trigger:', data)
+      }
+    } catch (err) {
+      console.error('[voice] Analysis failed:', err)
+    } finally {
+      setAnalyzingVoice(false)
+    }
   }
 
   async function saveNotifications() {
@@ -287,7 +350,8 @@ export default function SettingsPage() {
 
         {/* Voice */}
         {activeTab === 'voice' && (
-          <div className="space-y-6">
+          <div className="space-y-8">
+            {/* Voice description */}
             <div className="space-y-2">
               <Label>Voice description</Label>
               <Textarea
@@ -295,15 +359,71 @@ export default function SettingsPage() {
                 onChange={(e) => setVoiceDescription(e.target.value)}
                 rows={6}
                 className="bg-bg-surface"
-                placeholder="Describe how you communicate..."
+                placeholder="Describe how you communicate — your tone, humor, boundaries, and style..."
               />
-              <p className="text-sm text-text-muted">
-                This is how your AI-written content and messages will sound. 2-3 sentences is perfect.
+              <p className="text-xs text-text-muted">
+                This shapes how your AI-written content sounds. Be specific about tone, vocabulary, and personality.
               </p>
+              <Button onClick={saveVoice} disabled={saving} className="bg-accent text-white hover:bg-accent-hover">
+                {saving ? 'Saving...' : 'Save voice'}
+              </Button>
             </div>
-            <Button onClick={saveVoice} disabled={saving} className="bg-accent text-white hover:bg-accent-hover">
-              {saving ? 'Saving...' : 'Save voice'}
-            </Button>
+
+            {/* Chat history upload */}
+            <div className="space-y-3 border-t border-border pt-6">
+              <div>
+                <Label>Chat history</Label>
+                <p className="text-xs text-text-muted mt-1">
+                  Upload conversations with clients (.txt files). The AI analyzes your writing patterns — tone, humor, word choice, sentence structure — and generates a voice profile.
+                </p>
+              </div>
+
+              {/* Upload button */}
+              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border px-4 py-3 transition-colors hover:border-accent hover:bg-accent/5">
+                <Upload className="h-4 w-4 text-text-muted" />
+                <span className="text-sm text-text-secondary">
+                  {uploadingChats ? 'Uploading...' : 'Upload .txt files'}
+                </span>
+                <input
+                  type="file"
+                  accept=".txt"
+                  multiple
+                  className="hidden"
+                  onChange={handleChatUpload}
+                  disabled={uploadingChats}
+                />
+              </label>
+
+              {/* File list */}
+              {chatFiles.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-xs text-text-muted">{chatFiles.length} file(s)</p>
+                  {chatFiles.map((file) => (
+                    <div key={file.path} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <FileText className="h-3.5 w-3.5 text-text-muted shrink-0" />
+                        <span className="text-sm truncate">{file.name}</span>
+                      </div>
+                      <button onClick={() => removeChatFile(file.path)} className="text-text-muted hover:text-status-failed p-1">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Analyze button */}
+              {chatFiles.length > 0 && (
+                <Button onClick={analyzeVoice} disabled={analyzingVoice} variant="outline" className="w-full">
+                  {analyzingVoice ? (
+                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                  )}
+                  {analyzingVoice ? 'Analyzing your writing style...' : 'Analyze voice from chats'}
+                </Button>
+              )}
+            </div>
           </div>
         )}
 
