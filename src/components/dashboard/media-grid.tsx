@@ -683,12 +683,10 @@ async function generateVideoFrames(file: File, count: number): Promise<(Blob | n
     video.preload = 'auto'
     video.muted = true
     video.playsInline = true
-    video.crossOrigin = 'anonymous'
 
     const frames: (Blob | null)[] = []
-    let currentFrame = 0
 
-    function captureFrame(): Promise<Blob | null> {
+    function captureCurrentFrame(): Promise<Blob | null> {
       return new Promise((res) => {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
@@ -701,9 +699,7 @@ async function generateVideoFrames(file: File, count: number): Promise<(Blob | n
               canvas.width = vw * ratio
               canvas.height = vh * ratio
               const ctx = canvas.getContext('2d')!
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-            URL.revokeObjectURL(url)
-            canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.85)
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
               canvas.toBlob((blob) => res(blob), 'image/jpeg', 0.85)
             } catch {
               res(null)
@@ -716,14 +712,14 @@ async function generateVideoFrames(file: File, count: number): Promise<(Blob | n
     video.onloadedmetadata = async () => {
       const duration = video.duration
       for (let i = 0; i < count; i++) {
-        const time = (duration * (i + 1)) / (count + 1) // 1/6, 2/6, 3/6, 4/6, 5/6
+        const time = (duration * (i + 1)) / (count + 1)
         video.currentTime = time
 
-        await new Promise<void>((seekRes) => {
-          video.onseeked = () => seekRes()
+        await new Promise<void>((seekDone) => {
+          video.onseeked = () => seekDone()
         })
 
-        const blob = await captureFrame()
+        const blob = await captureCurrentFrame()
         frames.push(blob)
       }
 
