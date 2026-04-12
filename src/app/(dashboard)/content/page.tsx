@@ -252,12 +252,12 @@ function DayDetail({ day, posts, onEdit }: DayDetailProps) {
       ) : (
         <div className="space-y-2">
           {dayPosts.map((post) => (
-            <div key={post.id} className="flex items-center justify-between rounded-lg border border-border bg-bg-elevated px-3 py-2">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: post.platform_color }} />
-                <div className="min-w-0">
-                  <p className="text-sm truncate">{post.caption || 'No caption'}</p>
-                  <p className="text-xs text-text-muted">{post.platform_name} · {post.scheduled_at ? new Date(post.scheduled_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '—'}</p>
+            <div key={post.id} className="flex items-start justify-between rounded-lg border border-border bg-bg-elevated px-3 py-2 overflow-hidden">
+              <div className="flex items-start gap-2 min-w-0 flex-1">
+                <span className="h-2 w-2 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: post.platform_color }} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm break-words whitespace-pre-wrap">{post.caption || 'No caption'}</p>
+                  <p className="text-xs text-text-muted mt-1">{post.platform_name} · {post.scheduled_at ? new Date(post.scheduled_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '—'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0 ml-3">
@@ -331,7 +331,7 @@ function ApprovalQueue({ drafts, onApprove, onEdit, onReject }: ApprovalQueuePro
                 </div>
 
                 {/* Full caption */}
-                <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap mb-4">
+                <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap break-words mb-4">
                   {post.caption || 'No caption'}
                 </p>
 
