@@ -127,6 +127,12 @@ export async function POST(request: NextRequest) {
       }),
     })
 
+    if (!issueRes.ok) {
+      const errBody = await issueRes.text()
+      console.error('[trigger] Issue creation failed:', issueRes.status, errBody.slice(0, 300))
+      return NextResponse.json({ error: 'Failed to create issue', status: issueRes.status, detail: errBody.slice(0, 300) }, { status: 500 })
+    }
+
     const issueData = await issueRes.json()
     console.log(`[trigger] Created task ${issueData.identifier} for ${agent}`)
 
