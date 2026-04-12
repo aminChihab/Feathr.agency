@@ -174,9 +174,10 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
 
       for (let f = 0; f < frameBlobs.length; f++) {
         const blob = frameBlobs[f]
-        if (!blob) continue
+        if (!blob) { console.warn(`[upload] Frame ${f} blob is null`); continue }
         const framePath = `${userId}/thumbs/${uuid}_frame${f}.jpg`
-        await supabase.storage.from('media').upload(framePath, blob)
+        const { error: frameErr } = await supabase.storage.from('media').upload(framePath, blob)
+        if (frameErr) { console.error(`[upload] Frame ${f} upload failed:`, frameErr.message); continue }
         framePaths.push(framePath)
       }
 
