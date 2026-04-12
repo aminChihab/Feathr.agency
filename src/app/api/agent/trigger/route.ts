@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Origin': paperclipUrl,
+        'Origin': 'https://feathr-agency.vercel.app',
       },
       body: JSON.stringify({ email: paperclipEmail, password: paperclipPassword }),
     })
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         'Cookie': cookieValue,
-        'Origin': paperclipUrl,
+        'Origin': 'https://feathr-agency.vercel.app',
       },
       body: JSON.stringify({
         title: title ?? `Analyze media for ${profile_id}`,
