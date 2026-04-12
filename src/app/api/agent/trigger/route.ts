@@ -48,7 +48,10 @@ export async function POST(request: NextRequest) {
     // Login to Paperclip
     const loginRes = await fetch(`${paperclipUrl}/api/auth/sign-in/email`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Origin': paperclipUrl,
+      },
       body: JSON.stringify({ email: paperclipEmail, password: paperclipPassword }),
     })
 
