@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         title: title ?? `Analyze media for ${profile_id}`,
-        body: description,
+        description: description,
         assigneeAgentId: agentId,
         status: 'todo',
         priority: 'medium',
