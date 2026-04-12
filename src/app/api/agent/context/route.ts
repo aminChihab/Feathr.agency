@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
       .limit(30)
 
     // Get media library summary
-    const { data: mediaCount } = await supabase
+    const { count: mediaCount } = await supabase
       .from('content_library')
       .select('id', { count: 'exact', head: true })
       .eq('profile_id', profileId)
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
       research_reports: reports ?? [],
       platforms: platforms ?? [],
       recent_posts: recentPosts ?? [],
-      media_count: mediaCount?.count ?? 0,
+      media_count: mediaCount ?? 0,
     })
   }
 
