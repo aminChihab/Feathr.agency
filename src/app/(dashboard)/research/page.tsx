@@ -43,6 +43,14 @@ export default function ResearchPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      // Step 1: Sync fresh data from Twitter
+      console.log('[research] Syncing Twitter data...')
+      const syncRes = await fetch('/api/research/sync', { method: 'POST' })
+      const syncData = await syncRes.json()
+      console.log('[research] Sync result:', syncData)
+
+      // Step 2: Trigger Research Agent to analyze the data
+      console.log('[research] Triggering Research Agent...')
       const res = await fetch('/api/agent/trigger', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
