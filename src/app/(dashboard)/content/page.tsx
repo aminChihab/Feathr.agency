@@ -17,6 +17,8 @@ import {
   Edit3,
   Send,
   Plus,
+  Sparkles,
+  Loader2,
   Calendar as CalendarIcon,
   Grid3X3,
 } from 'lucide-react'
@@ -382,6 +384,7 @@ export default function ContentPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editPost, setEditPost] = useState<CalendarItem | null>(null)
   const [posting, setPosting] = useState(false)
+  const [suggesting, setSuggesting] = useState(false)
 
   // Calendar state
   const today = new Date()
@@ -457,6 +460,32 @@ export default function ContentPage() {
     setPosting(false)
   }
 
+  async function handleSuggestPosts() {
+    if (!userId) return
+    setSuggesting(true)
+    try {
+      const res = await fetch('/api/agent/trigger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agent: 'content-writer',
+          profile_id: userId,
+          title: 'Plan and write posts for the next 7 days',
+        }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        console.log('[content] Triggered content writer:', data.identifier)
+      } else {
+        console.error('[content] Failed to trigger:', data)
+      }
+    } catch (err) {
+      console.error('[content] Error triggering:', err)
+    } finally {
+      setSuggesting(false)
+    }
+  }
+
   // Navigation
   function navigatePrev() {
     const d = new Date(currentDate)
@@ -520,9 +549,17 @@ export default function ContentPage() {
             <Send className="h-3.5 w-3.5 mr-1.5" />
             {posting ? 'Posting...' : 'Post now'}
           </Button>
-          <Button onClick={handleNewPost} className="bg-accent text-white hover:bg-accent-hover">
-            <Plus className="h-4 w-4 mr-1.5" />
-            New post
+          <Button variant="outline" onClick={handleNewPost} className="text-xs">
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
+            Manual post
+          </Button>
+          <Button onClick={handleSuggestPosts} disabled={suggesting} className="bg-accent text-white hover:bg-accent-hover">
+            {suggesting ? (
+              <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+            ) : (
+              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+            )}
+            {suggesting ? 'Starting...' : 'Suggest posts'}
           </Button>
         </div>
       </div>
