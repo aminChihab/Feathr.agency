@@ -70,6 +70,7 @@ export default function SettingsPage() {
   const [city, setCity] = useState('')
   const [goals, setGoals] = useState<string[]>([])
   const [voiceDescription, setVoiceDescription] = useState('')
+  const [voiceSample, setVoiceSample] = useState('')
 
   // Chat history files
   const [chatFiles, setChatFiles] = useState<{ name: string; path: string }[]>([])
@@ -125,6 +126,7 @@ export default function SettingsPage() {
         setCity(profileData.city ?? '')
         setGoals((profileData.goals as string[]) ?? [])
         setVoiceDescription(profileData.voice_description ?? '')
+        setVoiceSample(profileData.voice_sample ?? '')
 
         const settings = (profileData.settings as any) ?? {}
         setResearchTerms(settings.research_terms ?? DEFAULT_TERMS)
@@ -389,124 +391,137 @@ export default function SettingsPage() {
         {/* Voice */}
         {activeTab === 'voice' && (
           <div className="space-y-8">
-            {/* Voice description */}
-            <div className="space-y-3">
-              <div>
-                <Label>Voice profile</Label>
-                <p className="text-xs text-text-muted mt-1">
-                  This shapes how your AI-written content sounds. You can edit it manually or generate it from chat history below.
-                </p>
-              </div>
+            {/* Voice description — free text by user */}
+            <div className="space-y-2">
+              <Label>Voice description</Label>
+              <Textarea
+                value={voiceDescription}
+                onChange={(e) => setVoiceDescription(e.target.value)}
+                rows={4}
+                className="bg-bg-surface"
+                placeholder="Describe how you communicate — your tone, humor, boundaries, and style..."
+              />
+              <p className="text-xs text-text-muted">
+                Describe your voice in your own words. This is read by the AI alongside the analyzed voice profile below.
+              </p>
+              <Button onClick={saveVoice} disabled={saving} className="bg-accent text-white hover:bg-accent-hover">
+                {saving ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
 
-              {/* Render JSON voice nicely if it's JSON, otherwise show textarea */}
-              {(() => {
-                let parsed: any = null
-                try { parsed = JSON.parse(voiceDescription) } catch {}
+            {/* Voice sample — JSON generated from chat analysis */}
+            {voiceSample && (() => {
+              let parsed: any = null
+              try { parsed = JSON.parse(voiceSample) } catch {}
+              if (!parsed || typeof parsed !== 'object') return null
 
-                if (parsed && typeof parsed === 'object') {
-                  return (
-                    <div className="space-y-3">
-                      {/* Summary */}
-                      {parsed.summary && (
-                        <div className="rounded-lg bg-accent/5 border border-accent/10 p-4">
-                          <p className="text-sm text-text-primary leading-relaxed">{parsed.summary}</p>
-                        </div>
+              return (
+                <div className="space-y-3 border-t border-border pt-6">
+                  <div>
+                    <Label>Analyzed voice profile</Label>
+                    <p className="text-xs text-text-muted mt-1">Generated from your chat history. Used by the AI to match your writing style.</p>
+                  </div>
+
+                  {/* Summary */}
+                  {parsed.summary && (
+                    <div className="rounded-lg bg-accent/5 border border-accent/10 p-4">
+                      <p className="text-sm text-text-primary leading-relaxed">{parsed.summary}</p>
+                    </div>
+                  )}
+
+                  {/* Tone & Personality */}
+                  {(parsed.tone?.length > 0 || parsed.personality_traits?.length > 0) && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {(parsed.tone ?? []).map((t: string, i: number) => (
+                        <span key={`t${i}`} className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs text-accent">{t}</span>
+                      ))}
+                      {(parsed.personality_traits ?? []).map((t: string, i: number) => (
+                        <span key={`p${i}`} className="rounded-full bg-status-scheduled/10 px-2.5 py-0.5 text-xs text-status-scheduled">{t}</span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Writing Style */}
+                  {parsed.writing_style && (
+                    <div className="rounded-lg bg-bg-base border border-border/50 px-4 py-3 space-y-1.5 text-xs">
+                      <p className="text-text-muted font-medium uppercase tracking-wider text-[10px]">Writing style</p>
+                      {parsed.writing_style.sentence_length && (
+                        <p><span className="text-text-muted">Sentences:</span> <span className="text-text-primary">{parsed.writing_style.sentence_length}</span></p>
                       )}
-
-                      {/* Tone & Personality */}
-                      <div className="flex flex-wrap gap-1.5">
-                        {(parsed.tone ?? []).map((t: string, i: number) => (
-                          <span key={i} className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs text-accent">{t}</span>
-                        ))}
-                        {(parsed.personality_traits ?? []).map((t: string, i: number) => (
-                          <span key={i} className="rounded-full bg-status-scheduled/10 px-2.5 py-0.5 text-xs text-status-scheduled">{t}</span>
-                        ))}
-                      </div>
-
-                      {/* Writing Style */}
-                      {parsed.writing_style && (
-                        <div className="rounded-lg bg-bg-base border border-border/50 px-4 py-3 space-y-1.5 text-xs">
-                          <p className="text-text-muted font-medium uppercase tracking-wider text-[10px]">Writing style</p>
-                          {parsed.writing_style.sentence_length && (
-                            <p><span className="text-text-muted">Sentences:</span> <span className="text-text-primary">{parsed.writing_style.sentence_length}</span></p>
-                          )}
-                          {parsed.writing_style.punctuation && (
-                            <p><span className="text-text-muted">Punctuation:</span> <span className="text-text-primary">{parsed.writing_style.punctuation}</span></p>
-                          )}
-                          {parsed.writing_style.capitalization && (
-                            <p><span className="text-text-muted">Capitalization:</span> <span className="text-text-primary">{parsed.writing_style.capitalization}</span></p>
-                          )}
-                          {parsed.writing_style.quirks?.length > 0 && (
-                            <div className="flex flex-wrap gap-1 pt-1">
-                              {parsed.writing_style.quirks.map((q: string, i: number) => (
-                                <span key={i} className="rounded bg-bg-elevated px-2 py-0.5 text-[11px] text-text-secondary">{q}</span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                      {parsed.writing_style.punctuation && (
+                        <p><span className="text-text-muted">Punctuation:</span> <span className="text-text-primary">{parsed.writing_style.punctuation}</span></p>
                       )}
-
-                      {/* Do / Don't */}
-                      {(parsed.do?.length > 0 || parsed.dont?.length > 0) && (
-                        <div className="grid grid-cols-2 gap-3">
-                          {parsed.do?.length > 0 && (
-                            <div className="rounded-lg bg-bg-base border border-border/50 px-4 py-3 space-y-1.5">
-                              <p className="text-[10px] text-status-scheduled font-medium uppercase tracking-wider">Do</p>
-                              {parsed.do.map((d: string, i: number) => (
-                                <p key={i} className="text-xs text-text-secondary">· {d}</p>
-                              ))}
-                            </div>
-                          )}
-                          {parsed.dont?.length > 0 && (
-                            <div className="rounded-lg bg-bg-base border border-border/50 px-4 py-3 space-y-1.5">
-                              <p className="text-[10px] text-status-failed font-medium uppercase tracking-wider">Don&apos;t</p>
-                              {parsed.dont.map((d: string, i: number) => (
-                                <p key={i} className="text-xs text-text-secondary">· {d}</p>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                      {parsed.writing_style.capitalization && (
+                        <p><span className="text-text-muted">Capitalization:</span> <span className="text-text-primary">{parsed.writing_style.capitalization}</span></p>
                       )}
-
-                      {/* Phrases */}
-                      {parsed.phrases?.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5">
-                          {parsed.phrases.map((p: string, i: number) => (
-                            <span key={i} className="rounded-full bg-bg-elevated px-2.5 py-0.5 text-xs text-text-secondary italic">&ldquo;{p}&rdquo;</span>
+                      {parsed.writing_style.quirks?.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          {parsed.writing_style.quirks.map((q: string, i: number) => (
+                            <span key={i} className="rounded bg-bg-elevated px-2 py-0.5 text-[11px] text-text-secondary">{q}</span>
                           ))}
                         </div>
                       )}
-
-                      {/* Raw JSON editor toggle */}
-                      <details className="group">
-                        <summary className="text-xs text-text-muted cursor-pointer hover:text-text-secondary">Edit raw JSON</summary>
-                        <Textarea
-                          value={voiceDescription}
-                          onChange={(e) => setVoiceDescription(e.target.value)}
-                          rows={12}
-                          className="bg-bg-surface mt-2 font-mono text-xs"
-                        />
-                      </details>
                     </div>
-                  )
-                }
+                  )}
 
-                // Plain text fallback
-                return (
-                  <Textarea
-                    value={voiceDescription}
-                    onChange={(e) => setVoiceDescription(e.target.value)}
-                    rows={6}
-                    className="bg-bg-surface"
-                    placeholder="Describe how you communicate — your tone, humor, boundaries, and style..."
-                  />
-                )
-              })()}
+                  {/* Do / Don't */}
+                  {(parsed.do?.length > 0 || parsed.dont?.length > 0) && (
+                    <div className="grid grid-cols-2 gap-3">
+                      {parsed.do?.length > 0 && (
+                        <div className="rounded-lg bg-bg-base border border-border/50 px-4 py-3 space-y-1.5">
+                          <p className="text-[10px] text-status-scheduled font-medium uppercase tracking-wider">Do</p>
+                          {parsed.do.map((d: string, i: number) => (
+                            <p key={i} className="text-xs text-text-secondary">&middot; {d}</p>
+                          ))}
+                        </div>
+                      )}
+                      {parsed.dont?.length > 0 && (
+                        <div className="rounded-lg bg-bg-base border border-border/50 px-4 py-3 space-y-1.5">
+                          <p className="text-[10px] text-status-failed font-medium uppercase tracking-wider">Don&apos;t</p>
+                          {parsed.dont.map((d: string, i: number) => (
+                            <p key={i} className="text-xs text-text-secondary">&middot; {d}</p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-              <Button onClick={saveVoice} disabled={saving} className="bg-accent text-white hover:bg-accent-hover">
-                {saving ? 'Saving...' : 'Save voice'}
-              </Button>
-            </div>
+                  {/* Phrases */}
+                  {parsed.phrases?.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {parsed.phrases.map((p: string, i: number) => (
+                        <span key={i} className="rounded-full bg-bg-elevated px-2.5 py-0.5 text-xs text-text-secondary italic">&ldquo;{p}&rdquo;</span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Raw JSON editor */}
+                  <details>
+                    <summary className="text-xs text-text-muted cursor-pointer hover:text-text-secondary">Edit raw JSON</summary>
+                    <Textarea
+                      value={voiceSample}
+                      onChange={(e) => setVoiceSample(e.target.value)}
+                      rows={12}
+                      className="bg-bg-surface mt-2 font-mono text-xs"
+                    />
+                    <Button
+                      onClick={async () => {
+                        if (!userId) return
+                        setSaving(true)
+                        await supabase.from('profiles').update({ voice_sample: voiceSample }).eq('id', userId)
+                        setSaving(false)
+                        flashSaved()
+                      }}
+                      disabled={saving}
+                      variant="outline"
+                      className="mt-2 text-xs"
+                    >
+                      {saving ? 'Saving...' : 'Save changes'}
+                    </Button>
+                  </details>
+                </div>
+              )
+            })()}
 
             {/* Chat history upload */}
             <div className="space-y-3 border-t border-border pt-6">

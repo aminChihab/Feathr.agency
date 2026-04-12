@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
     // Get profile + voice
     const { data: profile } = await supabase
       .from('profiles')
-      .select('professional_name, city, goals, voice_description')
+      .select('professional_name, city, goals, voice_description, voice_sample')
       .eq('id', profileId)
       .single()
 
@@ -141,7 +141,8 @@ export async function GET(request: NextRequest) {
         name: profile?.professional_name,
         city: profile?.city,
         goals: profile?.goals,
-        voice: profile?.voice_description,
+        voice_description: profile?.voice_description,
+        voice_sample: profile?.voice_sample,
       },
       research_reports: reports ?? [],
       platforms: platforms ?? [],

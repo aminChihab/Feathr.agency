@@ -24,10 +24,10 @@ export async function GET(request: NextRequest) {
 
   const supabase = createServiceClient()
 
-  // Get current voice
+  // Get current voice data
   const { data: profile } = await supabase
     .from('profiles')
-    .select('voice_description')
+    .select('voice_description, voice_sample')
     .eq('id', profileId)
     .single()
 
@@ -58,13 +58,14 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({
-    current_voice: profile?.voice_description ?? null,
+    voice_description: profile?.voice_description ?? null,
+    current_voice_sample: profile?.voice_sample ?? null,
     chat_files: chatTexts,
     total_chars: totalChars,
   })
 }
 
-// POST /api/agent/voice — Save updated voice description
+// POST /api/agent/voice — Save voice_sample (JSON from chat analysis)
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
   const expectedSecret = process.env.AGENT_SECRET
@@ -74,17 +75,26 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json()
-  const { profile_id, voice_description } = body
+  const { profile_id, voice_sample } = body
 
-  if (!profile_id || !voice_description) {
-    return NextResponse.json({ error: 'Missing profile_id or voice_description' }, { status: 400 })
+  if (!profile_id || !voice_sample) {
+    return NextResponse.json({ error: 'Missing profile_id or voice_sample' }, { status: 400 })
+  }
+
+  // Validate that voice_sample is valid JSON
+  try {
+    if (typeof voice_sample === 'string') {
+      JSON.parse(voice_sample)
+    }
+  } catch {
+    return NextResponse.json({ error: 'voice_sample must be valid JSON' }, { status: 400 })
   }
 
   const supabase = createServiceClient()
 
   const { error } = await supabase
     .from('profiles')
-    .update({ voice_description })
+    .update({ voice_sample })
     .eq('id', profile_id)
 
   if (error) {
