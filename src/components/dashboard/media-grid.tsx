@@ -255,10 +255,18 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
   }
 
   async function handleDelete(id: string, storagePath: string, thumbnailPath: string | null) {
+    // Get metadata for video frame paths before deleting
+    const item = items.find((i) => i.id === id)
+    const framePaths: string[] = (item?.metadata as any)?.frame_paths ?? []
+
     await supabase.from('content_library').delete().eq('id', id)
     await supabase.storage.from('media').remove([storagePath])
     if (thumbnailPath) {
       await supabase.storage.from('media').remove([thumbnailPath])
+    }
+    // Clean up video frames
+    if (framePaths.length > 0) {
+      await supabase.storage.from('media').remove(framePaths)
     }
     setItems((prev) => prev.filter((i) => i.id !== id))
     if (previewItem?.id === id) setPreviewItem(null)
