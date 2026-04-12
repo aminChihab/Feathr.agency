@@ -159,6 +159,7 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
     if (uploadError) return
 
     let thumbnailPath: string | null = null
+    let videoFramePaths: string[] = []
 
     if (fileType === 'photo') {
       const thumbBlob = await generateImageThumbnail(file)
@@ -167,11 +168,25 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
         await supabase.storage.from('media').upload(thumbnailPath, thumbBlob)
       }
     } else if (fileType === 'video') {
-      const thumbBlob = await generateVideoThumbnail(file)
-      if (thumbBlob) {
-        thumbnailPath = `${userId}/thumbs/${uuid}.jpg`
-        await supabase.storage.from('media').upload(thumbnailPath, thumbBlob)
+      // Generate 5 frames at 1/6, 2/6, 3/6, 4/6, 5/6 of video duration
+      const frameBlobs = await generateVideoFrames(file, 5)
+      const framePaths: string[] = []
+
+      for (let f = 0; f < frameBlobs.length; f++) {
+        const blob = frameBlobs[f]
+        if (!blob) continue
+        const framePath = `${userId}/thumbs/${uuid}_frame${f}.jpg`
+        await supabase.storage.from('media').upload(framePath, blob)
+        framePaths.push(framePath)
       }
+
+      // First frame as main thumbnail
+      if (framePaths.length > 0) {
+        thumbnailPath = framePaths[0]
+      }
+
+      // Store all frame paths in metadata
+      videoFramePaths = framePaths
     }
 
     await supabase.from('content_library').insert({
@@ -182,6 +197,7 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
       mime_type: file.type,
       file_size: file.size,
       thumbnail_path: thumbnailPath,
+      metadata: videoFramePaths.length > 0 ? { frame_paths: videoFramePaths } : {},
     })
 
     setUploadProgress((prev) => ({ ...prev, current: prev.current + 1 }))
@@ -659,8 +675,8 @@ async function generateImageThumbnail(file: File): Promise<Blob | null> {
   })
 }
 
-// Generate video thumbnail from first frame
-async function generateVideoThumbnail(file: File): Promise<Blob | null> {
+// Generate multiple video frames at evenly spaced intervals
+async function generateVideoFrames(file: File, count: number): Promise<(Blob | null)[]> {
   return new Promise((resolve) => {
     const video = document.createElement('video')
     const url = URL.createObjectURL(file)
@@ -669,35 +685,54 @@ async function generateVideoThumbnail(file: File): Promise<Blob | null> {
     video.playsInline = true
     video.crossOrigin = 'anonymous'
 
-    video.onloadedmetadata = () => {
-      video.currentTime = Math.min(1, video.duration * 0.1)
-    }
+    const frames: (Blob | null)[] = []
+    let currentFrame = 0
 
-    video.onseeked = () => {
-      requestAnimationFrame(() => {
+    function captureFrame(): Promise<Blob | null> {
+      return new Promise((res) => {
         requestAnimationFrame(() => {
-          try {
-            const canvas = document.createElement('canvas')
-            const maxSize = 600
-            const vw = video.videoWidth || 640
-            const vh = video.videoHeight || 360
-            const ratio = Math.min(maxSize / vw, maxSize / vh, 1)
-            canvas.width = vw * ratio
-            canvas.height = vh * ratio
-            const ctx = canvas.getContext('2d')!
+          requestAnimationFrame(() => {
+            try {
+              const canvas = document.createElement('canvas')
+              const maxSize = 600
+              const vw = video.videoWidth || 640
+              const vh = video.videoHeight || 360
+              const ratio = Math.min(maxSize / vw, maxSize / vh, 1)
+              canvas.width = vw * ratio
+              canvas.height = vh * ratio
+              const ctx = canvas.getContext('2d')!
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
             URL.revokeObjectURL(url)
             canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.85)
-          } catch {
-            URL.revokeObjectURL(url)
-            resolve(null)
-          }
+              canvas.toBlob((blob) => res(blob), 'image/jpeg', 0.85)
+            } catch {
+              res(null)
+            }
+          })
         })
       })
     }
 
-    video.onerror = () => { URL.revokeObjectURL(url); resolve(null) }
-    setTimeout(() => { URL.revokeObjectURL(url); resolve(null) }, 10000)
+    video.onloadedmetadata = async () => {
+      const duration = video.duration
+      for (let i = 0; i < count; i++) {
+        const time = (duration * (i + 1)) / (count + 1) // 1/6, 2/6, 3/6, 4/6, 5/6
+        video.currentTime = time
+
+        await new Promise<void>((seekRes) => {
+          video.onseeked = () => seekRes()
+        })
+
+        const blob = await captureFrame()
+        frames.push(blob)
+      }
+
+      URL.revokeObjectURL(url)
+      resolve(frames)
+    }
+
+    video.onerror = () => { URL.revokeObjectURL(url); resolve([]) }
+    setTimeout(() => { URL.revokeObjectURL(url); resolve(frames) }, 30000)
 
     video.src = url
     video.load()
