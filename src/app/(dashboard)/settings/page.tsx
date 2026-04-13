@@ -574,10 +574,10 @@ export default function SettingsPage() {
                       <button
                         key={name}
                         onClick={() => setSelectedParticipant(name)}
-                        className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
+                        className={`bg-surface-container-highest text-on-surface-variant rounded-full px-3 py-1 text-xs transition-colors ${
                           selectedParticipant === name
-                            ? 'bg-primary text-on-primary'
-                            : 'bg-surface border border-outline-variant/30 text-on-surface-variant hover:border-primary'
+                            ? 'ring-2 ring-primary text-primary'
+                            : 'hover:text-on-surface'
                         }`}
                       >
                         {name}
@@ -658,7 +658,7 @@ export default function SettingsPage() {
                 { label: 'Lead qualified', checked: notifLeadQualified, onChange: setNotifLeadQualified },
                 { label: 'Listing expiring', checked: notifListingExpiring, onChange: setNotifListingExpiring },
               ].map((item) => (
-                <label key={item.label} className="flex cursor-pointer items-center justify-between rounded-lg border border-outline-variant/30 px-4 py-3 transition-colors hover:bg-bg-surface">
+                <label key={item.label} className="flex cursor-pointer items-center justify-between rounded-xl border border-outline-variant/30 px-4 py-3 transition-colors hover:bg-surface-container-low">
                   <span className="text-sm">{item.label}</span>
                   <Checkbox checked={item.checked} onCheckedChange={(c) => item.onChange(c === true)} />
                 </label>
