@@ -119,7 +119,7 @@ export function Launch({ userId, supabase, onBack }: LaunchProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     )
   }
@@ -127,7 +127,7 @@ export function Launch({ userId, supabase, onBack }: LaunchProps) {
   if (launching) {
     return (
       <div className="space-y-8 text-center py-8">
-        <h1 className="text-3xl font-light tracking-tight">Setting up your assistants...</h1>
+        <h1 className="font-display text-4xl text-on-surface">Setting up your assistants...</h1>
         <div className="space-y-3 text-left max-w-sm mx-auto">
           {ASSISTANT_NAMES.map((name, i) => (
             <div
@@ -136,15 +136,15 @@ export function Launch({ userId, supabase, onBack }: LaunchProps) {
                 i < launchStep ? 'opacity-100' : 'opacity-20'
               }`}
             >
-              <span className={`text-sm ${i < launchStep ? 'text-status-scheduled' : 'text-text-muted'}`}>
-                {i < launchStep ? '✓' : '○'}
+              <span className={`text-sm ${i < launchStep ? 'text-primary' : 'text-on-surface-variant/60'}`}>
+                {i < launchStep ? '&#10003;' : '&#9675;'}
               </span>
-              <span className="text-sm">{name}</span>
+              <span className="text-sm text-on-surface">{name}</span>
             </div>
           ))}
         </div>
         {launchStep >= ASSISTANT_NAMES.length && (
-          <p className="text-accent animate-pulse">All set! Redirecting to your dashboard...</p>
+          <p className="text-primary animate-pulse">All set! Redirecting to your dashboard...</p>
         )}
       </div>
     )
@@ -156,9 +156,9 @@ export function Launch({ userId, supabase, onBack }: LaunchProps) {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-light tracking-tight">Set your schedule & launch</h1>
-        <p className="mt-2 text-text-secondary">
+      <div className="text-center">
+        <h1 className="font-display text-5xl text-on-surface">Your Atelier is Ready.</h1>
+        <p className="mt-2 text-on-surface-variant">
           Choose how often Feathr posts on each platform. You can adjust this anytime.
         </p>
       </div>
@@ -168,14 +168,14 @@ export function Launch({ userId, supabase, onBack }: LaunchProps) {
           {schedulableAccounts.map((account) => (
             <div
               key={account.id}
-              className="flex items-center justify-between rounded-lg border border-border px-4 py-3"
+              className="flex items-center justify-between bg-surface-container-low rounded-xl p-6"
             >
               <div className="flex items-center gap-3">
                 <div
                   className="h-3 w-3 rounded-full"
                   style={{ backgroundColor: account.platforms?.color ?? '#666' }}
                 />
-                <span className="text-sm font-medium">{account.platforms?.name}</span>
+                <span className="text-sm font-medium text-on-surface">{account.platforms?.name}</span>
               </div>
               <Select
                 value={schedules[account.id] ?? ''}
@@ -183,7 +183,7 @@ export function Launch({ userId, supabase, onBack }: LaunchProps) {
                   setSchedules((prev) => ({ ...prev, [account.id]: val }))
                 }
               >
-                <SelectTrigger className="w-40 bg-bg-surface">
+                <SelectTrigger className="w-40 bg-surface-container-low rounded-xl">
                   <SelectValue placeholder="Frequency" />
                 </SelectTrigger>
                 <SelectContent>
@@ -198,7 +198,7 @@ export function Launch({ userId, supabase, onBack }: LaunchProps) {
           ))}
         </div>
       ) : (
-        <p className="text-center text-text-muted">
+        <p className="text-center text-on-surface-variant/60">
           No platforms connected yet. You can set schedules later in Settings.
         </p>
       )}
@@ -207,10 +207,10 @@ export function Launch({ userId, supabase, onBack }: LaunchProps) {
         <Button variant="ghost" onClick={onBack}>Back</Button>
         <Button
           onClick={handleLaunch}
-          className="bg-accent px-8 text-white hover:bg-accent-hover"
+          className="gradient-cta h-14 px-10 text-lg text-white"
           size="lg"
         >
-          Launch your agency
+          Launch Dashboard
         </Button>
       </div>
     </div>

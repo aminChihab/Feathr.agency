@@ -42,8 +42,10 @@ export function Voice({ userId, supabase, onNext, onBack }: VoiceProps) {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-light tracking-tight">Your voice & style</h1>
-        <p className="mt-2 text-text-secondary">
+        <h1 className="font-display text-4xl text-on-surface">
+          Define Your <em className="serif-italic">Voice</em>
+        </h1>
+        <p className="mt-2 text-on-surface-variant">
           Describe how you communicate with clients. This is how your AI-written content and messages will sound.
         </p>
       </div>
@@ -61,11 +63,18 @@ export function Voice({ userId, supabase, onNext, onBack }: VoiceProps) {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={6}
-          className="bg-bg-surface"
+          className="bg-surface-container-low rounded-xl"
           placeholder="I'm warm and flirty but always professional. I use lots of emojis and address clients with 'babe' or 'love'. I'm direct about my boundaries but never rude."
         />
-        <p className="text-sm text-text-muted">
+        <p className="text-sm text-on-surface-variant/60">
           2-3 sentences is perfect. The more specific, the better your content will sound.
+        </p>
+      </div>
+
+      <div className="bg-surface-container-low rounded-xl p-4">
+        <p className="text-xs uppercase tracking-wider text-on-surface-variant mb-2">Training Insight</p>
+        <p className="text-sm text-on-surface-variant">
+          Your voice description helps our AI match your unique communication style across all platforms.
         </p>
       </div>
 
@@ -74,9 +83,9 @@ export function Voice({ userId, supabase, onNext, onBack }: VoiceProps) {
         <Button
           onClick={handleNext}
           disabled={!description.trim() || loading}
-          className="bg-accent text-white hover:bg-accent-hover disabled:opacity-50"
+          className="gradient-cta text-white disabled:opacity-50"
         >
-          {loading ? 'Saving...' : 'Next'}
+          {loading ? 'Saving...' : 'Continue'}
         </Button>
       </div>
     </div>

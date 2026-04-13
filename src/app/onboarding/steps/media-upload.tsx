@@ -104,8 +104,8 @@ export function MediaUpload({ userId, supabase, onNext, onBack }: MediaUploadPro
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-light tracking-tight">Upload your content</h1>
-        <p className="mt-2 text-text-secondary">
+        <h1 className="font-display text-4xl text-on-surface">Curate Your Portfolio</h1>
+        <p className="mt-2 text-on-surface-variant">
           Add photos and videos that Feathr can use for your posts, stories, and promotions.
         </p>
       </div>
@@ -122,19 +122,19 @@ export function MediaUpload({ userId, supabase, onNext, onBack }: MediaUploadPro
         onFilesAdded={handleFilesAdded}
       >
         <div className="space-y-2">
-          <p className="text-text-secondary">
+          <p className="text-on-surface-variant">
             {uploading ? 'Uploading...' : 'Drag & drop photos or videos here, or click to browse'}
           </p>
-          <p className="text-sm text-text-muted">JPG, PNG, WEBP, MP4, MOV — max 50MB each</p>
+          <p className="text-sm text-on-surface-variant/60">JPG, PNG, WEBP, MP4, MOV — max 50MB each</p>
         </div>
       </FileDropzone>
 
       {files.length > 0 && (
         <div>
-          <p className="mb-3 text-sm text-text-secondary">{files.length} file(s) uploaded</p>
+          <p className="mb-3 text-sm text-on-surface-variant">{files.length} file(s) uploaded</p>
           <div className="grid grid-cols-3 gap-3">
             {files.map((file) => (
-              <div key={file.id} className="group relative rounded-lg border border-border overflow-hidden">
+              <div key={file.id} className="group relative bg-surface-container-high rounded-xl overflow-hidden">
                 {file.type === 'photo' && file.thumbnailUrl ? (
                   <img
                     src={file.thumbnailUrl}
@@ -142,15 +142,20 @@ export function MediaUpload({ userId, supabase, onNext, onBack }: MediaUploadPro
                     className="aspect-square w-full object-cover"
                   />
                 ) : (
-                  <div className="flex aspect-square items-center justify-center bg-bg-surface">
-                    <span className="text-2xl">🎬</span>
+                  <div className="flex aspect-square items-center justify-center bg-surface-container-high rounded-xl">
+                    <span className="text-2xl">&#127916;</span>
+                  </div>
+                )}
+                {uploading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <span className="text-xs uppercase tracking-wider text-white">Processing</span>
                   </div>
                 )}
                 <button
                   onClick={() => removeFile(file.id)}
                   className="absolute right-1 top-1 rounded-full bg-black/60 px-2 py-0.5 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
                 >
-                  ✕
+                  &#10005;
                 </button>
               </div>
             ))}
@@ -159,7 +164,7 @@ export function MediaUpload({ userId, supabase, onNext, onBack }: MediaUploadPro
       )}
 
       {files.length === 0 && (
-        <p className="text-center text-sm text-text-muted">
+        <p className="text-center text-sm text-on-surface-variant/60">
           We recommend uploading at least 3 photos to get started.
         </p>
       )}
@@ -169,9 +174,9 @@ export function MediaUpload({ userId, supabase, onNext, onBack }: MediaUploadPro
         <Button
           onClick={onNext}
           disabled={uploading}
-          className="bg-accent text-white hover:bg-accent-hover disabled:opacity-50"
+          className="gradient-cta text-white disabled:opacity-50"
         >
-          Next
+          Continue
         </Button>
       </div>
     </div>

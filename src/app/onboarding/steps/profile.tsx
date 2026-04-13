@@ -6,7 +6,6 @@ import type { Database } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
 
 interface ProfileProps {
   userId: string
@@ -65,8 +64,10 @@ export function Profile({ userId, supabase, onNext, onBack }: ProfileProps) {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-light tracking-tight">Create your profile</h1>
-        <p className="mt-2 text-text-secondary">Tell us the basics about your work.</p>
+        <h1 className="font-display text-4xl text-on-surface">
+          The foundation of your <em className="serif-italic">digital atelier.</em>
+        </h1>
+        <p className="mt-2 text-on-surface-variant">Tell us the basics about your work.</p>
       </div>
 
       {error && (
@@ -83,7 +84,7 @@ export function Profile({ userId, supabase, onNext, onBack }: ProfileProps) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Eva Hunter"
-            className="bg-bg-surface"
+            className="bg-surface-container-low rounded-xl"
           />
         </div>
 
@@ -94,24 +95,27 @@ export function Profile({ userId, supabase, onNext, onBack }: ProfileProps) {
             value={city}
             onChange={(e) => setCity(e.target.value)}
             placeholder="e.g. Amsterdam"
-            className="bg-bg-surface"
+            className="bg-surface-container-low rounded-xl"
           />
         </div>
 
         <div className="space-y-3">
           <Label>What are your goals?</Label>
-          {GOALS.map((goal) => (
-            <label
-              key={goal.value}
-              className="flex cursor-pointer items-center gap-3 rounded-lg border border-border px-4 py-3 transition-colors hover:bg-bg-surface"
-            >
-              <Checkbox
-                checked={goals.includes(goal.value)}
-                onCheckedChange={() => toggleGoal(goal.value)}
-              />
-              <span className="text-sm">{goal.label}</span>
-            </label>
-          ))}
+          <div className="flex flex-wrap gap-2">
+            {GOALS.map((goal) => (
+              <button
+                key={goal.value}
+                onClick={() => toggleGoal(goal.value)}
+                className={`rounded-full px-4 py-2 text-sm transition-colors ${
+                  goals.includes(goal.value)
+                    ? 'bg-primary/15 text-primary border border-primary/30'
+                    : 'bg-surface-container-high text-on-surface-variant'
+                }`}
+              >
+                {goal.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -120,9 +124,9 @@ export function Profile({ userId, supabase, onNext, onBack }: ProfileProps) {
         <Button
           onClick={handleNext}
           disabled={!isValid || loading}
-          className="bg-accent text-white hover:bg-accent-hover disabled:opacity-50"
+          className="gradient-cta text-white disabled:opacity-50"
         >
-          {loading ? 'Saving...' : 'Next'}
+          {loading ? 'Saving...' : 'Continue'}
         </Button>
       </div>
     </div>

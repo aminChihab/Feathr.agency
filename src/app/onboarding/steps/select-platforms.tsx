@@ -66,16 +66,16 @@ export function SelectPlatforms({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     )
   }
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-light tracking-tight">Choose your platforms</h1>
-        <p className="mt-2 text-text-secondary">
+      <div className="text-center">
+        <h1 className="font-display text-4xl text-on-surface">Choose your channels</h1>
+        <p className="mt-2 text-on-surface-variant">
           Select the platforms you want Feathr to manage for you. You can always add more later.
         </p>
       </div>
@@ -83,7 +83,7 @@ export function SelectPlatforms({
       <div className="space-y-6">
         {grouped.map((group) => (
           <div key={group.category} className="space-y-3">
-            <h2 className="text-sm font-medium uppercase tracking-wider text-text-muted">
+            <h2 className="text-xs font-medium uppercase tracking-wider text-on-surface-variant">
               {group.label}
             </h2>
             <div className="grid grid-cols-2 gap-2">
@@ -95,22 +95,20 @@ export function SelectPlatforms({
                   <button
                     key={platform.id}
                     onClick={() => togglePlatform(platform.id)}
-                    className={`flex items-center gap-3 rounded-lg border px-4 py-3 text-left transition-colors ${
+                    className={`flex flex-col items-center justify-center gap-2 rounded-xl p-6 text-center transition-colors ${
                       selected
-                        ? 'border-accent bg-accent/10'
-                        : 'border-border hover:bg-bg-surface'
+                        ? 'border-2 border-primary bg-surface-container-high'
+                        : 'bg-surface-container-high hover:bg-surface-container-high/80'
                     }`}
                   >
                     <div
-                      className="h-3 w-3 rounded-full flex-shrink-0"
+                      className="h-3 w-3 rounded-full"
                       style={{ backgroundColor: platform.color ?? '#666' }}
                     />
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{platform.name}</p>
-                      <p className="text-xs text-text-muted">
-                        {capabilities.join(' · ')}
-                      </p>
-                    </div>
+                    <p className="text-sm font-medium text-on-surface">{platform.name}</p>
+                    <p className="text-xs text-on-surface-variant/60">
+                      {capabilities.join(' · ')}
+                    </p>
                   </button>
                 )
               })}
@@ -122,15 +120,15 @@ export function SelectPlatforms({
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={onBack}>Back</Button>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-text-muted">
+          <span className="text-sm text-on-surface-variant">
             {selectedPlatforms.length} selected
           </span>
           <Button
             onClick={onNext}
             disabled={selectedPlatforms.length === 0}
-            className="bg-accent text-white hover:bg-accent-hover disabled:opacity-50"
+            className="gradient-cta text-white disabled:opacity-50"
           >
-            Next
+            Continue
           </Button>
         </div>
       </div>

@@ -54,8 +54,8 @@ export function ChatHistory({ userId, supabase, onNext, onBack }: ChatHistoryPro
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-light tracking-tight">Chat history</h1>
-        <p className="mt-2 text-text-secondary">
+        <h1 className="font-display text-4xl text-on-surface">Your Digital Resonance</h1>
+        <p className="mt-2 text-on-surface-variant">
           Upload previous conversations with clients (.txt files). This helps the AI learn exactly how you communicate — your tone, humor, boundaries, and style.
         </p>
       </div>
@@ -72,25 +72,25 @@ export function ChatHistory({ userId, supabase, onNext, onBack }: ChatHistoryPro
         onFilesAdded={handleFilesAdded}
       >
         <div className="space-y-2">
-          <p className="text-text-secondary">
+          <p className="text-on-surface-variant">
             {uploading ? 'Uploading...' : 'Drag & drop .txt files here, or click to browse'}
           </p>
-          <p className="text-sm text-text-muted">Up to 20 files</p>
+          <p className="text-sm text-on-surface-variant/60">Up to 20 files</p>
         </div>
       </FileDropzone>
 
       {files.length > 0 && (
         <div className="space-y-2">
-          <p className="text-sm text-text-secondary">{files.length} file(s) uploaded</p>
+          <p className="text-sm text-on-surface-variant">{files.length} file(s) uploaded</p>
           {files.map((file) => (
             <div
               key={file.path}
-              className="flex items-center justify-between rounded-lg border border-border px-4 py-2"
+              className="flex items-center justify-between bg-surface-container-high rounded-full px-4 py-2"
             >
-              <span className="text-sm truncate">{file.name}</span>
+              <span className="text-sm truncate text-on-surface">{file.name}</span>
               <button
                 onClick={() => removeFile(file.path)}
-                className="text-sm text-text-muted hover:text-status-failed"
+                className="text-sm text-on-surface-variant/60 hover:text-status-failed"
               >
                 Remove
               </button>
@@ -101,18 +101,21 @@ export function ChatHistory({ userId, supabase, onNext, onBack }: ChatHistoryPro
 
       <div className="flex justify-between">
         <Button variant="ghost" onClick={onBack}>Back</Button>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
           {files.length === 0 && (
-            <Button variant="ghost" onClick={onNext}>
+            <button
+              onClick={onNext}
+              className="text-sm text-on-surface-variant hover:text-on-surface transition-colors"
+            >
               Skip for now
-            </Button>
+            </button>
           )}
           <Button
             onClick={onNext}
             disabled={uploading}
-            className="bg-accent text-white hover:bg-accent-hover disabled:opacity-50"
+            className="gradient-cta text-white disabled:opacity-50"
           >
-            Next
+            Confirm & Continue
           </Button>
         </div>
       </div>

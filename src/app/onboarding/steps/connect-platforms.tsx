@@ -91,7 +91,7 @@ export function ConnectPlatforms({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     )
   }
@@ -99,8 +99,10 @@ export function ConnectPlatforms({
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-light tracking-tight">Connect your platforms</h1>
-        <p className="mt-2 text-text-secondary">
+        <h1 className="font-display text-4xl text-on-surface">
+          Connect your <span className="font-bold">Platforms.</span>
+        </h1>
+        <p className="mt-2 text-on-surface-variant">
           Link your accounts so Feathr can manage them for you. You can skip any and connect later.
         </p>
       </div>
@@ -113,13 +115,13 @@ export function ConnectPlatforms({
             return (
               <div
                 key={platform.id}
-                className="flex items-center justify-between rounded-lg border border-status-scheduled/50 bg-status-scheduled/5 px-4 py-3"
+                className="flex items-center justify-between bg-surface-container-low rounded-xl px-6 py-4"
               >
                 <div className="flex items-center gap-3">
                   <div className="h-3 w-3 rounded-full" style={{ backgroundColor: platform.color ?? '#666' }} />
-                  <span className="text-sm font-medium">{platform.name}</span>
+                  <span className="text-sm font-medium text-on-surface">{platform.name}</span>
                 </div>
-                <span className="text-sm text-status-scheduled">Connected</span>
+                <span className="bg-tertiary/15 text-tertiary text-xs rounded-full px-2 py-0.5">AUTHENTICATED</span>
               </div>
             )
           }
@@ -128,27 +130,27 @@ export function ConnectPlatforms({
             return (
               <div
                 key={platform.id}
-                className="flex items-center justify-between rounded-lg border border-border px-4 py-3 opacity-50"
+                className="flex items-center justify-between bg-surface-container-low rounded-xl px-6 py-4 opacity-50"
               >
                 <div className="flex items-center gap-3">
                   <div className="h-3 w-3 rounded-full" style={{ backgroundColor: platform.color ?? '#666' }} />
-                  <span className="text-sm">{platform.name}</span>
+                  <span className="text-sm text-on-surface">{platform.name}</span>
                 </div>
-                <span className="text-sm text-text-muted">Skipped</span>
+                <span className="text-sm text-on-surface-variant/60">Skipped</span>
               </div>
             )
           }
 
           return (
-            <div key={platform.id} className="rounded-lg border border-border p-4 space-y-3">
+            <div key={platform.id} className="bg-surface-container-low rounded-xl p-6 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="h-3 w-3 rounded-full" style={{ backgroundColor: platform.color ?? '#666' }} />
-                  <span className="text-sm font-medium">{platform.name}</span>
+                  <span className="text-sm font-medium text-on-surface">{platform.name}</span>
                 </div>
                 <button
                   onClick={() => skipPlatform(platform.id)}
-                  className="text-xs text-text-muted hover:text-text-secondary"
+                  className="text-xs text-on-surface-variant/60 hover:text-on-surface-variant"
                 >
                   Skip
                 </button>
@@ -157,9 +159,8 @@ export function ConnectPlatforms({
               {platform.auth_type === 'oauth' && (
                 <Button
                   onClick={() => startOAuth(platform)}
-                  variant="outline"
                   size="sm"
-                  className="w-full"
+                  className="w-full gradient-cta text-white"
                 >
                   Connect {platform.name}
                 </Button>
@@ -177,7 +178,7 @@ export function ConnectPlatforms({
                           [platform.id]: { ...prev[platform.id], username: e.target.value, password: prev[platform.id]?.password ?? '' },
                         }))
                       }
-                      className="bg-bg-surface h-9 text-sm"
+                      className="bg-surface-container-low rounded-xl h-9 text-sm"
                       placeholder="your@email.com"
                     />
                   </div>
@@ -192,7 +193,7 @@ export function ConnectPlatforms({
                           [platform.id]: { username: prev[platform.id]?.username ?? '', password: e.target.value },
                         }))
                       }
-                      className="bg-bg-surface h-9 text-sm"
+                      className="bg-surface-container-low rounded-xl h-9 text-sm"
                       placeholder="••••••••"
                     />
                   </div>
@@ -200,7 +201,7 @@ export function ConnectPlatforms({
                     onClick={() => connectCredentials(platform)}
                     disabled={state === 'saving'}
                     size="sm"
-                    className="w-full bg-accent text-white hover:bg-accent-hover"
+                    className="w-full gradient-cta text-white"
                   >
                     {state === 'saving' ? 'Saving...' : 'Save credentials'}
                   </Button>
@@ -216,7 +217,7 @@ export function ConnectPlatforms({
                       onChange={(e) =>
                         setApiKeys((prev) => ({ ...prev, [platform.id]: e.target.value }))
                       }
-                      className="bg-bg-surface h-9 text-sm"
+                      className="bg-surface-container-low rounded-xl h-9 text-sm"
                       placeholder="Paste your token here"
                     />
                   </div>
@@ -224,7 +225,7 @@ export function ConnectPlatforms({
                     onClick={() => connectApiKey(platform)}
                     disabled={state === 'saving'}
                     size="sm"
-                    className="w-full bg-accent text-white hover:bg-accent-hover"
+                    className="w-full gradient-cta text-white"
                   >
                     {state === 'saving' ? 'Saving...' : 'Save token'}
                   </Button>
@@ -232,7 +233,7 @@ export function ConnectPlatforms({
               )}
 
               {platform.auth_type === 'manual' && (
-                <p className="text-sm text-text-muted">
+                <p className="text-sm text-on-surface-variant/60">
                   This platform needs to be connected manually. You can set this up later in Settings.
                 </p>
               )}
@@ -241,13 +242,23 @@ export function ConnectPlatforms({
         })}
       </div>
 
+      <div className="bg-surface-container-low rounded-xl p-4 flex items-start gap-3">
+        <span className="text-on-surface-variant mt-0.5">&#128737;</span>
+        <div>
+          <p className="text-xs uppercase tracking-wider text-on-surface-variant mb-1">Privacy Assurance</p>
+          <p className="text-sm text-on-surface-variant/60">
+            Your credentials are encrypted end-to-end. Feathr never stores plaintext passwords.
+          </p>
+        </div>
+      </div>
+
       <div className="flex justify-between">
         <Button variant="ghost" onClick={onBack}>Back</Button>
         <Button
           onClick={onNext}
-          className="bg-accent text-white hover:bg-accent-hover"
+          className="gradient-cta text-white"
         >
-          Next
+          Continue
         </Button>
       </div>
     </div>
