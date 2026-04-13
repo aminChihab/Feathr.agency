@@ -180,10 +180,21 @@ export default function ResearchPage() {
             <p className="text-sm text-text-muted mt-1">{reports.length} report{reports.length !== 1 ? 's' : ''}</p>
           )}
         </div>
-        <Button onClick={handleNewResearch} disabled={triggering}>
-          {triggering ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-1.5" />}
-          {triggering ? 'Running...' : 'New Research'}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="text-xs" onClick={async () => {
+            console.log('[research] Testing IG sync...')
+            const res = await fetch('/api/research/sync-instagram', { method: 'POST' })
+            const data = await res.json()
+            console.log('[research] IG sync result:', data)
+            alert(`IG Sync: ${data.competitor_reports ?? 0} reports, ${data.errors?.length ?? 0} errors. Check console.`)
+          }}>
+            Test IG Sync
+          </Button>
+          <Button onClick={handleNewResearch} disabled={triggering}>
+            {triggering ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-1.5" />}
+            {triggering ? 'Running...' : 'New Research'}
+          </Button>
+        </div>
       </div>
 
       <ResearchSuggestions notifications={notifications} onAccept={handleAcceptSuggestion} onDismiss={handleDismissNotification} />
