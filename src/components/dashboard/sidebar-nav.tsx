@@ -6,8 +6,9 @@ import { cn } from '@/lib/utils'
 import Image from 'next/image'
 import {
   LayoutDashboard, Inbox, CalendarDays, BarChart3, Link2,
-  Search, ListChecks, Users, Plane, Bot, Settings,
+  Search, ListChecks, Users, Plane, Bot, Settings, Bell,
 } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -20,8 +21,9 @@ const navItems = [
   { href: '/clients', label: 'Clients', icon: Users },
   { href: '/touring', label: 'Touring', icon: Plane },
   { href: '/agents', label: 'Assistants', icon: Bot },
-  { href: '/settings', label: 'Settings', icon: Settings },
 ]
+
+const settingsItem = { href: '/settings', label: 'Settings', icon: Settings }
 
 interface SidebarNavProps {
   profileName: string | null
@@ -30,6 +32,22 @@ interface SidebarNavProps {
 
 export function SidebarNav({ profileName, email }: SidebarNavProps) {
   const pathname = usePathname()
+  const [notifCount, setNotifCount] = useState(0)
+
+  useEffect(() => {
+    async function fetchCount() {
+      try {
+        const res = await fetch('/api/notifications/count')
+        if (res.ok) {
+          const data = await res.json()
+          setNotifCount(data.count ?? 0)
+        }
+      } catch {}
+    }
+    fetchCount()
+    const interval = setInterval(fetchCount, 60000)
+    return () => clearInterval(interval)
+  }, [])
 
   function isActive(href: string) {
     if (href === '/') return pathname === '/'
@@ -64,6 +82,43 @@ export function SidebarNav({ profileName, email }: SidebarNavProps) {
             </Link>
           )
         })}
+
+        {/* Notifications bell */}
+        <Link
+          href="/research"
+          className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors relative ${
+            pathname === '/research'
+              ? 'bg-bg-elevated text-text-primary'
+              : 'text-text-secondary hover:bg-bg-surface hover:text-text-primary'
+          }`}
+        >
+          <Bell className="h-4 w-4" />
+          Notifications
+          {notifCount > 0 && (
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-5 min-w-[1.25rem] rounded-full bg-accent text-white text-[10px] font-medium px-1">
+              {notifCount > 99 ? '99+' : notifCount}
+            </span>
+          )}
+        </Link>
+
+        {/* Settings */}
+        {(() => {
+          const active = isActive(settingsItem.href)
+          return (
+            <Link
+              href={settingsItem.href}
+              className={cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
+                active
+                  ? 'bg-accent/10 text-accent font-medium'
+                  : 'text-text-secondary hover:bg-bg-elevated hover:text-text-primary'
+              )}
+            >
+              <settingsItem.icon className={cn('h-4 w-4', active && 'text-accent')} />
+              <span>{settingsItem.label}</span>
+            </Link>
+          )
+        })()}
       </nav>
 
       {/* Profile */}
