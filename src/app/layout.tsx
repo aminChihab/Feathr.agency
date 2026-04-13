@@ -22,8 +22,8 @@ export const metadata: Metadata = {
   title: 'FEATHR — Your AI Marketing Agency',
   description: 'AI-powered marketing for independent creators. 5 minutes a day.',
   icons: {
-    icon: '/logo.png',
-    apple: '/logo.png',
+    icon: '/logo.ico',
+    apple: '/logo.ico',
   },
 }
 
