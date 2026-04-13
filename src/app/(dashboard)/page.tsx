@@ -133,11 +133,11 @@ export default async function DashboardPage() {
       </div>
 
       {/* Main Sections: Bento Grid Layout */}
-      <div className="grid grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-12 gap-6 items-start">
 
         {/* Pending Approvals (7/12 width) */}
-        <section className="col-span-12 lg:col-span-7 bg-surface-container-lowest/50 rounded-2xl p-8 border border-outline-variant/10">
-          <div className="flex justify-between items-end mb-10">
+        <section className="col-span-12 lg:col-span-7 bg-surface-container-lowest/50 rounded-2xl p-8 border border-outline-variant/10 flex flex-col max-h-[calc(100vh-220px)]">
+          <div className="flex justify-between items-end mb-6">
             <div>
               <h3 className="font-display text-2xl text-on-surface">Pending Approvals</h3>
               <p className="text-on-surface-variant text-xs mt-1">AI-generated drafts awaiting final refinement</p>
@@ -152,7 +152,7 @@ export default async function DashboardPage() {
               <p className="text-on-surface-variant">No pending approvals. Your assistants will create drafts here.</p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4 overflow-y-auto flex-1 -mr-2 pr-2">
               {pendingPosts.map((post: any) => {
                 const platform = (post as any).platform_accounts?.platforms
                 return (
@@ -197,11 +197,11 @@ export default async function DashboardPage() {
         </section>
 
         {/* Right Column (5/12 width) */}
-        <section className="col-span-12 lg:col-span-5 flex flex-col gap-8">
+        <section className="col-span-12 lg:col-span-5 flex flex-col gap-6">
 
           {/* Hot Leads Panel */}
           <div className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/10">
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex justify-between items-center mb-5">
               <h3 className="font-display text-2xl text-on-surface">Hot Leads</h3>
               <Flame className="h-5 w-5 text-secondary" />
             </div>

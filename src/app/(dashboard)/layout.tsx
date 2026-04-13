@@ -23,7 +23,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         email={user.email ?? ''}
       />
       <main className="ml-64 flex-1 min-h-screen">
-        <div className="p-10 space-y-10">
+        <div className="p-10 space-y-6">
           {children}
         </div>
       </main>
