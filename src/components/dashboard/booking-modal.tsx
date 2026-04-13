@@ -68,30 +68,30 @@ export function BookingModal({ open, onClose, supabase, userId, clientId, client
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="bg-bg-surface border-border max-w-sm">
+      <DialogContent className="bg-surface-container-high border-outline-variant/30 max-w-sm">
         <DialogHeader>
-          <DialogTitle className="font-light">Add booking for {clientName}</DialogTitle>
+          <DialogTitle className="font-display">Add booking for {clientName}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>Date</Label>
-            <Input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} className="bg-bg-base [color-scheme:dark]" />
+            <Input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} className="bg-surface [color-scheme:dark]" />
           </div>
           <div className="space-y-2">
             <Label>Duration</Label>
-            <Input value={duration} onChange={(e) => setDuration(e.target.value)} className="bg-bg-base" placeholder="e.g. 1 hour" />
+            <Input value={duration} onChange={(e) => setDuration(e.target.value)} className="bg-surface" placeholder="e.g. 1 hour" />
           </div>
           <div className="space-y-2">
             <Label>Revenue</Label>
-            <Input type="number" step="0.01" value={revenue} onChange={(e) => setRevenue(e.target.value)} className="bg-bg-base" placeholder="0.00" />
+            <Input type="number" step="0.01" value={revenue} onChange={(e) => setRevenue(e.target.value)} className="bg-surface" placeholder="0.00" />
           </div>
           <div className="space-y-2">
             <Label>Notes</Label>
-            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="bg-bg-base" placeholder="Optional notes..." />
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="bg-surface" placeholder="Optional notes..." />
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={onClose}>Cancel</Button>
-            <Button onClick={handleSave} disabled={!date || saving} className="bg-accent text-white hover:bg-accent-hover">
+            <Button onClick={handleSave} disabled={!date || saving} className="gradient-cta text-white">
               {saving ? 'Saving...' : 'Add booking'}
             </Button>
           </div>

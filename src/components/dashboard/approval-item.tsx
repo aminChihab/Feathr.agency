@@ -22,13 +22,13 @@ export function ApprovalItem({
     : 'Not scheduled'
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-border bg-bg-surface px-4 py-3">
+    <div className="flex items-center justify-between rounded-lg border border-outline-variant/15 bg-surface-container-low px-4 py-3">
       <div className="flex items-center gap-3 min-w-0 flex-1">
         <span className="text-[10px] font-medium flex-shrink-0" style={{ color: platformColor }}>
           {platformName}
         </span>
         <p className="truncate text-sm">{caption || 'No caption'}</p>
-        <span className="text-[10px] text-text-muted flex-shrink-0">{time}</span>
+        <span className="text-[10px] text-on-surface-variant/60 flex-shrink-0">{time}</span>
       </div>
       <div className="flex items-center gap-1 flex-shrink-0 ml-4">
         <StatusBadge status="draft" />

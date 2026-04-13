@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -31,54 +30,122 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="text-center">
-        <h1 className="text-4xl font-light tracking-tight">Feathr</h1>
-        <p className="mt-2 text-text-secondary">Log in op je account</p>
+    <>
+      {/* Brand Identity */}
+      <div className="text-center mb-12">
+        <h1 className="font-display text-6xl italic text-primary tracking-tight mb-2 select-none">
+          Feathr
+        </h1>
+        <p className="text-on-surface-variant font-body text-sm tracking-[0.2em] uppercase opacity-60">
+          Marketing Atelier
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {error && (
-          <div className="rounded-lg bg-status-failed/10 px-4 py-3 text-sm text-status-failed">
-            {error}
+      {/* Authentication Card */}
+      <section className="glass-panel rounded-full p-10 shadow-2xl border border-outline-variant/10">
+        <header className="mb-8">
+          <h2 className="font-display text-3xl text-on-surface mb-1">Welcome back</h2>
+          <p className="text-on-surface-variant text-sm">
+            Please enter your credentials to access your atelier.
+          </p>
+        </header>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="bg-error-container/20 text-error text-sm rounded-lg p-3">
+              {error}
+            </div>
+          )}
+
+          {/* Email Field */}
+          <div className="group">
+            <label
+              className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-2 ml-1"
+              htmlFor="email"
+            >
+              Work Email
+            </label>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-0 top-1/2 -translate-y-1/2 text-on-surface-variant/40 text-lg">
+                mail
+              </span>
+              <input
+                className="w-full bg-transparent border-0 border-b-2 border-surface-variant focus:border-primary focus:ring-0 text-on-surface placeholder:text-on-surface-variant/20 py-3 pl-8 transition-all duration-300 outline-none"
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@atelier.com"
+                required
+              />
+            </div>
           </div>
-        )}
 
-        <div className="space-y-2">
-          <label htmlFor="email" className="text-sm text-text-secondary">E-mail</label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full rounded-lg border border-border bg-bg-surface px-4 py-3 text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-            placeholder="je@email.com"
-          />
+          {/* Password Field */}
+          <div className="group">
+            <div className="flex justify-between items-end mb-2 ml-1">
+              <label
+                className="block text-[10px] uppercase tracking-widest text-on-surface-variant"
+                htmlFor="password"
+              >
+                Password
+              </label>
+              <Link
+                className="text-[10px] uppercase tracking-widest text-primary hover:opacity-70 transition-opacity"
+                href="#"
+              >
+                Forgot?
+              </Link>
+            </div>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-0 top-1/2 -translate-y-1/2 text-on-surface-variant/40 text-lg">
+                lock
+              </span>
+              <input
+                className="w-full bg-transparent border-0 border-b-2 border-surface-variant focus:border-primary focus:ring-0 text-on-surface placeholder:text-on-surface-variant/20 py-3 pl-8 transition-all duration-300 outline-none"
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Action Button */}
+          <button
+            className="w-full mt-8 py-4 gradient-cta text-on-primary font-semibold text-sm tracking-wide rounded-lg hover:shadow-xl hover:shadow-primary/10 active:scale-[0.98] transition-all duration-200 disabled:opacity-50"
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? 'Signing in...' : 'Enter Dashboard'}
+          </button>
+        </form>
+
+        <footer className="mt-10 text-center">
+          <p className="text-on-surface-variant text-xs mb-4">New to the atelier?</p>
+          <Link
+            href="/signup"
+            className="text-on-surface font-semibold text-sm border-b border-outline-variant/30 hover:border-primary transition-colors pb-0.5"
+          >
+            Request an Invitation
+          </Link>
+        </footer>
+      </section>
+
+      {/* Trust Indicator */}
+      <div className="mt-12 flex justify-center items-center gap-8 opacity-30 grayscale transition-all duration-500 hover:opacity-60 hover:grayscale-0">
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-sm">verified_user</span>
+          <span className="text-[10px] uppercase tracking-tighter">Secure Vault</span>
         </div>
-
-        <div className="space-y-2">
-          <label htmlFor="password" className="text-sm text-text-secondary">Wachtwoord</label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full rounded-lg border border-border bg-bg-surface px-4 py-3 text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-            placeholder="••••••••"
-          />
+        <div className="w-px h-3 bg-outline-variant" />
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-sm">encrypted</span>
+          <span className="text-[10px] uppercase tracking-tighter">AES-256</span>
         </div>
-
-        <Button type="submit" disabled={loading} className="w-full bg-accent text-white hover:bg-accent-hover disabled:opacity-50">
-          {loading ? 'Bezig...' : 'Inloggen'}
-        </Button>
-      </form>
-
-      <p className="text-center text-sm text-text-muted">
-        Nog geen account?{' '}
-        <Link href="/signup" className="text-accent hover:text-accent-hover">Aanmelden</Link>
-      </p>
-    </div>
+      </div>
+    </>
   )
 }

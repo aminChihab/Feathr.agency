@@ -4,12 +4,24 @@
 import { useEffect, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
-import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 type Platform = Database['public']['Tables']['platforms']['Row']
+
+/* Icon config per platform slug */
+const PLATFORM_VISUALS: Record<string, { bg: string; icon: string }> = {
+  instagram: { bg: 'bg-gradient-to-tr from-[#f09433] via-[#e6683c] to-[#bc1888]', icon: 'photo_camera' },
+  twitter: { bg: 'bg-black', icon: 'close' },
+  x: { bg: 'bg-black', icon: 'close' },
+  whatsapp: { bg: 'bg-[#25D366]', icon: 'chat' },
+  facebook: { bg: 'bg-[#1877F2]', icon: 'social_leaderboard' },
+  tiktok: { bg: 'bg-black', icon: 'linked_camera' },
+  linkedin: { bg: 'bg-[#0A66C2]', icon: 'work' },
+  threads: { bg: 'bg-black', icon: 'alternate_email' },
+  youtube: { bg: 'bg-[#FF0000]', icon: 'youtube_activity' },
+}
 
 interface ConnectPlatformModalProps {
   open: boolean
@@ -97,78 +109,112 @@ export function ConnectPlatformModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent className="bg-bg-surface border-border max-w-lg max-h-[80vh] overflow-y-auto">
+      <DialogContent className="bg-surface-container-low border-outline-variant/10 max-w-lg max-h-[80vh] overflow-y-auto rounded-xl">
         <DialogHeader>
-          <DialogTitle className="font-light">
-            {selectedPlatform ? `Connect ${selectedPlatform.name}` : 'Add platform'}
+          <DialogTitle className="font-display text-on-surface text-xl">
+            {selectedPlatform ? `Connect ${selectedPlatform.name}` : 'Discover Integrations'}
           </DialogTitle>
+          <p className="text-xs text-on-surface-variant mt-1">
+            {selectedPlatform
+              ? 'Authenticate to link this platform to your atelier.'
+              : 'Select a platform to begin the connection process.'}
+          </p>
         </DialogHeader>
 
         {!selectedPlatform ? (
           loading ? (
-            <p className="text-center text-text-muted py-8">Loading...</p>
+            <div className="flex items-center justify-center py-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            </div>
           ) : availablePlatforms.length === 0 ? (
-            <p className="text-center text-text-muted py-8">All platforms are already connected.</p>
+            <p className="text-center text-on-surface-variant/60 py-8 text-sm">All platforms are already connected.</p>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6 mt-2">
               {CATEGORY_ORDER.map((cat) => {
                 const catPlatforms = availablePlatforms.filter((p) => p.category === cat)
                 if (catPlatforms.length === 0) return null
                 return (
                   <div key={cat} className="space-y-2">
-                    <p className="text-xs font-medium uppercase tracking-wider text-text-muted">{CATEGORY_LABELS[cat]}</p>
-                    {catPlatforms.map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => setSelectedPlatform(p)}
-                        className="flex w-full items-center gap-3 rounded-lg border border-border px-4 py-3 text-left transition-colors hover:bg-bg-elevated"
-                      >
-                        <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: p.color ?? '#666' }} />
-                        <span className="text-sm">{p.name}</span>
-                      </button>
-                    ))}
+                    <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-on-surface-variant/60">{CATEGORY_LABELS[cat]}</p>
+                    {catPlatforms.map((p) => {
+                      const visuals = PLATFORM_VISUALS[p.slug ?? '']
+                      return (
+                        <button
+                          key={p.id}
+                          onClick={() => setSelectedPlatform(p)}
+                          className="flex w-full items-center gap-4 rounded-lg bg-surface-container px-4 py-3 text-left transition-all hover:bg-surface-bright group"
+                        >
+                          <div
+                            className={`h-9 w-9 rounded-full flex items-center justify-center ${visuals?.bg ?? ''}`}
+                            style={!visuals ? { backgroundColor: p.color ?? '#666' } : undefined}
+                          >
+                            <span className="material-symbols-outlined text-white text-base">
+                              {visuals?.icon ?? 'hub'}
+                            </span>
+                          </div>
+                          <span className="text-sm text-on-surface font-medium">{p.name}</span>
+                        </button>
+                      )
+                    })}
                   </div>
                 )
               })}
             </div>
           )
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 mt-2">
             {selectedPlatform.auth_type === 'oauth' && (
-              <Button onClick={startOAuth} className="w-full bg-accent text-white hover:bg-accent-hover">
+              <button
+                onClick={startOAuth}
+                className="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary-container px-6 py-3 rounded-lg text-sm font-semibold hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-lg">link</span>
                 Connect {selectedPlatform.name}
-              </Button>
+              </button>
             )}
             {selectedPlatform.auth_type === 'credentials' && (
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <Label className="text-xs">Email or username</Label>
-                  <Input value={credentials.username} onChange={(e) => setCredentials((p) => ({ ...p, username: e.target.value }))} className="bg-bg-base" />
+                  <Label className="text-xs text-on-surface-variant">Email or username</Label>
+                  <Input value={credentials.username} onChange={(e) => setCredentials((prev) => ({ ...prev, username: e.target.value }))} className="bg-surface-container-high border-none text-sm" />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Password</Label>
-                  <Input type="password" value={credentials.password} onChange={(e) => setCredentials((p) => ({ ...p, password: e.target.value }))} className="bg-bg-base" />
+                  <Label className="text-xs text-on-surface-variant">Password</Label>
+                  <Input type="password" value={credentials.password} onChange={(e) => setCredentials((prev) => ({ ...prev, password: e.target.value }))} className="bg-surface-container-high border-none text-sm" />
                 </div>
-                <Button onClick={connectCredentials} disabled={saving} className="w-full bg-accent text-white hover:bg-accent-hover">
+                <button
+                  onClick={connectCredentials}
+                  disabled={saving}
+                  className="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary-container px-6 py-3 rounded-lg text-sm font-semibold hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+                >
                   {saving ? 'Saving...' : 'Save credentials'}
-                </Button>
+                </button>
               </div>
             )}
             {selectedPlatform.auth_type === 'api_key' && (
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <Label className="text-xs">API key or token</Label>
-                  <Input value={apiKey} onChange={(e) => setApiKey(e.target.value)} className="bg-bg-base" />
+                  <Label className="text-xs text-on-surface-variant">API key or token</Label>
+                  <Input value={apiKey} onChange={(e) => setApiKey(e.target.value)} className="bg-surface-container-high border-none text-sm" />
                 </div>
-                <Button onClick={connectApiKey} disabled={saving} className="w-full bg-accent text-white hover:bg-accent-hover">
+                <button
+                  onClick={connectApiKey}
+                  disabled={saving}
+                  className="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary-container px-6 py-3 rounded-lg text-sm font-semibold hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+                >
                   {saving ? 'Saving...' : 'Save token'}
-                </Button>
+                </button>
               </div>
             )}
             {selectedPlatform.auth_type === 'manual' && (
-              <p className="text-sm text-text-muted">This platform needs to be connected manually. Set this up in the platform&apos;s own settings.</p>
+              <p className="text-sm text-on-surface-variant/60">This platform needs to be connected manually. Set this up in the platform&apos;s own settings.</p>
             )}
-            <Button variant="ghost" onClick={() => setSelectedPlatform(null)} className="w-full">Back to platforms</Button>
+            <button
+              onClick={() => setSelectedPlatform(null)}
+              className="w-full py-2.5 text-on-surface-variant hover:text-on-surface text-sm transition-colors"
+            >
+              Back to platforms
+            </button>
           </div>
         )}
       </DialogContent>

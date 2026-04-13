@@ -1,18 +1,21 @@
 import type { Metadata } from 'next'
-import { Cormorant_Infant, Jost } from 'next/font/google'
+import { Instrument_Serif, Instrument_Sans } from 'next/font/google'
 import './globals.css'
 
-const cormorant = Cormorant_Infant({
+const instrumentSerif = Instrument_Serif({
   subsets: ['latin'],
   variable: '--font-display',
   display: 'swap',
-  weight: ['300', '400', '500', '600', '700'],
+  weight: '400',
+  style: ['normal', 'italic'],
 })
 
-const jost = Jost({
+const instrumentSans = Instrument_Sans({
   subsets: ['latin'],
   variable: '--font-body',
   display: 'swap',
+  weight: ['400', '500', '600'],
+  style: ['normal', 'italic'],
 })
 
 export const metadata: Metadata = {
@@ -30,8 +33,14 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="nl" className={`${cormorant.variable} ${jost.variable} dark`}>
-      <body className="min-h-screen bg-bg-base text-text-primary antialiased">
+    <html lang="en" className={`${instrumentSerif.variable} ${instrumentSans.variable} dark`}>
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="min-h-screen bg-surface text-on-surface antialiased font-body">
         {children}
       </body>
     </html>

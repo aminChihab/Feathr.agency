@@ -5,7 +5,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import { FileDropzone } from '@/components/ui/file-dropzone'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
-import { Play, X, ChevronLeft, ChevronRight, Search, Image, Video, LayoutGrid, Eye, Trash2, Upload, ArrowUpDown, Tag } from 'lucide-react'
+import { Play, X, ChevronLeft, ChevronRight, Search, Image, Video, Eye, Trash2, Upload, Tag, Download, Share2, Zap } from 'lucide-react'
 
 type MediaItem = Database['public']['Tables']['content_library']['Row'] & {
   signedUrl: string | null
@@ -37,18 +37,13 @@ function formatDate(iso: string): string {
   })
 }
 
-const TAG_COLORS = [
-  'bg-accent/15 text-accent border border-accent/30',
-  'bg-blue-500/15 text-blue-400 border border-blue-500/30',
-  'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
-  'bg-purple-500/15 text-purple-400 border border-purple-500/30',
-  'bg-amber-500/15 text-amber-400 border border-amber-500/30',
-]
-
-function tagColor(tag: string): string {
-  let hash = 0
-  for (let i = 0; i < tag.length; i++) hash = (hash * 31 + tag.charCodeAt(i)) | 0
-  return TAG_COLORS[Math.abs(hash) % TAG_COLORS.length]
+/** Return a file extension badge label from mime or filename. */
+function getExtBadge(item: MediaItem): string {
+  const ext = item.file_name.split('.').pop()?.toUpperCase() ?? ''
+  if (['JPG', 'JPEG', 'PNG', 'WEBP', 'GIF', 'TIFF', 'RAW', 'CR2'].includes(ext)) return ext
+  if (['MP4', 'MOV', 'AVI', 'WEBM'].includes(ext)) return ext
+  if (item.file_type === 'video') return 'MP4'
+  return ext || 'FILE'
 }
 
 export function MediaGrid({ supabase, userId }: MediaGridProps) {
@@ -131,12 +126,10 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
   const filteredItems = useMemo(() => {
     let result = items
 
-    // Tag filter
     if (activeTag) {
       result = result.filter((item) => (item.tags ?? []).includes(activeTag))
     }
 
-    // Search filter
     if (search.trim()) {
       const q = search.toLowerCase()
       result = result.filter((item) => {
@@ -150,12 +143,10 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
       })
     }
 
-    // Sort
     result = [...result].sort((a, b) => {
       if (sortBy === 'name') {
         return a.file_name.localeCompare(b.file_name, undefined, { numeric: true, sensitivity: 'base' })
       }
-      // 'updated' — newest first
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     })
 
@@ -166,6 +157,12 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
     const photos = items.filter((i) => i.file_type === 'photo').length
     const videos = items.filter((i) => i.file_type === 'video').length
     return { total: items.length, photos, videos }
+  }, [items])
+
+  // Rough storage estimate
+  const totalSizeGB = useMemo(() => {
+    const bytes = items.reduce((sum, i) => sum + (i.file_size ?? 0), 0)
+    return (bytes / 1024 / 1024 / 1024).toFixed(1)
   }, [items])
 
   async function uploadSingleFile(file: File): Promise<string | null> {
@@ -190,7 +187,6 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
         await supabase.storage.from('media').upload(thumbnailPath, thumbBlob)
       }
     } else if (fileType === 'video') {
-      // Generate 5 frames at 1/6, 2/6, 3/6, 4/6, 5/6 of video duration
       const frameBlobs = await generateVideoFrames(file, 5)
       const framePaths: string[] = []
 
@@ -203,12 +199,9 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
         framePaths.push(framePath)
       }
 
-      // First frame as main thumbnail
       if (framePaths.length > 0) {
         thumbnailPath = framePaths[0]
       }
-
-      // Store all frame paths in metadata
       videoFramePaths = framePaths
     }
 
@@ -229,7 +222,6 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
   }
 
   async function handleFilesSelected(files: File[]) {
-    // Check for duplicates by file name and size
     const found: { file: File; existing: MediaItem }[] = []
     const clean: File[] = []
 
@@ -272,7 +264,6 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
     setUploadProgress({ current: 0, total: 0 })
     loadItems()
 
-    // Trigger Media Analyst agent with the specific media IDs
     if (uploadedIds.length > 0) {
       try {
         await fetch('/api/agent/trigger', {
@@ -301,7 +292,6 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
   }
 
   async function handleDelete(id: string, storagePath: string, thumbnailPath: string | null) {
-    // Get metadata for video frame paths before deleting
     const item = items.find((i) => i.id === id)
     const framePaths: string[] = (item?.metadata as any)?.frame_paths ?? []
 
@@ -310,7 +300,6 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
     if (thumbnailPath) {
       await supabase.storage.from('media').remove([thumbnailPath])
     }
-    // Clean up video frames
     if (framePaths.length > 0) {
       await supabase.storage.from('media').remove(framePaths)
     }
@@ -323,42 +312,62 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
     : 0
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-10">
+      {/* ── Upload Section (grid 8/4 from mockup) ─────────────────────── */}
+      <section className="grid grid-cols-12 gap-8">
+        {/* Dropzone */}
+        <div className="col-span-8">
+          <FileDropzone
+            accept=".jpg,.jpeg,.png,.webp,.mp4,.mov,.tiff,.cr2,.raw"
+            maxFiles={50}
+            maxSizeMB={500}
+            onFilesAdded={handleFilesSelected}
+            className="group relative h-48 rounded-xl border border-dashed border-outline-variant/30 bg-surface-container-lowest flex flex-col items-center justify-center transition-all hover:bg-surface-container-low hover:border-primary/40 cursor-pointer"
+          >
+            {uploading ? (
+              <div className="flex flex-col items-center gap-3">
+                <Upload className="h-8 w-8 text-primary/40 animate-bounce" />
+                <p className="text-sm text-on-surface-variant">
+                  Uploading {uploadProgress.current} of {uploadProgress.total} files...
+                </p>
+                <div className="w-64 h-1.5 rounded-full bg-surface-container-high overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all duration-300 ease-out"
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+                <span className="text-xs text-on-surface-variant">{Math.round(progressPct)}% complete</span>
+              </div>
+            ) : (
+              <>
+                <Upload className="h-10 w-10 text-primary/40 mb-3 group-hover:scale-110 transition-transform" />
+                <p className="font-display text-xl text-on-surface-variant italic">Drop your vision here</p>
+                <p className="text-xs text-on-surface-variant/40 mt-1">RAW, TIFF, or MP4 up to 500MB</p>
+              </>
+            )}
+          </FileDropzone>
+        </div>
 
-      {/* Upload zone */}
-      <FileDropzone
-        accept=".jpg,.jpeg,.png,.webp,.mp4,.mov"
-        maxFiles={50}
-        maxSizeMB={50}
-        onFilesAdded={handleFilesSelected}
-        className="group relative overflow-hidden rounded-xl border-2 border-dashed border-border bg-bg-surface transition-all duration-200 hover:border-accent/60 hover:bg-accent/5"
-      >
-        {uploading ? (
-          <div className="flex flex-col items-center gap-3 py-2">
-            <div className="flex items-center gap-2 text-sm text-text-secondary">
-              <Upload className="h-4 w-4 animate-bounce text-accent" />
-              Uploading {uploadProgress.current} of {uploadProgress.total} files...
-            </div>
-            <div className="w-64 h-1.5 rounded-full bg-bg-elevated overflow-hidden">
-              <div
-                className="h-full rounded-full bg-accent transition-all duration-300 ease-out"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-            <span className="text-xs text-text-muted">{Math.round(progressPct)}% complete</span>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-2 py-2">
-            <div className="rounded-full bg-bg-elevated p-3 transition-transform duration-200 group-hover:scale-110">
-              <Upload className="h-5 w-5 text-accent" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-text-primary">Drop files here or click to browse</p>
-              <p className="text-xs text-text-muted mt-0.5">JPG, PNG, WEBP, MP4, MOV — max 50MB each, up to 50 files</p>
+        {/* Storage Insight card */}
+        <div className="col-span-4 flex flex-col justify-between p-6 bg-surface-container-high rounded-xl">
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-widest text-primary mb-4">Storage Insight</h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-end">
+                <span className="text-2xl font-display italic">{totalSizeGB} GB</span>
+                <span className="text-xs opacity-40">of 50 GB used</span>
+              </div>
+              <div className="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+                <div className="bg-primary h-full transition-all" style={{ width: `${Math.min(parseFloat(totalSizeGB) / 50 * 100, 100)}%` }} />
+              </div>
             </div>
           </div>
-        )}
-      </FileDropzone>
+          <button className="flex items-center justify-center gap-2 text-xs py-2 border border-outline-variant/20 rounded-lg hover:bg-surface-bright transition-colors mt-4">
+            <Zap className="h-3.5 w-3.5" />
+            Upgrade Atelier Space
+          </button>
+        </div>
+      </section>
 
       {/* Duplicate warning */}
       {duplicates.length > 0 && (
@@ -369,28 +378,28 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
           <div className="space-y-2">
             {duplicates.map((d, i) => (
               <div key={i} className="flex items-center gap-3 text-xs">
-                <span className="text-text-primary">{d.file.name}</span>
-                <span className="text-text-muted">({formatFileSize(d.file.size)})</span>
-                <span className="text-text-muted">— matches existing file</span>
+                <span className="text-on-surface">{d.file.name}</span>
+                <span className="text-on-surface-variant">({formatFileSize(d.file.size)})</span>
+                <span className="text-on-surface-variant">-- matches existing file</span>
               </div>
             ))}
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => handleDuplicateDecision(true)}
-              className="rounded-lg bg-accent px-3 py-1.5 text-xs text-white hover:bg-accent-hover"
+              className="rounded-lg bg-primary px-3 py-1.5 text-xs text-white hover:bg-primary-hover"
             >
               Upload anyway ({duplicates.length + pendingFiles.length} files)
             </button>
             <button
               onClick={() => handleDuplicateDecision(false)}
-              className="rounded-lg bg-bg-elevated px-3 py-1.5 text-xs text-text-secondary hover:text-text-primary"
+              className="rounded-lg bg-surface-container-high px-3 py-1.5 text-xs text-on-surface-variant hover:text-on-surface"
             >
               Skip duplicates ({pendingFiles.length} files)
             </button>
             <button
               onClick={() => { setDuplicates([]); setPendingFiles([]) }}
-              className="rounded-lg px-3 py-1.5 text-xs text-text-muted hover:text-text-primary"
+              className="rounded-lg px-3 py-1.5 text-xs text-on-surface-variant hover:text-on-surface"
             >
               Cancel
             </button>
@@ -398,97 +407,60 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
         </div>
       )}
 
-      {/* Toolbar: filters + search + count */}
-      <div className="flex items-center gap-3 flex-wrap">
-        {/* Type filters */}
-        <div className="flex items-center gap-1.5 rounded-lg bg-bg-elevated p-1">
+      {/* ── Filter Bar (from mockup) ──────────────────────────────────── */}
+      <section className="flex justify-between items-center pb-2">
+        <div className="flex gap-8">
           <button
             onClick={() => setFilter('all')}
-            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+            className={`text-sm font-medium pb-2 transition-all ${
               filter === 'all'
-                ? 'bg-accent text-white shadow-sm'
-                : 'text-text-secondary hover:text-text-primary'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-on-surface/40 hover:text-on-surface/80'
             }`}
           >
-            <LayoutGrid className="h-3 w-3" />
-            All
+            All Assets
           </button>
           <button
             onClick={() => setFilter('photo')}
-            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+            className={`text-sm font-medium pb-2 transition-all ${
               filter === 'photo'
-                ? 'bg-accent text-white shadow-sm'
-                : 'text-text-secondary hover:text-text-primary'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-on-surface/40 hover:text-on-surface/80'
             }`}
           >
-            <Image className="h-3 w-3" />
             Photos
           </button>
           <button
             onClick={() => setFilter('video')}
-            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+            className={`text-sm font-medium pb-2 transition-all ${
               filter === 'video'
-                ? 'bg-accent text-white shadow-sm'
-                : 'text-text-secondary hover:text-text-primary'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-on-surface/40 hover:text-on-surface/80'
             }`}
           >
-            <Video className="h-3 w-3" />
             Videos
           </button>
         </div>
-
-        {/* Search */}
-        <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-muted" />
-          <input
-            type="text"
-            placeholder="Search by name, description, tags..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg bg-bg-elevated border border-border pl-9 pr-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/60 transition-colors"
-          />
-        </div>
-
-        {/* Sort */}
-        <div className="flex items-center bg-bg-elevated rounded-lg border border-border p-0.5 shrink-0">
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-on-surface-variant/60">Sort by</span>
           <button
-            onClick={() => setSortBy('updated')}
-            className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
-              sortBy === 'updated' ? 'bg-accent text-white' : 'text-text-muted hover:text-text-primary'
-            }`}
+            onClick={() => setSortBy(sortBy === 'updated' ? 'name' : 'updated')}
+            className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors"
           >
-            Recent
-          </button>
-          <button
-            onClick={() => setSortBy('name')}
-            className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
-              sortBy === 'name' ? 'bg-accent text-white' : 'text-text-muted hover:text-text-primary'
-            }`}
-          >
-            Name
+            {sortBy === 'updated' ? 'Recently Added' : 'Name'}
+            <ChevronLeft className="h-3.5 w-3.5 rotate-[-90deg]" />
           </button>
         </div>
-
-        {/* Count */}
-        {!loading && (
-          <p className="text-xs text-text-muted shrink-0">
-            {search || activeTag ? (
-              <>{filteredItems.length} of {counts.total} items</>
-            ) : (
-              <>{counts.total} items{counts.photos > 0 && ` · ${counts.photos} photo${counts.photos !== 1 ? 's' : ''}`}{counts.videos > 0 && ` · ${counts.videos} video${counts.videos !== 1 ? 's' : ''}`}</>
-            )}
-          </p>
-        )}
-      </div>
+      </section>
 
       {/* Active tag filter */}
       {activeTag && (
-        <div className="flex items-center gap-2 -mt-2">
-          <Tag className="h-3 w-3 text-text-muted" />
-          <span className="text-xs text-text-muted">Filtered by:</span>
+        <div className="flex items-center gap-2 -mt-6">
+          <Tag className="h-3 w-3 text-on-surface-variant" />
+          <span className="text-xs text-on-surface-variant">Filtered by:</span>
           <button
             onClick={() => setActiveTag(null)}
-            className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${tagColor(activeTag)}`}
+            className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium bg-surface-container-highest text-on-surface-variant"
           >
             {activeTag}
             <X className="h-3 w-3 ml-0.5" />
@@ -496,149 +468,145 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
         </div>
       )}
 
-      {/* Grid */}
+      {/* ── Media Grid (4-col from mockup) ────────────────────────────── */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-          <div className="rounded-full bg-bg-elevated p-4">
-            <Image className="h-6 w-6 text-text-muted" />
+          <div className="rounded-full bg-surface-container-high p-4">
+            <Image className="h-6 w-6 text-on-surface-variant" />
           </div>
           <div>
-            <p className="text-sm font-medium text-text-secondary">
+            <p className="text-sm font-medium text-on-surface-variant">
               {search ? 'No results found' : 'No media yet'}
             </p>
-            <p className="text-xs text-text-muted mt-1">
+            <p className="text-xs text-on-surface-variant mt-1">
               {search ? 'Try a different search term' : 'Upload some files to get started'}
             </p>
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {filteredItems.map((item) => {
-            const description = (item.metadata as { description?: string } | null)?.description
             const tags = item.tags ?? []
-            const hasDescription = !!description
+            const isVideo = item.file_type === 'video'
+            const extBadge = getExtBadge(item)
+            const hasAiTag = tags.length > 0
 
             return (
               <div
                 key={item.id}
-                className="group relative flex flex-col rounded-xl border border-border bg-bg-surface overflow-hidden transition-all duration-200 hover:border-border-hover hover:shadow-lg hover:shadow-black/20"
+                className="group bg-surface-container-low rounded-xl overflow-hidden hover:translate-y-[-4px] transition-all duration-300"
               >
                 {/* Thumbnail */}
                 <div
-                  className="relative aspect-video cursor-pointer overflow-hidden bg-bg-elevated"
+                  className="relative aspect-[4/5] overflow-hidden cursor-pointer"
                   onClick={() => setPreviewItem(item)}
                 >
                   {item.signedUrl ? (
                     <img
-                      src={item.signedUrl}
                       alt={item.file_name}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500"
+                      src={item.signedUrl}
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                      {item.file_type === 'video' ? (
-                        <Play className="h-10 w-10 text-text-muted" />
+                    <div className="flex h-full w-full items-center justify-center bg-surface-container-high">
+                      {isVideo ? (
+                        <Play className="h-10 w-10 text-on-surface-variant" />
                       ) : (
-                        <Image className="h-10 w-10 text-text-muted" />
+                        <Image className="h-10 w-10 text-on-surface-variant" />
                       )}
                     </div>
                   )}
 
-                  {/* Video play overlay */}
-                  {item.file_type === 'video' && item.signedUrl && (
+                  {/* File type badge */}
+                  <div className={`absolute top-3 left-3 px-2 py-1 rounded text-[10px] font-bold tracking-tighter uppercase ${
+                    isVideo
+                      ? 'bg-primary text-on-primary-container'
+                      : 'bg-black/40 backdrop-blur-md text-white'
+                  }`}>
+                    {extBadge}
+                  </div>
+
+                  {/* Video play icon */}
+                  {isVideo && item.signedUrl && (
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="rounded-full bg-black/50 p-2.5 backdrop-blur-sm transition-transform duration-200 group-hover:scale-110">
-                        <Play className="h-5 w-5 text-white" fill="white" />
+                      <Play className="h-14 w-14 text-white/40 group-hover:text-primary transition-colors" fill="currentColor" />
+                    </div>
+                  )}
+
+                  {/* Hover overlay with download/share buttons */}
+                  {!isVideo && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setPreviewItem(item) }}
+                          className="p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-primary transition-colors"
+                        >
+                          <Download className="h-3.5 w-3.5 text-white" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDelete(item.id, item.storage_path, item.thumbnail_path)
+                          }}
+                          className="p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-primary transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-white" />
+                        </button>
                       </div>
                     </div>
                   )}
-
-                  {/* Hover actions overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setPreviewItem(item) }}
-                      className="flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-2 text-xs font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/25"
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                      View
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDelete(item.id, item.storage_path, item.thumbnail_path)
-                      }}
-                      className="flex items-center gap-1.5 rounded-lg bg-red-500/20 px-3 py-2 text-xs font-medium text-red-400 backdrop-blur-sm transition-colors hover:bg-red-500/30"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Delete
-                    </button>
-                  </div>
-
-                  {/* Badges: top-left file type, top-right analysis status */}
-                  <div className="absolute left-2 top-2 flex items-center gap-1.5">
-                    <span className="rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white backdrop-blur-sm">
-                      {item.file_type}
-                    </span>
-                  </div>
-                  <div className="absolute right-2 top-2">
-                    <span
-                      title={hasDescription ? 'AI analysis complete' : 'Pending analysis'}
-                      className={`block h-2.5 w-2.5 rounded-full border-2 border-bg-surface ${
-                        hasDescription ? 'bg-emerald-400' : 'bg-amber-400'
-                      }`}
-                    />
-                  </div>
                 </div>
 
                 {/* Card body */}
-                <div className="flex flex-col gap-2 p-3">
-                  {/* File name */}
-                  <p className="truncate text-sm font-medium text-text-primary" title={item.file_name}>
-                    {item.file_name}
-                  </p>
-
-                  {/* AI description */}
-                  <p className={`text-xs leading-relaxed ${
-                    hasDescription
-                      ? 'text-text-secondary line-clamp-2'
-                      : 'italic text-text-muted'
-                  }`}>
-                    {description ?? 'Pending analysis...'}
-                  </p>
-
-                  {/* Tags */}
-                  {tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {tags.slice(0, 5).map((tag) => (
-                        <button
-                          key={tag}
-                          onClick={(e) => { e.stopPropagation(); setActiveTag(activeTag === tag ? null : tag) }}
-                          className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition-opacity hover:opacity-80 ${tagColor(tag)} ${activeTag === tag ? 'ring-1 ring-white/30' : ''}`}
-                        >
-                          {tag}
-                        </button>
-                      ))}
-                      {tags.length > 5 && (
-                        <span className="rounded-full border border-border px-2 py-0.5 text-[10px] text-text-muted">
-                          +{tags.length - 5}
-                        </span>
-                      )}
-                    </div>
-                  )}
+                <div className="p-4 space-y-3">
+                  <h4 className="text-sm font-medium truncate">{item.file_name}</h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {tags.slice(0, 3).map((tag) => (
+                      <button
+                        key={tag}
+                        onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+                        className="text-[9px] px-2 py-0.5 bg-surface-container-highest text-on-surface-variant/80 rounded-full hover:opacity-80 transition-opacity"
+                      >
+                        #{tag}
+                      </button>
+                    ))}
+                    {hasAiTag && (
+                      <span className="text-[9px] px-2 py-0.5 bg-surface-container-highest text-on-surface-variant/80 rounded-full italic font-display">
+                        AI Tagged
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             )
           })}
-        </div>
+        </section>
       )}
 
-      {/* Preview lightbox */}
+      {/* ── Pagination Footer (from mockup) ───────────────────────────── */}
+      {!loading && filteredItems.length > 0 && (
+        <footer className="flex justify-between items-center pt-8 border-t border-outline-variant/10">
+          <div className="text-xs text-on-surface-variant/40">
+            Showing {filteredItems.length} of {counts.total} files
+          </div>
+          <div className="flex gap-2">
+            <button className="px-4 py-2 bg-surface-container-low text-xs hover:bg-surface-bright rounded-lg transition-colors">
+              Previous
+            </button>
+            <button className="px-4 py-2 bg-primary text-on-primary-container text-xs font-semibold rounded-lg hover:opacity-90 transition-opacity">
+              Load More Assets
+            </button>
+          </div>
+        </footer>
+      )}
+
+      {/* ── Preview lightbox ──────────────────────────────────────────── */}
       <Dialog open={!!previewItem} onOpenChange={(open) => !open && setPreviewItem(null)}>
-        <DialogContent className="bg-bg-surface border-border max-w-4xl p-0 overflow-hidden">
+        <DialogContent className="bg-surface-container-low border-outline-variant/15 max-w-4xl p-0 overflow-hidden">
           {previewItem && (() => {
             const description = (previewItem.metadata as { description?: string } | null)?.description
             const tags = previewItem.tags ?? []
@@ -690,12 +658,11 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
 
                 {/* Info bar */}
                 <div className="flex flex-col gap-3 p-4">
-                  {/* Row 1: name + type badge + size + date */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-text-primary">{previewItem.file_name}</p>
-                      <div className="mt-1 flex items-center gap-3 text-xs text-text-muted">
-                        <span className="uppercase font-medium text-text-secondary">{previewItem.file_type}</span>
+                      <p className="truncate text-sm font-medium text-on-surface">{previewItem.file_name}</p>
+                      <div className="mt-1 flex items-center gap-3 text-xs text-on-surface-variant">
+                        <span className="uppercase font-medium text-on-surface-variant">{previewItem.file_type}</span>
                         <span>{formatFileSize(previewItem.file_size)}</span>
                         <span>{formatDate(previewItem.created_at)}</span>
                       </div>
@@ -704,29 +671,27 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
                       <span
                         className={`h-2 w-2 rounded-full ${hasDescription ? 'bg-emerald-400' : 'bg-amber-400'}`}
                       />
-                      <span className="text-xs text-text-muted">
+                      <span className="text-xs text-on-surface-variant">
                         {hasDescription ? 'Analyzed' : 'Pending'}
                       </span>
                     </div>
                   </div>
 
-                  {/* Row 2: AI description */}
-                  <div className="rounded-lg bg-bg-elevated px-3 py-2.5">
-                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">AI Description</p>
+                  <div className="rounded-lg bg-surface-container-high px-3 py-2.5">
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">AI Description</p>
                     <p className={`text-sm leading-relaxed ${
-                      hasDescription ? 'text-text-secondary' : 'italic text-text-muted'
+                      hasDescription ? 'text-on-surface-variant' : 'italic text-on-surface-variant'
                     }`}>
                       {description ?? 'Pending analysis...'}
                     </p>
                   </div>
 
-                  {/* Row 3: tags */}
                   {tags.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {tags.map((tag) => (
                         <span
                           key={tag}
-                          className={`rounded-full px-2.5 py-1 text-xs font-medium ${tagColor(tag)}`}
+                          className="rounded-full px-2.5 py-1 text-xs font-medium bg-surface-container-highest text-on-surface-variant"
                         >
                           {tag}
                         </span>

@@ -96,7 +96,7 @@ export function LinkClientModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="bg-bg-surface border-border max-w-sm">
+      <DialogContent className="bg-surface-container-low border-outline-variant/15 max-w-sm">
         <DialogHeader>
           <DialogTitle className="font-light">
             {showCreate ? 'Create new client' : 'Link to client'}
@@ -110,13 +110,13 @@ export function LinkClientModal({
               <Input
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                className="bg-bg-base"
+                className="bg-surface-container-lowest"
                 placeholder="Name or alias"
               />
             </div>
             <div className="flex justify-between">
               <Button variant="ghost" onClick={() => setShowCreate(false)}>Back</Button>
-              <Button onClick={createAndLink} disabled={!newName.trim() || saving} className="bg-accent text-white hover:bg-accent-hover">
+              <Button onClick={createAndLink} disabled={!newName.trim() || saving} className="bg-primary text-on-primary hover:bg-primary/80">
                 {saving ? 'Creating...' : 'Create & link'}
               </Button>
             </div>
@@ -124,20 +124,20 @@ export function LinkClientModal({
         ) : (
           <div className="space-y-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
+              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-on-surface-variant/60" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search clients..."
-                className="bg-bg-base pl-9 h-8 text-xs"
+                className="bg-surface-container-lowest pl-9 h-8 text-xs"
               />
             </div>
 
             <div className="max-h-60 overflow-y-auto space-y-1">
               {loading ? (
-                <p className="text-center text-xs text-text-muted py-4">Loading...</p>
+                <p className="text-center text-xs text-on-surface-variant/60 py-4">Loading...</p>
               ) : filtered.length === 0 ? (
-                <p className="text-center text-xs text-text-muted py-4">
+                <p className="text-center text-xs text-on-surface-variant/60 py-4">
                   {search ? 'No clients found.' : 'No clients yet.'}
                 </p>
               ) : (
@@ -146,13 +146,13 @@ export function LinkClientModal({
                     key={client.id}
                     onClick={() => linkClient(client.id)}
                     disabled={saving}
-                    className="w-full flex items-center justify-between rounded-lg border border-border px-3 py-2 text-left transition-colors hover:bg-bg-elevated"
+                    className="w-full flex items-center justify-between rounded-lg border border-outline-variant/15 px-3 py-2 text-left transition-colors hover:bg-surface-container-high"
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-sm">{client.name}</span>
                       {client.is_vip && <Crown className="h-3 w-3 text-status-draft" />}
                     </div>
-                    <span className="text-[10px] text-text-muted">{client.total_bookings} bookings</span>
+                    <span className="text-[10px] text-on-surface-variant/60">{client.total_bookings} bookings</span>
                   </button>
                 ))
               )}

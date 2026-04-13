@@ -10,7 +10,6 @@ import { ClientSidebar } from '@/components/inbox/client-sidebar'
 import { LinkClientModal } from '@/components/inbox/link-client-modal'
 import { BookingModal } from '@/components/dashboard/booking-modal'
 import { computeConversationFields } from '@/lib/conversations'
-import { MessageSquare } from 'lucide-react'
 
 type Message = Database['public']['Tables']['messages']['Row']
 type Client = Database['public']['Tables']['clients']['Row']
@@ -242,8 +241,8 @@ export default function InboxPage() {
 
   if (loading || !userId) {
     return (
-      <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+      <div className="flex h-[calc(100vh-5rem)] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     )
   }
@@ -251,7 +250,8 @@ export default function InboxPage() {
   const activeConv = conversations.find((c) => c.id === activeConvId)
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] -m-8">
+    <div className="flex flex-1 overflow-hidden h-[calc(100vh-5rem)] -m-8">
+      {/* Left Column: Conversation List */}
       <ConversationList
         conversations={conversations}
         activeId={activeConvId}
@@ -263,6 +263,7 @@ export default function InboxPage() {
         syncing={syncing}
       />
 
+      {/* Center Column: Chat View */}
       {activeConv ? (
         <MessageThread
           conversation={activeConv}
@@ -283,16 +284,16 @@ export default function InboxPage() {
           onRejectMessage={handleRejectMessage}
         />
       ) : (
-        <div className="flex flex-1 items-center justify-center">
-          <div className="text-center space-y-2">
-            <MessageSquare className="h-12 w-12 text-text-muted mx-auto" />
-            <p className="text-text-muted">Select a conversation to view messages</p>
-          </div>
-        </div>
+        <section className="flex-1 flex flex-col items-center justify-center bg-surface">
+          <span className="material-symbols-outlined text-[48px] text-on-surface-variant/30 mb-3">inbox</span>
+          <p className="text-sm text-on-surface-variant/40">Select a conversation to view messages</p>
+        </section>
       )}
 
+      {/* Right Column: Client Info Panel */}
       <ClientSidebar
         client={client}
+        conversation={activeConv ?? null}
         onLinkClient={() => setLinkModalOpen(true)}
         onUnlinkClient={handleUnlinkClient}
         onAddBooking={client ? () => setBookingModalOpen(true) : undefined}

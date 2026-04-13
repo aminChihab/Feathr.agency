@@ -1,11 +1,7 @@
-import { SilkBackground } from '@/components/ui/silk-background-animation'
-
 export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <SilkBackground>
-      <div className="flex min-h-screen items-center justify-center px-4">
-        <div className="w-full max-w-2xl">{children}</div>
-      </div>
-    </SilkBackground>
+    <div className="relative min-h-screen w-full overflow-x-hidden bg-surface text-on-surface font-body">
+      {children}
+    </div>
   )
 }

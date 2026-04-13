@@ -60,8 +60,8 @@ export function FileDropzone({
       onDrop={handleDrop}
       onClick={() => inputRef.current?.click()}
       className={cn(
-        'cursor-pointer rounded-lg border-2 border-dashed border-border p-8 text-center transition-colors',
-        isDragging && 'border-accent bg-accent/5',
+        'cursor-pointer rounded-xl border-2 border-dashed border-outline-variant/30 bg-surface-container-lowest p-8 text-center transition-colors',
+        isDragging && 'border-primary/50 bg-primary/5',
         className
       )}
     >
@@ -74,7 +74,7 @@ export function FileDropzone({
         className="hidden"
       />
       {children || (
-        <p className="text-text-secondary">
+        <p className="text-on-surface-variant">
           Drag & drop files here, or click to browse
         </p>
       )}

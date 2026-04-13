@@ -7,20 +7,19 @@ import type { Database } from '@/types/database'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { PostModal } from '@/components/dashboard/post-modal'
+import { PostCard } from '@/components/dashboard/post-card'
 import { MediaGrid } from '@/components/dashboard/media-grid'
 import { StatusBadge } from '@/components/dashboard/status-badge'
 import {
   ChevronLeft,
   ChevronRight,
-  Check,
-  X,
   Edit3,
   Send,
-  Plus,
   Sparkles,
   Loader2,
-  Calendar as CalendarIcon,
-  Grid3X3,
+  Search,
+  Filter,
+  ArrowUpDown,
 } from 'lucide-react'
 
 type CalendarItem = Database['public']['Tables']['content_calendar']['Row']
@@ -38,11 +37,10 @@ interface MediaThumb {
 
 // ─── Calendar helpers ────────────────────────────────────────────────────────
 
-/** Returns an array of 7 Date objects for the week containing `date` (Mon→Sun). */
+/** Returns an array of 7 Date objects for the week containing `date` (Mon-Sun). */
 export function getWeekDays(date: Date): Date[] {
   const d = new Date(date)
-  const day = d.getDay() // 0=Sun … 6=Sat
-  // Monday = day 1; shift so week starts Monday
+  const day = d.getDay() // 0=Sun ... 6=Sat
   const diffToMon = (day === 0 ? -6 : 1 - day)
   d.setDate(d.getDate() + diffToMon)
   return Array.from({ length: 7 }, (_, i) => {
@@ -57,12 +55,10 @@ export function getMonthGrid(year: number, month: number): Date[] {
   const firstDay = new Date(year, month, 1)
   const lastDay = new Date(year, month + 1, 0)
 
-  // Find Monday on/before firstDay
   const startOffset = (firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1)
   const gridStart = new Date(firstDay)
   gridStart.setDate(firstDay.getDate() - startOffset)
 
-  // Find Sunday on/after lastDay
   const endOffset = (lastDay.getDay() === 0 ? 0 : 7 - lastDay.getDay())
   const gridEnd = new Date(lastDay)
   gridEnd.setDate(lastDay.getDate() + endOffset)
@@ -98,6 +94,15 @@ const STATUS_DOT: Record<string, string> = {
   failed: 'bg-status-failed',
 }
 
+// ─── Platform dot colors ─────────────────────────────────────────────────────
+const PLATFORM_DOT: Record<string, string> = {
+  instagram: '#E1306C',
+  twitter: '#1DA1F2',
+  linkedin: '#0077B5',
+  facebook: '#1877F2',
+  tiktok: '#000000',
+}
+
 // ─── Week View ───────────────────────────────────────────────────────────────
 
 interface WeekViewProps {
@@ -111,18 +116,17 @@ function WeekView({ weekDays, posts, today, onEdit }: WeekViewProps) {
   const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
   return (
-    <div className="rounded-lg border border-border bg-bg-surface overflow-hidden">
-      {/* Header row */}
-      <div className="grid grid-cols-7 border-b border-border">
+    <div className="rounded-xl bg-surface-container-low overflow-hidden">
+      <div className="grid grid-cols-7 border-b border-outline-variant/15">
         {weekDays.map((day, i) => {
           const isToday = isSameDay(day, today)
           return (
             <div
               key={i}
-              className={`px-3 py-2 text-center border-r border-border last:border-r-0 ${isToday ? 'bg-accent/10' : ''}`}
+              className={`px-3 py-2 text-center border-r border-outline-variant/15 last:border-r-0 ${isToday ? 'bg-primary/10' : ''}`}
             >
-              <p className="text-xs text-text-muted">{DAY_LABELS[i]}</p>
-              <p className={`text-sm font-medium mt-0.5 ${isToday ? 'text-accent' : 'text-text-primary'}`}>
+              <p className="text-xs text-on-surface-variant">{DAY_LABELS[i]}</p>
+              <p className={`text-sm font-medium mt-0.5 ${isToday ? 'text-primary' : 'text-on-surface'}`}>
                 {day.getDate()}
               </p>
             </div>
@@ -130,7 +134,6 @@ function WeekView({ weekDays, posts, today, onEdit }: WeekViewProps) {
         })}
       </div>
 
-      {/* Posts per day */}
       <div className="grid grid-cols-7 min-h-[200px]">
         {weekDays.map((day, i) => {
           const dayPosts = postsForDay(posts, day)
@@ -138,22 +141,22 @@ function WeekView({ weekDays, posts, today, onEdit }: WeekViewProps) {
           return (
             <div
               key={i}
-              className={`px-2 py-2 border-r border-border last:border-r-0 space-y-1 ${isToday ? 'bg-accent/5' : ''}`}
+              className={`px-2 py-2 border-r border-outline-variant/15 last:border-r-0 space-y-1 ${isToday ? 'bg-primary/5' : ''}`}
             >
               {dayPosts.map((post) => (
                 <button
                   key={post.id}
                   onClick={() => onEdit(post.id)}
-                  className="w-full text-left rounded px-2 py-1.5 text-xs bg-bg-elevated hover:bg-bg-overlay transition-colors group"
+                  className="w-full text-left rounded px-2 py-1.5 text-xs bg-surface-container-high hover:bg-surface-container-highest transition-colors group"
                 >
                   <div className="flex items-center gap-1.5 mb-0.5">
                     <span
                       className="h-1.5 w-1.5 rounded-full flex-shrink-0"
                       style={{ backgroundColor: post.platform_color }}
                     />
-                    <span className="truncate text-text-muted font-medium">{post.platform_name}</span>
+                    <span className="truncate text-on-surface-variant font-medium">{post.platform_name}</span>
                   </div>
-                  <p className="truncate text-text-primary leading-tight">{post.caption || 'No caption'}</p>
+                  <p className="truncate text-on-surface leading-tight">{post.caption || 'No caption'}</p>
                   <div className="mt-1">
                     <StatusBadge status={post.status} className="text-[10px] px-1.5 py-0" />
                   </div>
@@ -161,7 +164,7 @@ function WeekView({ weekDays, posts, today, onEdit }: WeekViewProps) {
               ))}
               {dayPosts.length === 0 && (
                 <div className="h-full flex items-center justify-center">
-                  <span className="text-[10px] text-text-muted opacity-40">—</span>
+                  <span className="text-[10px] text-on-surface-variant opacity-40">--</span>
                 </div>
               )}
             </div>
@@ -188,17 +191,15 @@ function MonthView({ year, month, posts, today, onDayClick, selectedDay }: Month
   const grid = getMonthGrid(year, month)
 
   return (
-    <div className="rounded-lg border border-border bg-bg-surface overflow-hidden">
-      {/* Header */}
-      <div className="grid grid-cols-7 border-b border-border">
+    <div className="rounded-xl bg-surface-container-low overflow-hidden">
+      <div className="grid grid-cols-7 border-b border-outline-variant/15">
         {DAY_LABELS.map((label) => (
-          <div key={label} className="px-3 py-2 text-center border-r border-border last:border-r-0">
-            <p className="text-xs text-text-muted font-medium">{label}</p>
+          <div key={label} className="px-3 py-2 text-center border-r border-outline-variant/15 last:border-r-0">
+            <p className="text-xs text-on-surface-variant font-medium">{label}</p>
           </div>
         ))}
       </div>
 
-      {/* Grid */}
       <div className="grid grid-cols-7">
         {grid.map((day, i) => {
           const isCurrentMonth = day.getMonth() === month
@@ -211,25 +212,25 @@ function MonthView({ year, month, posts, today, onDayClick, selectedDay }: Month
               key={i}
               onClick={() => onDayClick(day)}
               className={`
-                min-h-[80px] p-2 border-r border-b border-border last:border-r-0 text-left transition-colors
-                ${isCurrentMonth ? 'hover:bg-bg-elevated' : 'opacity-40'}
-                ${isToday ? 'bg-accent/10' : ''}
-                ${isSelected && !isToday ? 'bg-bg-elevated ring-1 ring-accent/50 ring-inset' : ''}
+                min-h-[80px] p-2 border-r border-b border-outline-variant/15 last:border-r-0 text-left transition-colors
+                ${isCurrentMonth ? 'hover:bg-surface-container-high' : 'opacity-40'}
+                ${isToday ? 'bg-primary/10' : ''}
+                ${isSelected && !isToday ? 'bg-surface-container-high ring-1 ring-primary/50 ring-inset' : ''}
               `}
             >
-              <p className={`text-xs font-medium mb-1 ${isToday ? 'text-accent' : isCurrentMonth ? 'text-text-primary' : 'text-text-muted'}`}>
+              <p className={`text-xs font-medium mb-1 ${isToday ? 'text-primary' : isCurrentMonth ? 'text-on-surface' : 'text-on-surface-variant'}`}>
                 {day.getDate()}
               </p>
               <div className="flex flex-wrap gap-0.5">
                 {dayPosts.slice(0, 5).map((post) => (
                   <span
                     key={post.id}
-                    className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[post.status] ?? 'bg-text-muted'}`}
+                    className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[post.status] ?? 'bg-on-surface-variant'}`}
                     title={`${post.platform_name}: ${post.caption?.slice(0, 40) ?? 'No caption'}`}
                   />
                 ))}
                 {dayPosts.length > 5 && (
-                  <span className="text-[9px] text-text-muted">+{dayPosts.length - 5}</span>
+                  <span className="text-[9px] text-on-surface-variant">+{dayPosts.length - 5}</span>
                 )}
               </div>
             </button>
@@ -254,28 +255,28 @@ function DayDetail({ day, posts, mediaThumbs, onEdit }: DayDetailProps) {
   const label = day.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 
   return (
-    <div className="mt-4 rounded-lg border border-border bg-bg-surface p-4">
-      <h3 className="text-sm font-medium text-text-secondary mb-3">{label}</h3>
+    <div className="mt-4 rounded-xl bg-surface-container-low p-4">
+      <h3 className="text-sm font-medium text-on-surface-variant mb-3">{label}</h3>
       {dayPosts.length === 0 ? (
-        <p className="text-sm text-text-muted">No posts scheduled for this day.</p>
+        <p className="text-sm text-on-surface-variant">No posts scheduled for this day.</p>
       ) : (
         <div className="space-y-2">
           {dayPosts.map((post) => (
-            <div key={post.id} className="flex items-start justify-between rounded-lg border border-border bg-bg-elevated px-3 py-2 overflow-hidden">
+            <div key={post.id} className="flex items-start justify-between rounded-xl bg-surface-container-high px-3 py-2 overflow-hidden">
               <div className="flex items-start gap-2 min-w-0 flex-1">
                 <span className="h-2 w-2 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: post.platform_color }} />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm break-words whitespace-pre-wrap">{post.caption || 'No caption'}</p>
+                  <p className="text-sm text-on-surface break-words whitespace-pre-wrap">{post.caption || 'No caption'}</p>
                   {post.media_ids && (post.media_ids as string[]).length > 0 && (
                     <div className="flex gap-1.5 mt-2">
                       {(post.media_ids as string[]).map((mediaId) => {
                         const thumb = mediaThumbs[mediaId]
-                        if (!thumb) return <div key={mediaId} className="h-12 w-12 rounded bg-bg-base border border-border animate-pulse" />
-                        return <img key={mediaId} src={thumb.url} alt="" className="h-12 w-12 rounded object-cover border border-border" />
+                        if (!thumb) return <div key={mediaId} className="h-12 w-12 rounded bg-surface-container-lowest animate-pulse" />
+                        return <img key={mediaId} src={thumb.url} alt="" className="h-12 w-12 rounded object-cover" />
                       })}
                     </div>
                   )}
-                  <p className="text-xs text-text-muted mt-1">{post.platform_name} · {post.scheduled_at ? new Date(post.scheduled_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '—'}</p>
+                  <p className="text-xs text-on-surface-variant mt-1">{post.platform_name} · {post.scheduled_at ? new Date(post.scheduled_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '--'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0 ml-3">
@@ -286,125 +287,6 @@ function DayDetail({ day, posts, mediaThumbs, onEdit }: DayDetailProps) {
               </div>
             </div>
           ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── Approval Queue ──────────────────────────────────────────────────────────
-
-interface ApprovalQueueProps {
-  drafts: PostWithPlatform[]
-  mediaThumbs: Record<string, MediaThumb>
-  onApprove: (id: string) => void
-  onEdit: (id: string) => void
-  onReject: (id: string) => void
-}
-
-function ApprovalQueue({ drafts, mediaThumbs, onApprove, onEdit, onReject }: ApprovalQueueProps) {
-  return (
-    <div className="rounded-lg border border-border bg-bg-surface">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-medium">Pending Approvals</h2>
-          {drafts.length > 0 && (
-            <span className="inline-flex items-center justify-center h-5 min-w-[1.25rem] rounded-full bg-accent text-white text-xs font-medium px-1.5">
-              {drafts.length}
-            </span>
-          )}
-        </div>
-        <p className="text-xs text-text-muted">AI-generated drafts awaiting your review</p>
-      </div>
-
-      {drafts.length === 0 ? (
-        <div className="px-5 py-10 text-center">
-          <div className="h-8 w-8 rounded-full bg-status-scheduled/15 flex items-center justify-center mx-auto mb-2">
-            <Check className="h-4 w-4 text-status-scheduled" />
-          </div>
-          <p className="text-sm text-text-muted">No pending approvals — you're all caught up!</p>
-        </div>
-      ) : (
-        <div className="divide-y divide-border">
-          {drafts.map((post) => {
-            const time = post.scheduled_at
-              ? new Date(post.scheduled_at).toLocaleString('en-US', {
-                  weekday: 'short', month: 'short', day: 'numeric',
-                  hour: '2-digit', minute: '2-digit',
-                })
-              : 'Not scheduled'
-
-            return (
-              <div key={post.id} className="px-5 py-4">
-                {/* Platform + time */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="h-2.5 w-2.5 rounded-full"
-                      style={{ backgroundColor: post.platform_color }}
-                    />
-                    <span className="text-sm font-medium">{post.platform_name}</span>
-                    <StatusBadge status={post.status} />
-                  </div>
-                  <span className="text-xs text-text-muted">{time}</span>
-                </div>
-
-                {/* Full caption */}
-                <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap break-words mb-4">
-                  {post.caption || 'No caption'}
-                </p>
-
-                {/* Media thumbnails */}
-                {post.media_ids && (post.media_ids as string[]).length > 0 && (
-                  <div className="flex gap-2 mb-4 overflow-x-auto">
-                    {(post.media_ids as string[]).map((mediaId) => {
-                      const thumb = mediaThumbs[mediaId]
-                      if (!thumb) return (
-                        <div key={mediaId} className="h-20 w-20 rounded-lg bg-bg-base border border-border flex-shrink-0 animate-pulse" />
-                      )
-                      return (
-                        <img
-                          key={mediaId}
-                          src={thumb.url}
-                          alt=""
-                          className="h-20 w-20 rounded-lg object-cover border border-border flex-shrink-0"
-                        />
-                      )
-                    })}
-                  </div>
-                )}
-
-                {/* Action buttons */}
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    className="bg-status-scheduled/20 text-status-scheduled hover:bg-status-scheduled/30 border-0 font-medium"
-                    onClick={() => onApprove(post.id)}
-                  >
-                    <Check className="h-3.5 w-3.5 mr-1.5" />
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-text-secondary hover:text-text-primary"
-                    onClick={() => onEdit(post.id)}
-                  >
-                    <Edit3 className="h-3.5 w-3.5 mr-1.5" />
-                    Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="bg-status-failed/15 text-status-failed hover:bg-status-failed/25 border-0"
-                    onClick={() => onReject(post.id)}
-                  >
-                    <X className="h-3.5 w-3.5 mr-1.5" />
-                    Reject
-                  </Button>
-                </div>
-              </div>
-            )
-          })}
         </div>
       )}
     </div>
@@ -423,6 +305,7 @@ export default function ContentPage() {
   const [posting, setPosting] = useState(false)
   const [suggesting, setSuggesting] = useState(false)
   const [mediaThumbs, setMediaThumbs] = useState<Record<string, MediaThumb>>({})
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Calendar state
   const today = new Date()
@@ -458,7 +341,6 @@ export default function ContentPage() {
     setPosts(mapped)
     setLoading(false)
 
-    // Load media thumbnails for posts with media_ids
     const allMediaIds = new Set<string>()
     mapped.forEach((p) => {
       const ids = p.media_ids as string[] | null
@@ -591,9 +473,9 @@ export default function ContentPage() {
     const end = weekDays[6]
     const sameMonth = start.getMonth() === end.getMonth()
     if (sameMonth) {
-      return `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} – ${end.getDate()}, ${end.getFullYear()}`
+      return `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} -- ${end.getDate()}, ${end.getFullYear()}`
     }
-    return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+    return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} -- ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
   })()
 
   const monthLabel = new Date(currentYear, currentMonth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -603,149 +485,216 @@ export default function ContentPage() {
   if (!userId) return null
 
   return (
-    <Tabs defaultValue="content" className="space-y-6">
-      {/* Top-level tabs as page header */}
-      <div className="flex items-center justify-between">
-        <TabsList className="bg-transparent p-0 gap-6">
-          <TabsTrigger value="content" className="px-0 pb-2 text-3xl font-light rounded-none border-b-2 data-[state=active]:border-accent data-[state=active]:text-text-primary data-[state=inactive]:border-transparent data-[state=inactive]:text-text-muted data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-            Content
-          </TabsTrigger>
-          <TabsTrigger value="media" className="px-0 pb-2 text-3xl font-light rounded-none border-b-2 data-[state=active]:border-accent data-[state=active]:text-text-primary data-[state=inactive]:border-transparent data-[state=inactive]:text-text-muted data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-            Media
-          </TabsTrigger>
-        </TabsList>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handlePostNow} disabled={posting} className="text-xs">
-            <Send className="h-3.5 w-3.5 mr-1.5" />
+    <Tabs defaultValue="content" className="space-y-0">
+      {/* ── Sticky TopAppBar (from mockup) ─────────────────────────────── */}
+      <header className="sticky top-0 z-40 w-full bg-background/80 backdrop-blur-xl flex justify-between items-center h-20 px-0 mb-0">
+        <h2 className="font-display text-3xl font-light text-primary">Pending Approvals</h2>
+        <div className="flex items-center gap-4">
+          {/* Search */}
+          <div className="relative hidden lg:block">
+            <input
+              type="text"
+              placeholder="Search content..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-surface-container-low border-none rounded-full px-6 py-2 text-sm w-64 focus:ring-1 focus:ring-primary placeholder:text-on-surface-variant/40 text-on-surface"
+            />
+            <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-on-surface-variant/40" />
+          </div>
+          {/* Post now CTA */}
+          <button
+            onClick={handlePostNow}
+            disabled={posting}
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-primary to-primary-container text-on-primary font-semibold text-sm rounded-full transition-transform active:scale-95 shadow-lg shadow-primary/10"
+          >
+            <Send className="h-3.5 w-3.5" />
             {posting ? 'Posting...' : 'Post now'}
-          </Button>
-          <Button variant="outline" onClick={handleNewPost} className="text-xs">
-            <Plus className="h-3.5 w-3.5 mr-1.5" />
-            Manual post
-          </Button>
-          <Button onClick={handleSuggestPosts} disabled={suggesting} className="bg-accent text-white hover:bg-accent-hover">
-            {suggesting ? (
-              <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-            ) : (
-              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-            )}
-            {suggesting ? 'Starting...' : 'Suggest posts'}
-          </Button>
+          </button>
+          {/* Manual post / Suggest posts pill */}
+          <div className="flex items-center bg-surface-container-low rounded-full p-1">
+            <button
+              onClick={handleNewPost}
+              className="px-4 py-1.5 text-xs font-medium text-on-surface hover:bg-surface-container-high rounded-full transition-all"
+            >
+              Manual post
+            </button>
+            <button
+              onClick={handleSuggestPosts}
+              disabled={suggesting}
+              className="px-4 py-1.5 text-xs font-medium text-on-surface hover:bg-surface-container-high rounded-full transition-all"
+            >
+              {suggesting ? (
+                <span className="flex items-center gap-1.5">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Starting...
+                </span>
+              ) : (
+                'Suggest posts'
+              )}
+            </button>
+          </div>
         </div>
-      </div>
+      </header>
+
+      {/* Tab switcher */}
+      <TabsList className="bg-transparent p-0 gap-6 mb-8">
+        <TabsTrigger value="content" className="px-0 pb-2 text-sm font-medium rounded-none border-b-2 data-[state=active]:border-primary data-[state=active]:text-on-surface data-[state=inactive]:border-transparent data-[state=inactive]:text-on-surface-variant data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+          Content
+        </TabsTrigger>
+        <TabsTrigger value="media" className="px-0 pb-2 text-sm font-medium rounded-none border-b-2 data-[state=active]:border-primary data-[state=active]:text-on-surface data-[state=inactive]:border-transparent data-[state=inactive]:text-on-surface-variant data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+          Media
+        </TabsTrigger>
+      </TabsList>
 
       {/* ── Content Tab ────────────────────────────────────────────────── */}
-      <TabsContent value="content" className="mt-0 space-y-6">
-
-      {/* Approval Queue */}
-      {loading ? (
-        <div className="flex items-center justify-center py-8">
-          <div className="h-7 w-7 animate-spin rounded-full border-2 border-accent border-t-transparent" />
-        </div>
-      ) : (
-        <ApprovalQueue
-          drafts={aiDrafts}
-          mediaThumbs={mediaThumbs}
-          onApprove={handleApprove}
-          onEdit={handleEdit}
-          onReject={handleDelete}
-        />
-      )}
-
-      {/* Calendar controls */}
-      <div className="space-y-4">
-          {/* Calendar controls */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={navigatePrev} className="h-8 w-8 p-0">
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={navigateNext} className="h-8 w-8 p-0">
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={goToToday} className="text-xs px-3 h-8">
-                Today
-              </Button>
-              <h2 className="text-sm font-medium text-text-secondary ml-2">
-                {calendarMode === 'week' ? weekLabel : monthLabel}
-              </h2>
+      <TabsContent value="content" className="mt-0">
+        <section className="max-w-7xl mx-auto space-y-6">
+          {/* Hero: Review Queue label + count + filter/sort buttons */}
+          <div className="flex justify-between items-end mb-6">
+            <div>
+              <span className="text-primary font-medium tracking-widest text-[10px] uppercase">Review Queue</span>
+              <h3 className="text-4xl font-display font-light mt-1 text-on-surface">
+                {aiDrafts.length} post{aiDrafts.length !== 1 ? 's' : ''} waiting{' '}
+                <span className="serif-italic">for your touch.</span>
+              </h3>
             </div>
-
-            {/* Week / Month toggle */}
-            <div className="flex items-center bg-bg-surface rounded-lg border border-border p-0.5">
-              <button
-                onClick={() => setCalendarMode('week')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                  calendarMode === 'week'
-                    ? 'bg-accent text-white'
-                    : 'text-text-muted hover:text-text-primary'
-                }`}
-              >
-                Week
+            <div className="flex gap-2">
+              <button className="p-2 border border-outline-variant/15 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors">
+                <Filter className="h-5 w-5" />
               </button>
-              <button
-                onClick={() => setCalendarMode('month')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                  calendarMode === 'month'
-                    ? 'bg-accent text-white'
-                    : 'text-text-muted hover:text-text-primary'
-                }`}
-              >
-                Month
+              <button className="p-2 border border-outline-variant/15 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors">
+                <ArrowUpDown className="h-5 w-5" />
               </button>
             </div>
           </div>
 
-          {/* Calendar body */}
+          {/* Posts List (Editorial Cards) */}
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <div className="h-7 w-7 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+              <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             </div>
-          ) : calendarMode === 'week' ? (
-            <WeekView
-              weekDays={weekDays}
-              posts={posts}
-              today={today}
-              onEdit={handleEdit}
-            />
           ) : (
-            <>
-              <MonthView
-                year={currentYear}
-                month={currentMonth}
-                posts={posts}
-                today={today}
-                onDayClick={(day) => setSelectedDay((prev) => (prev && isSameDay(prev, day) ? null : day))}
-                selectedDay={selectedDay}
-              />
-              {selectedDay && (
-                <DayDetail
-                  day={selectedDay}
-                  posts={posts}
+            <div className="space-y-6">
+              {aiDrafts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
                   mediaThumbs={mediaThumbs}
+                  onApprove={handleApprove}
                   onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onRetry={handleRetry}
                 />
-              )}
-            </>
+              ))}
+            </div>
           )}
 
-          {/* Legend */}
-          <div className="flex items-center gap-4 pt-1">
-            {[
-              { status: 'draft', label: 'Draft' },
-              { status: 'approved', label: 'Approved' },
-              { status: 'scheduled', label: 'Scheduled' },
-              { status: 'posted', label: 'Posted' },
-              { status: 'failed', label: 'Failed' },
-            ].map(({ status, label }) => (
-              <div key={status} className="flex items-center gap-1.5">
-                <span className={`h-2 w-2 rounded-full ${STATUS_DOT[status]}`} />
-                <span className="text-xs text-text-muted">{label}</span>
-              </div>
-            ))}
-          </div>
-      </div>
+          {/* End of queue */}
+          {!loading && (
+            <div className="mt-16 flex flex-col items-center justify-center py-12 border border-dashed border-outline-variant/20 rounded-3xl">
+              <Sparkles className="h-10 w-10 text-on-surface-variant/20 mb-4" />
+              <p className="text-on-surface-variant/40 text-sm font-medium">End of the queue. Great work today.</p>
+              <button
+                onClick={handleSuggestPosts}
+                disabled={suggesting}
+                className="mt-4 text-xs font-bold uppercase tracking-widest text-primary hover:opacity-70 transition-opacity"
+              >
+                {suggesting ? 'Starting...' : 'Request AI Suggestions'}
+              </button>
+            </div>
+          )}
 
+          {/* Calendar controls */}
+          <div className="space-y-4 pt-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={navigatePrev} className="h-8 w-8 p-0 border-outline-variant/15">
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={navigateNext} className="h-8 w-8 p-0 border-outline-variant/15">
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={goToToday} className="text-xs px-3 h-8 border-outline-variant/15">
+                  Today
+                </Button>
+                <h2 className="text-sm font-medium text-on-surface-variant ml-2">
+                  {calendarMode === 'week' ? weekLabel : monthLabel}
+                </h2>
+              </div>
+
+              <div className="flex items-center bg-surface-container-low rounded-lg p-0.5">
+                <button
+                  onClick={() => setCalendarMode('week')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    calendarMode === 'week'
+                      ? 'bg-primary text-on-primary'
+                      : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  Week
+                </button>
+                <button
+                  onClick={() => setCalendarMode('month')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    calendarMode === 'month'
+                      ? 'bg-primary text-on-primary'
+                      : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  Month
+                </button>
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              </div>
+            ) : calendarMode === 'week' ? (
+              <WeekView
+                weekDays={weekDays}
+                posts={posts}
+                today={today}
+                onEdit={handleEdit}
+              />
+            ) : (
+              <>
+                <MonthView
+                  year={currentYear}
+                  month={currentMonth}
+                  posts={posts}
+                  today={today}
+                  onDayClick={(day) => setSelectedDay((prev) => (prev && isSameDay(prev, day) ? null : day))}
+                  selectedDay={selectedDay}
+                />
+                {selectedDay && (
+                  <DayDetail
+                    day={selectedDay}
+                    posts={posts}
+                    mediaThumbs={mediaThumbs}
+                    onEdit={handleEdit}
+                  />
+                )}
+              </>
+            )}
+
+            {/* Legend */}
+            <div className="flex items-center gap-4 pt-1">
+              {[
+                { status: 'draft', label: 'Draft' },
+                { status: 'approved', label: 'Approved' },
+                { status: 'scheduled', label: 'Scheduled' },
+                { status: 'posted', label: 'Posted' },
+                { status: 'failed', label: 'Failed' },
+              ].map(({ status, label }) => (
+                <div key={status} className="flex items-center gap-1.5">
+                  <span className={`h-2 w-2 rounded-full ${STATUS_DOT[status]}`} />
+                  <span className="text-xs text-on-surface-variant">{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       </TabsContent>
 
       {/* ── Media Tab ────────────────────────────────────────────────── */}

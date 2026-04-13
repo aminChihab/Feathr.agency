@@ -2,9 +2,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Send } from 'lucide-react'
 
 interface ReplyBoxProps {
   onSend: (body: string) => Promise<void>
@@ -31,25 +28,32 @@ export function ReplyBox({ onSend, disabled }: ReplyBoxProps) {
   }
 
   return (
-    <div className="border-t border-border p-4">
-      <div className="flex gap-2">
-        <Textarea
+    <div className="p-6 bg-surface-container-low/20 backdrop-blur-md">
+      <div className="flex items-end gap-3 bg-surface-container-highest/50 p-2 rounded-2xl border border-outline-variant/10 focus-within:border-primary/30 transition-all">
+        <button className="p-2 text-on-surface-variant hover:text-primary transition-colors" type="button">
+          <span className="material-symbols-outlined">add_circle</span>
+        </button>
+        <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
-          rows={2}
           disabled={disabled}
-          className="bg-bg-surface resize-none"
+          className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 resize-none h-10 max-h-32 custom-scrollbar placeholder:text-on-surface-variant/30 text-on-surface"
         />
-        <Button
-          onClick={handleSend}
-          disabled={!text.trim() || sending || disabled}
-          size="icon"
-          className="h-auto bg-accent text-white hover:bg-accent-hover"
-        >
-          <Send className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1 pr-2 pb-1">
+          <button className="p-2 text-on-surface-variant hover:text-primary transition-colors" type="button">
+            <span className="material-symbols-outlined">mood</span>
+          </button>
+          <button
+            onClick={handleSend}
+            disabled={!text.trim() || sending || disabled}
+            className="p-2.5 bg-primary text-on-primary-container rounded-xl shadow-lg shadow-primary/10 transition-transform active:scale-95 disabled:opacity-40"
+            type="button"
+          >
+            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>send</span>
+          </button>
+        </div>
       </div>
     </div>
   )

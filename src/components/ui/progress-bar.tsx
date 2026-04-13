@@ -13,12 +13,12 @@ export function ProgressBar({ currentStep, totalSteps, className }: ProgressBarP
 
   return (
     <div className={cn('w-full', className)}>
-      <div className="mb-2 flex justify-between text-sm text-text-secondary">
+      <div className="mb-2 flex justify-between text-sm text-on-surface-variant">
         <span>Step {currentStep} of {totalSteps}</span>
       </div>
-      <div className="h-1.5 w-full rounded-full bg-bg-elevated">
+      <div className="h-1.5 w-full rounded-full bg-surface-container-highest">
         <div
-          className="h-1.5 rounded-full bg-accent transition-all duration-500"
+          className="h-1.5 rounded-full gradient-cta transition-all duration-500"
           style={{ width: `${percentage}%` }}
         />
       </div>
