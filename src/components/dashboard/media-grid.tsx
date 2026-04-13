@@ -5,7 +5,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import { FileDropzone } from '@/components/ui/file-dropzone'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
-import { Play, X, ChevronLeft, ChevronRight, Search, Image, Video, LayoutGrid, Eye, Trash2, Upload } from 'lucide-react'
+import { Play, X, ChevronLeft, ChevronRight, Search, Image, Video, LayoutGrid, Eye, Trash2, Upload, ArrowUpDown, Tag } from 'lucide-react'
 
 type MediaItem = Database['public']['Tables']['content_library']['Row'] & {
   signedUrl: string | null
@@ -58,6 +58,8 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 })
   const [filter, setFilter] = useState<'all' | 'photo' | 'video'>('all')
   const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState<'updated' | 'name'>('updated')
+  const [activeTag, setActiveTag] = useState<string | null>(null)
   const [previewItem, setPreviewItem] = useState<MediaItem | null>(null)
   const [duplicates, setDuplicates] = useState<{ file: File; existing: MediaItem }[]>([])
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
@@ -127,18 +129,38 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
   }, [filter])
 
   const filteredItems = useMemo(() => {
-    if (!search.trim()) return items
-    const q = search.toLowerCase()
-    return items.filter((item) => {
-      const desc = (item.metadata as { description?: string } | null)?.description ?? ''
-      const tags = (item.tags ?? []).join(' ')
-      return (
-        item.file_name.toLowerCase().includes(q) ||
-        desc.toLowerCase().includes(q) ||
-        tags.toLowerCase().includes(q)
-      )
+    let result = items
+
+    // Tag filter
+    if (activeTag) {
+      result = result.filter((item) => (item.tags ?? []).includes(activeTag))
+    }
+
+    // Search filter
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      result = result.filter((item) => {
+        const desc = (item.metadata as { description?: string } | null)?.description ?? ''
+        const tags = (item.tags ?? []).join(' ')
+        return (
+          item.file_name.toLowerCase().includes(q) ||
+          desc.toLowerCase().includes(q) ||
+          tags.toLowerCase().includes(q)
+        )
+      })
+    }
+
+    // Sort
+    result = [...result].sort((a, b) => {
+      if (sortBy === 'name') {
+        return a.file_name.localeCompare(b.file_name)
+      }
+      // 'updated' — newest first
+      return new Date(b.updated_at ?? b.created_at).getTime() - new Date(a.updated_at ?? a.created_at).getTime()
     })
-  }, [items, search])
+
+    return result
+  }, [items, search, sortBy, activeTag])
 
   const counts = useMemo(() => {
     const photos = items.filter((i) => i.file_type === 'photo').length
@@ -427,10 +449,20 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
           />
         </div>
 
+        {/* Sort */}
+        <button
+          onClick={() => setSortBy(sortBy === 'updated' ? 'name' : 'updated')}
+          className="flex items-center gap-1.5 rounded-lg border border-border bg-bg-elevated px-3 py-2 text-xs text-text-secondary hover:text-text-primary transition-colors shrink-0"
+          title={`Sort by ${sortBy === 'updated' ? 'name' : 'last updated'}`}
+        >
+          <ArrowUpDown className="h-3 w-3" />
+          {sortBy === 'updated' ? 'Updated' : 'Name'}
+        </button>
+
         {/* Count */}
         {!loading && (
           <p className="text-xs text-text-muted shrink-0">
-            {search ? (
+            {search || activeTag ? (
               <>{filteredItems.length} of {counts.total} items</>
             ) : (
               <>{counts.total} items{counts.photos > 0 && ` · ${counts.photos} photo${counts.photos !== 1 ? 's' : ''}`}{counts.videos > 0 && ` · ${counts.videos} video${counts.videos !== 1 ? 's' : ''}`}</>
@@ -438,6 +470,21 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
           </p>
         )}
       </div>
+
+      {/* Active tag filter */}
+      {activeTag && (
+        <div className="flex items-center gap-2 -mt-2">
+          <Tag className="h-3 w-3 text-text-muted" />
+          <span className="text-xs text-text-muted">Filtered by:</span>
+          <button
+            onClick={() => setActiveTag(null)}
+            className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${tagColor(activeTag)}`}
+          >
+            {activeTag}
+            <X className="h-3 w-3 ml-0.5" />
+          </button>
+        </div>
+      )}
 
       {/* Grid */}
       {loading ? (
@@ -557,12 +604,13 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
                   {tags.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {tags.slice(0, 5).map((tag) => (
-                        <span
+                        <button
                           key={tag}
-                          className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${tagColor(tag)}`}
+                          onClick={(e) => { e.stopPropagation(); setActiveTag(activeTag === tag ? null : tag) }}
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition-opacity hover:opacity-80 ${tagColor(tag)} ${activeTag === tag ? 'ring-1 ring-white/30' : ''}`}
                         >
                           {tag}
-                        </span>
+                        </button>
                       ))}
                       {tags.length > 5 && (
                         <span className="rounded-full border border-border px-2 py-0.5 text-[10px] text-text-muted">
