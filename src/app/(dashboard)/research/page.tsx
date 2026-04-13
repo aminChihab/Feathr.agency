@@ -2,26 +2,26 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/types/database'
 import { ResearchReportCard } from '@/components/dashboard/research-report-card'
 import { ResearchSuggestions } from '@/components/dashboard/research-suggestions'
 import { ResearchTargets } from '@/components/dashboard/research-targets'
 import { Button } from '@/components/ui/button'
 import { Sparkles, Loader2, Search } from 'lucide-react'
 
-type Report = Database['public']['Tables']['research_reports']['Row']
-
-function isAgentReport(body: any): boolean {
-  return !!(body?.summary || body?.content_ideas || body?.trending_topics || body?.competitor_strategies ||
-    body?.type === 'x_strategy' || body?.type === 'ig_strategy' || body?.type === 'performance' ||
-    body?.reply_opportunities || body?.trending_formats || body?.top_posts)
+interface ReportSection {
+  section_type: string
+  title: string
+  content: string
+  sort_order: number
 }
 
-function getReportType(body: any): string {
-  if (body?.type === 'x_strategy') return 'x_strategy'
-  if (body?.type === 'ig_strategy') return 'ig_strategy'
-  if (body?.type === 'performance') return 'performance'
-  return 'other'
+interface Report {
+  id: string
+  report_type: string
+  title: string
+  summary: string | null
+  created_at: string
+  research_report_sections: ReportSection[]
 }
 
 export default function ResearchPage() {
@@ -38,13 +38,15 @@ export default function ResearchPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
+    // Load reports with sections
     const { data: reportData } = await supabase
       .from('research_reports')
-      .select('*')
+      .select('id, report_type, title, summary, created_at, research_report_sections(section_type, title, content, sort_order)')
       .eq('profile_id', user.id)
       .order('created_at', { ascending: false })
+      .limit(20)
 
-    setReports((reportData ?? []).filter((r) => isAgentReport(r.body)))
+    setReports((reportData as Report[] | null) ?? [])
 
     const notifRes = await fetch('/api/notifications')
     if (notifRes.ok) {
@@ -62,8 +64,8 @@ export default function ResearchPage() {
     setTwitterTargets({
       handles: s.twitter_handles ?? s.competitor_handles ?? [],
       terms: s.twitter_terms ?? s.research_terms ?? [],
-      discoveredHandles: s.discovered_twitter_handles ?? s.discovered_handles ?? [],
-      discoveredTerms: s.discovered_twitter_terms ?? s.discovered_terms ?? [],
+      discoveredHandles: s.discovered_twitter_handles ?? [],
+      discoveredTerms: s.discovered_twitter_terms ?? [],
     })
     setInstagramTargets({
       handles: s.instagram_handles ?? [],
@@ -103,7 +105,6 @@ export default function ResearchPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    // Determine platform from notification body
     const notif = notifications.find((n) => n.id === notifId)
     const platform = notif?.body?.platform ?? 'twitter'
 
@@ -118,7 +119,6 @@ export default function ResearchPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(update),
     })
-
     loadAll()
   }
 
@@ -175,7 +175,7 @@ export default function ResearchPage() {
     loadAll()
   }
 
-  const filteredReports = filter === 'all' ? reports : reports.filter((r) => getReportType(r.body as any) === filter)
+  const filteredReports = filter === 'all' ? reports : reports.filter((r) => r.report_type === filter)
 
   if (loading) {
     return (
@@ -194,21 +194,10 @@ export default function ResearchPage() {
             <p className="text-sm text-text-muted mt-1">{reports.length} report{reports.length !== 1 ? 's' : ''}</p>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" className="text-xs" onClick={async () => {
-            console.log('[research] Testing IG sync...')
-            const res = await fetch('/api/research/sync-instagram', { method: 'POST' })
-            const data = await res.json()
-            console.log('[research] IG sync result:', data)
-            alert(`IG Sync: ${data.competitor_reports ?? 0} reports, ${data.errors?.length ?? 0} errors. Check console.`)
-          }}>
-            Test IG Sync
-          </Button>
-          <Button onClick={handleNewResearch} disabled={triggering}>
-            {triggering ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-1.5" />}
-            {triggering ? 'Running...' : 'New Research'}
-          </Button>
-        </div>
+        <Button onClick={handleNewResearch} disabled={triggering}>
+          {triggering ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-1.5" />}
+          {triggering ? 'Running...' : 'New Research'}
+        </Button>
       </div>
 
       <ResearchSuggestions notifications={notifications} onAccept={handleAcceptSuggestion} onDismiss={handleDismissNotification} />
@@ -254,7 +243,15 @@ export default function ResearchPage() {
       ) : (
         <div className="space-y-4">
           {filteredReports.map((report, i) => (
-            <ResearchReportCard key={report.id} type={report.type} title={report.title} createdAt={report.created_at} body={report.body} defaultOpen={i === 0} />
+            <ResearchReportCard
+              key={report.id}
+              reportType={report.report_type}
+              title={report.title}
+              summary={report.summary}
+              createdAt={report.created_at}
+              sections={report.research_report_sections ?? []}
+              defaultOpen={i === 0}
+            />
           ))}
         </div>
       )}
