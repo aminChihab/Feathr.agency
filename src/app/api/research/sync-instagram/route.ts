@@ -1,6 +1,27 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { decryptCredentials } from '@/lib/crypto'
+
+const APIFY_TOKEN = process.env.APIFY_API_TOKEN
+const APIFY_ACTOR = 'apify~instagram-scraper'
+
+async function runApifyScraper(input: any): Promise<any[]> {
+  const res = await fetch(
+    `https://api.apify.com/v2/acts/${APIFY_ACTOR}/run-sync-get-dataset-items?token=${APIFY_TOKEN}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    }
+  )
+
+  if (!res.ok) {
+    const err = await res.text()
+    console.error('[ig-sync] Apify error:', res.status, err.slice(0, 200))
+    return []
+  }
+
+  return await res.json()
+}
 
 export async function POST() {
   const supabase = await createClient()
@@ -10,33 +31,12 @@ export async function POST() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  if (!APIFY_TOKEN) {
+    return NextResponse.json({ error: 'APIFY_API_TOKEN not configured' }, { status: 500 })
+  }
+
   console.log('[ig-sync] Starting for user:', user.id)
 
-  // Get Instagram account
-  const { data: igAccount } = await supabase
-    .from('platform_accounts')
-    .select('id, credentials_encrypted, metadata, platforms!inner(slug)')
-    .eq('profile_id', user.id)
-    .eq('status', 'connected')
-    .eq('platforms.slug', 'instagram')
-    .single()
-
-  if (!igAccount) {
-    console.log('[ig-sync] No connected Instagram account')
-    return NextResponse.json({ error: 'No connected Instagram account' }, { status: 400 })
-  }
-
-  const creds = decryptCredentials(igAccount.credentials_encrypted ?? '{}')
-  const accessToken = creds.access_token
-  const igUserId = (igAccount.metadata as any)?.instagram_user_id ?? creds.instagram_user_id
-
-  console.log('[ig-sync] IG user ID:', igUserId ? 'found' : 'MISSING', '| Token:', accessToken ? 'found' : 'MISSING')
-
-  if (!accessToken || !igUserId) {
-    return NextResponse.json({ error: 'Missing Instagram credentials' }, { status: 400 })
-  }
-
-  // Load research settings
   const { data: profile } = await supabase
     .from('profiles')
     .select('settings')
@@ -51,50 +51,45 @@ export async function POST() {
   console.log('[ig-sync] Search terms:', searchTerms.join(', ') || 'none')
 
   if (competitorHandles.length === 0 && searchTerms.length === 0) {
-    console.log('[ig-sync] No Instagram targets configured')
     return NextResponse.json({ competitor_reports: 0, hashtag_reports: 0, message: 'No Instagram targets configured' })
   }
 
   let competitorReports = 0
+  let hashtagReports = 0
   const errors: string[] = []
 
+  // Scrape competitor profiles
   for (const handle of competitorHandles) {
     try {
-      console.log(`[ig-sync] Looking up @${handle}...`)
+      console.log(`[ig-sync] Scraping @${handle}...`)
 
-      const url = `https://graph.instagram.com/v22.0/${igUserId}?fields=business_discovery.fields(username,name,biography,followers_count,follows_count,media_count,media.limit(12){caption,timestamp,like_count,comments_count,media_type,permalink}).username(${handle})&access_token=${accessToken}`
+      const results = await runApifyScraper({
+        directUrls: [`https://www.instagram.com/${handle}/`],
+        resultsType: 'posts',
+        resultsLimit: 12,
+      })
 
-      const searchRes = await fetch(url)
-
-      if (!searchRes.ok) {
-        const errBody = await searchRes.text()
-        console.error(`[ig-sync] @${handle}: ${searchRes.status}`, errBody.slice(0, 200))
-        errors.push(`@${handle}: ${searchRes.status} — ${errBody.slice(0, 100)}`)
-        await new Promise((r) => setTimeout(r, 1000))
+      if (results.length === 0) {
+        console.log(`[ig-sync] @${handle}: no results`)
+        errors.push(`@${handle}: no results`)
         continue
       }
 
-      const data = await searchRes.json()
-      const discovery = data.business_discovery
-
-      if (!discovery) {
-        console.log(`[ig-sync] @${handle}: no business_discovery in response`)
-        errors.push(`@${handle}: not a business/creator account`)
-        continue
-      }
-
-      const recentMedia = (discovery.media?.data ?? []).map((m: any) => ({
-        caption: m.caption ?? '',
-        timestamp: m.timestamp,
-        likes: m.like_count ?? 0,
-        comments: m.comments_count ?? 0,
-        media_type: m.media_type,
-        permalink: m.permalink,
+      // Extract profile info from first result
+      const first = results[0]
+      const recentPosts = results.map((post: any) => ({
+        caption: post.caption ?? '',
+        timestamp: post.timestamp,
+        likes: post.likesCount ?? 0,
+        comments: post.commentsCount ?? 0,
+        media_type: post.type ?? 'Image',
+        permalink: post.url,
+        hashtags: post.hashtags ?? [],
       }))
 
-      console.log(`[ig-sync] @${handle}: ${discovery.followers_count ?? 0} followers, ${recentMedia.length} posts`)
+      console.log(`[ig-sync] @${handle}: ${recentPosts.length} posts scraped`)
 
-      const { error: insertError } = await supabase.from('research_reports').insert({
+      await supabase.from('research_reports').insert({
         profile_id: user.id,
         type: 'competitor',
         title: `IG Competitor: @${handle}`,
@@ -103,84 +98,53 @@ export async function POST() {
           platform: 'instagram',
           scraped_at: new Date().toISOString(),
           profile: {
-            display_name: discovery.name ?? handle,
-            bio: discovery.biography ?? '',
-            followers: discovery.followers_count ?? 0,
-            following: discovery.follows_count ?? 0,
-            post_count: discovery.media_count ?? 0,
+            display_name: first.ownerFullName ?? handle,
+            bio: first.ownerBio ?? '',
+            followers: first.ownerFollowerCount ?? 0,
+            following: first.ownerFollowingCount ?? 0,
+            post_count: first.ownerPostCount ?? 0,
           },
-          recent_posts: recentMedia,
+          recent_posts: recentPosts,
         },
       })
 
-      if (insertError) {
-        console.error(`[ig-sync] @${handle}: DB insert failed:`, insertError.message)
-        errors.push(`@${handle}: DB error — ${insertError.message}`)
-      } else {
-        competitorReports++
-      }
-
-      await new Promise((r) => setTimeout(r, 1000))
+      competitorReports++
     } catch (err) {
       console.error(`[ig-sync] @${handle}: exception:`, err)
       errors.push(`@${handle}: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 
-  // Hashtag search
-  let hashtagReports = 0
-
+  // Scrape hashtags
   for (const term of searchTerms) {
     try {
       const cleanTag = term.replace(/^#/, '').toLowerCase()
-      console.log(`[ig-sync] Searching hashtag #${cleanTag}...`)
+      console.log(`[ig-sync] Scraping #${cleanTag}...`)
 
-      // Step 1: Get hashtag ID
-      const searchRes = await fetch(
-        `https://graph.instagram.com/v22.0/ig_hashtag_search?q=${encodeURIComponent(cleanTag)}&user_id=${igUserId}&access_token=${accessToken}`
-      )
+      const results = await runApifyScraper({
+        directUrls: [`https://www.instagram.com/explore/tags/${cleanTag}/`],
+        resultsType: 'posts',
+        resultsLimit: 20,
+      })
 
-      if (!searchRes.ok) {
-        const errBody = await searchRes.text()
-        console.error(`[ig-sync] Hashtag #${cleanTag}: ${searchRes.status}`, errBody.slice(0, 200))
-        errors.push(`#${cleanTag}: ${searchRes.status} — ${errBody.slice(0, 100)}`)
-        await new Promise((r) => setTimeout(r, 1000))
+      if (results.length === 0) {
+        console.log(`[ig-sync] #${cleanTag}: no results`)
+        errors.push(`#${cleanTag}: no results`)
         continue
       }
 
-      const searchData = await searchRes.json()
-      const hashtagId = searchData.data?.[0]?.id
-
-      if (!hashtagId) {
-        console.log(`[ig-sync] Hashtag #${cleanTag}: not found`)
-        errors.push(`#${cleanTag}: not found`)
-        continue
-      }
-
-      // Step 2: Get recent media for this hashtag
-      const mediaRes = await fetch(
-        `https://graph.instagram.com/v22.0/${hashtagId}/recent_media?user_id=${igUserId}&fields=caption,timestamp,like_count,comments_count,media_type,permalink&access_token=${accessToken}`
-      )
-
-      if (!mediaRes.ok) {
-        const errBody = await mediaRes.text()
-        console.error(`[ig-sync] Hashtag #${cleanTag} media: ${mediaRes.status}`, errBody.slice(0, 200))
-        errors.push(`#${cleanTag} media: ${mediaRes.status}`)
-        await new Promise((r) => setTimeout(r, 1000))
-        continue
-      }
-
-      const mediaData = await mediaRes.json()
-      const posts = (mediaData.data ?? []).map((m: any) => ({
-        caption: m.caption ?? '',
-        timestamp: m.timestamp,
-        likes: m.like_count ?? 0,
-        comments: m.comments_count ?? 0,
-        media_type: m.media_type,
-        permalink: m.permalink,
+      const posts = results.map((post: any) => ({
+        caption: post.caption ?? '',
+        timestamp: post.timestamp,
+        likes: post.likesCount ?? 0,
+        comments: post.commentsCount ?? 0,
+        media_type: post.type ?? 'Image',
+        permalink: post.url,
+        owner: post.ownerUsername ?? '',
+        hashtags: post.hashtags ?? [],
       }))
 
-      console.log(`[ig-sync] Hashtag #${cleanTag}: ${posts.length} recent posts`)
+      console.log(`[ig-sync] #${cleanTag}: ${posts.length} posts scraped`)
 
       await supabase.from('research_reports').insert({
         profile_id: user.id,
@@ -196,14 +160,13 @@ export async function POST() {
       })
 
       hashtagReports++
-      await new Promise((r) => setTimeout(r, 1000))
     } catch (err) {
-      console.error(`[ig-sync] Hashtag ${term}: exception:`, err)
+      console.error(`[ig-sync] ${term}: exception:`, err)
       errors.push(`${term}: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 
-  console.log(`[ig-sync] Done: ${competitorReports} competitor reports, ${hashtagReports} hashtag reports, ${errors.length} errors`)
+  console.log(`[ig-sync] Done: ${competitorReports} competitor, ${hashtagReports} hashtag, ${errors.length} errors`)
 
   return NextResponse.json({
     competitor_reports: competitorReports,
