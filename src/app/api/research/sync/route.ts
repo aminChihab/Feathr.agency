@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { decryptCredentials } from '@/lib/crypto'
-import type { Json } from '@/types/database'
 
 interface ScrapedTweet {
   text: string
@@ -218,17 +217,28 @@ export async function POST() {
     try {
       const tweets = await searchTweets(accessToken, term)
       if (tweets.length > 0) {
-        await supabase.from('research_reports').insert({
+        const { data: scraped } = await supabase.from('research_scraped').insert({
           profile_id: user.id,
-          type: 'trend',
-          title: `Trending: ${term}`,
-          body: {
-            term,
-            scraped_at: new Date().toISOString(),
-            tweet_count: tweets.length,
-            tweets: tweets as unknown as Json[],
-          } as unknown as Json,
-        })
+          platform: 'twitter',
+          data_type: 'hashtag',
+          term,
+          scraped_at: new Date().toISOString(),
+        }).select('id').single()
+
+        if (scraped) {
+          await supabase.from('research_scraped_posts').insert(
+            tweets.map((tweet: any) => ({
+              scraped_id: scraped.id,
+              caption: tweet.text,
+              permalink: tweet.tweetUrl,
+              likes: tweet.likes ?? 0,
+              comments: tweet.replies ?? 0,
+              views: tweet.views ?? 0,
+              posted_at: tweet.postedAt ?? null,
+            }))
+          )
+        }
+
         trendReports++
         console.log(`[research] Saved trend: "${term}" (${tweets.length} tweets)`)
       }
@@ -243,23 +253,33 @@ export async function POST() {
     try {
       const profileData = await lookupProfile(accessToken, handle)
       if (profileData) {
-        await supabase.from('research_reports').insert({
+        const { data: scraped } = await supabase.from('research_scraped').insert({
           profile_id: user.id,
-          type: 'competitor',
-          title: `Competitor: @${profileData.handle}`,
-          body: {
-            handle: profileData.handle,
-            scraped_at: new Date().toISOString(),
-            profile: {
-              display_name: profileData.displayName,
-              bio: profileData.bio,
-              followers: profileData.followers,
-              following: profileData.following,
-              tweet_count: profileData.tweetCount,
-            },
-            recent_tweets: profileData.recentTweets as unknown as Json[],
-          } as unknown as Json,
-        })
+          platform: 'twitter',
+          data_type: 'competitor',
+          handle: profileData.handle,
+          display_name: profileData.displayName,
+          bio: profileData.bio,
+          followers: profileData.followers,
+          following: profileData.following,
+          post_count: profileData.tweetCount,
+          scraped_at: new Date().toISOString(),
+        }).select('id').single()
+
+        if (scraped && profileData.recentTweets.length > 0) {
+          await supabase.from('research_scraped_posts').insert(
+            profileData.recentTweets.map((tweet: any) => ({
+              scraped_id: scraped.id,
+              caption: tweet.text,
+              permalink: tweet.tweetUrl,
+              likes: tweet.likes ?? 0,
+              comments: tweet.replies ?? 0,
+              views: tweet.views ?? 0,
+              posted_at: tweet.postedAt ?? null,
+            }))
+          )
+        }
+
         competitorReports++
         console.log(`[research] Saved competitor: @${profileData.handle}`)
       }

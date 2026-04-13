@@ -39,19 +39,23 @@ export async function POST() {
     return NextResponse.json({ started: false, message: 'No Instagram targets configured' })
   }
 
-  const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://feathr-agency.vercel.app'}/api/webhook/apify`
-  const webhooksParam = Buffer.from(JSON.stringify([
-    { eventTypes: ['ACTOR.RUN.SUCCEEDED'], requestUrl: webhookUrl },
-  ])).toString('base64')
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://feathr-agency.vercel.app'
 
   let runsStarted = 0
   const errors: string[] = []
 
   // Run 1: Profile scraper with cookies (handles restricted/21+ content)
+  // crawlerbros actor limitation: one run per handle
   if (competitorHandles.length > 0) {
     for (const handle of competitorHandles) {
       try {
         console.log(`[ig-sync] Starting profile scrape for @${handle}...`)
+
+        // Pass metadata via webhook URL so the webhook can create records directly
+        const webhookUrl = `${baseUrl}/api/webhook/apify?profile_id=${user.id}&handles=${encodeURIComponent(JSON.stringify([handle]))}&terms=${encodeURIComponent(JSON.stringify([]))}&actor=profile`
+        const webhooksParam = Buffer.from(JSON.stringify([
+          { eventTypes: ['ACTOR.RUN.SUCCEEDED'], requestUrl: webhookUrl },
+        ])).toString('base64')
 
         const res = await fetch(
           `https://api.apify.com/v2/acts/${APIFY_PROFILE_ACTOR}/runs?token=${APIFY_TOKEN}&webhooks=${webhooksParam}`,
@@ -77,21 +81,6 @@ export async function POST() {
         const runId = runData.data?.id
         console.log(`[ig-sync] @${handle}: run started, id=${runId}`)
 
-        await supabase.from('research_reports').insert({
-          profile_id: user.id,
-          type: 'market',
-          title: `IG Scrape: @${handle} (pending)`,
-          body: {
-            platform: 'instagram',
-            apify_run_id: runId,
-            apify_actor: 'profile',
-            status: 'pending',
-            started_at: new Date().toISOString(),
-            handles: [handle],
-            terms: [],
-          },
-        })
-
         runsStarted++
       } catch (err) {
         console.error(`[ig-sync] @${handle}: exception:`, err)
@@ -103,10 +92,17 @@ export async function POST() {
   // Run 2: Hashtag scraper (one run for all hashtags)
   if (searchTerms.length > 0) {
     try {
-      const hashtagUrls = searchTerms.map((t) =>
-        `https://www.instagram.com/explore/tags/${t.replace(/^#/, '').toLowerCase()}/`
+      const cleanTerms = searchTerms.map((t) => t.replace(/^#/, '').toLowerCase())
+      const hashtagUrls = cleanTerms.map((t) =>
+        `https://www.instagram.com/explore/tags/${t}/`
       )
       console.log('[ig-sync] Starting hashtag scrape:', hashtagUrls.join(', '))
+
+      // Pass metadata via webhook URL so the webhook can create records directly
+      const webhookUrl = `${baseUrl}/api/webhook/apify?profile_id=${user.id}&handles=${encodeURIComponent(JSON.stringify([]))}&terms=${encodeURIComponent(JSON.stringify(cleanTerms))}&actor=hashtag`
+      const webhooksParam = Buffer.from(JSON.stringify([
+        { eventTypes: ['ACTOR.RUN.SUCCEEDED'], requestUrl: webhookUrl },
+      ])).toString('base64')
 
       const res = await fetch(
         `https://api.apify.com/v2/acts/${APIFY_HASHTAG_ACTOR}/runs?token=${APIFY_TOKEN}&webhooks=${webhooksParam}`,
@@ -128,21 +124,6 @@ export async function POST() {
         const runData = await res.json()
         const runId = runData.data?.id
         console.log(`[ig-sync] Hashtag run started, id=${runId}`)
-
-        await supabase.from('research_reports').insert({
-          profile_id: user.id,
-          type: 'market',
-          title: 'IG Hashtag Scrape (pending)',
-          body: {
-            platform: 'instagram',
-            apify_run_id: runId,
-            apify_actor: 'hashtag',
-            status: 'pending',
-            started_at: new Date().toISOString(),
-            handles: [],
-            terms: searchTerms.map((t) => t.replace(/^#/, '').toLowerCase()),
-          },
-        })
 
         runsStarted++
       }
