@@ -811,30 +811,65 @@ export type Database = {
           },
         ]
       }
-      research_reports: {
+      research_report_sections: {
         Row: {
-          body: Json
-          created_at: string
           id: string
-          profile_id: string
+          report_id: string
+          section_type: string
           title: string
-          type: Database["public"]["Enums"]["report_type"]
+          content: string
+          sort_order: number
         }
         Insert: {
-          body?: Json
-          created_at?: string
           id?: string
-          profile_id: string
+          report_id: string
+          section_type: string
           title: string
-          type: Database["public"]["Enums"]["report_type"]
+          content: string
+          sort_order?: number
         }
         Update: {
-          body?: Json
+          id?: string
+          report_id?: string
+          section_type?: string
+          title?: string
+          content?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_report_sections_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "research_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      research_reports: {
+        Row: {
+          id: string
+          profile_id: string
+          report_type: string
+          title: string
+          summary: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          report_type: string
+          title: string
+          summary?: string | null
           created_at?: string
+        }
+        Update: {
           id?: string
           profile_id?: string
+          report_type?: string
           title?: string
-          type?: Database["public"]["Enums"]["report_type"]
+          summary?: string | null
+          created_at?: string
         }
         Relationships: [
           {
@@ -842,6 +877,118 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      research_scraped: {
+        Row: {
+          id: string
+          profile_id: string
+          platform: string
+          data_type: string
+          handle: string | null
+          term: string | null
+          display_name: string | null
+          bio: string | null
+          followers: number
+          following: number
+          post_count: number
+          profile_pic_url: string | null
+          external_url: string | null
+          scraped_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          platform: string
+          data_type: string
+          handle?: string | null
+          term?: string | null
+          display_name?: string | null
+          bio?: string | null
+          followers?: number
+          following?: number
+          post_count?: number
+          profile_pic_url?: string | null
+          external_url?: string | null
+          scraped_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          platform?: string
+          data_type?: string
+          handle?: string | null
+          term?: string | null
+          display_name?: string | null
+          bio?: string | null
+          followers?: number
+          following?: number
+          post_count?: number
+          profile_pic_url?: string | null
+          external_url?: string | null
+          scraped_at?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_scraped_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      research_scraped_posts: {
+        Row: {
+          id: string
+          scraped_id: string
+          caption: string | null
+          permalink: string | null
+          media_type: string | null
+          likes: number
+          comments: number
+          views: number
+          hashtags: string[]
+          media_urls: string[]
+          posted_at: string | null
+        }
+        Insert: {
+          id?: string
+          scraped_id: string
+          caption?: string | null
+          permalink?: string | null
+          media_type?: string | null
+          likes?: number
+          comments?: number
+          views?: number
+          hashtags?: string[]
+          media_urls?: string[]
+          posted_at?: string | null
+        }
+        Update: {
+          id?: string
+          scraped_id?: string
+          caption?: string | null
+          permalink?: string | null
+          media_type?: string | null
+          likes?: number
+          comments?: number
+          views?: number
+          hashtags?: string[]
+          media_urls?: string[]
+          posted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_scraped_posts_scraped_id_fkey"
+            columns: ["scraped_id"]
+            isOneToOne: false
+            referencedRelation: "research_scraped"
             referencedColumns: ["id"]
           },
         ]
@@ -930,12 +1077,6 @@ export type Database = {
         | "communication"
       profile_status: "onboarding" | "setup" | "active" | "paused"
       renewal_status: "none" | "pending" | "renewed" | "failed"
-      report_type:
-        | "trend"
-        | "competitor"
-        | "market"
-        | "algorithm"
-        | "performance"
       touring_status: "planned" | "active" | "completed" | "cancelled"
     }
     CompositeTypes: {
@@ -1096,13 +1237,6 @@ export const Constants = {
       ],
       profile_status: ["onboarding", "setup", "active", "paused"],
       renewal_status: ["none", "pending", "renewed", "failed"],
-      report_type: [
-        "trend",
-        "competitor",
-        "market",
-        "algorithm",
-        "performance",
-      ],
       touring_status: ["planned", "active", "completed", "cancelled"],
     },
   },
