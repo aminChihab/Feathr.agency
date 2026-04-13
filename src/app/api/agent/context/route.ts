@@ -80,10 +80,10 @@ export async function GET(request: NextRequest) {
   }
 
   if (type === 'content-writer') {
-    // Get profile + voice
+    // Get profile + voice + performance rules
     const { data: profile } = await supabase
       .from('profiles')
-      .select('professional_name, city, goals, voice_description, voice_sample')
+      .select('professional_name, city, goals, voice_description, voice_sample, performance_rules')
       .eq('id', profileId)
       .single()
 
@@ -94,6 +94,10 @@ export async function GET(request: NextRequest) {
       .eq('profile_id', profileId)
       .order('created_at', { ascending: false })
       .limit(10)
+
+    // Extract latest strategy reports by type
+    const latestXStrategy = reports?.find((r) => (r.body as any)?.type === 'x_strategy')
+    const latestIGStrategy = reports?.find((r) => (r.body as any)?.type === 'ig_strategy')
 
     // Get connected platforms
     const { data: platforms } = await supabase
@@ -144,6 +148,9 @@ export async function GET(request: NextRequest) {
         voice_description: profile?.voice_description,
         voice_sample: profile?.voice_sample,
       },
+      performance_rules: profile?.performance_rules ?? null,
+      latest_x_strategy: latestXStrategy?.body ?? null,
+      latest_ig_strategy: latestIGStrategy?.body ?? null,
       research_reports: reports ?? [],
       platforms: platforms ?? [],
       recent_posts: recentPosts ?? [],
