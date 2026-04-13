@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import Link from 'next/link'
 import {
-  User, Mic, Link2, Calendar, Bell, Shield, CreditCard, Search,
+  User, Mic, Link2, Calendar, Bell, Shield, CreditCard,
   Upload, FileText, Trash2, Sparkles, Loader2,
 } from 'lucide-react'
 
@@ -188,8 +188,6 @@ export default function SettingsPage() {
 
   function extractParticipants(text: string): string[] {
     const names = new Set<string>()
-    // WhatsApp format: "dd/mm/yyyy, hh:mm - Name: message"
-    // Also: "[dd/mm/yyyy, hh:mm:ss] Name: message"
     const patterns = [
       /^\d{1,2}\/\d{1,2}\/\d{2,4},?\s*\d{1,2}[:.]\d{2}(?:[:.]\d{2})?\s*[-–]\s*(.+?):\s/gm,
       /^\[\d{1,2}\/\d{1,2}\/\d{2,4},?\s*\d{1,2}[:.]\d{2}(?:[:.]\d{2})?\]\s*(.+?):\s/gm,
@@ -216,7 +214,6 @@ export default function SettingsPage() {
     for (const file of newFiles) {
       if (chatFiles.length >= 20) break
 
-      // Read file to extract participants
       const text = await file.text()
       const names = extractParticipants(text)
       names.forEach((n) => allParticipants.add(n))
@@ -335,16 +332,22 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex gap-8">
-      {/* Vertical tabs */}
-      <nav className="w-48 flex-shrink-0 space-y-1">
+    <div className="space-y-6">
+      {/* Top bar */}
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-3xl text-primary">Settings</h1>
+        {saved && <span className="text-sm text-tertiary">Saved</span>}
+      </div>
+
+      {/* Sub-navigation pills */}
+      <nav className="flex flex-wrap gap-1">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+            className={`flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
               activeTab === tab.id
-                ? 'bg-surface-container-low rounded-lg text-on-surface'
+                ? 'bg-surface-container-low rounded-lg text-on-surface font-medium'
                 : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
@@ -355,29 +358,25 @@ export default function SettingsPage() {
       </nav>
 
       {/* Tab content */}
-      <div className="flex-1 max-w-xl space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="font-display text-3xl">Settings</h1>
-          {saved && <span className="text-sm text-tertiary">Saved</span>}
-        </div>
+      <div className="max-w-xl space-y-6">
 
         {/* Profile */}
         {activeTab === 'profile' && (
-          <div className="space-y-6">
+          <div className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/10 space-y-6">
             <div className="space-y-2">
-              <Label>Professional name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} className="bg-surface-container-low" />
+              <label className="text-[10px] uppercase tracking-widest text-on-surface-variant font-body">Professional name</label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} className="bg-surface" />
             </div>
             <div className="space-y-2">
-              <Label>City</Label>
-              <Input value={city} onChange={(e) => setCity(e.target.value)} className="bg-surface-container-low" />
+              <label className="text-[10px] uppercase tracking-widest text-on-surface-variant font-body">City</label>
+              <Input value={city} onChange={(e) => setCity(e.target.value)} className="bg-surface" />
             </div>
             <div className="space-y-3">
-              <Label>Goals</Label>
+              <label className="text-[10px] uppercase tracking-widest text-on-surface-variant font-body">Goals</label>
               {GOALS.map((goal) => (
-                <label key={goal.value} className="flex cursor-pointer items-center gap-3 rounded-xl border border-outline-variant/30 px-4 py-3 transition-colors hover:bg-surface-container-low">
+                <label key={goal.value} className="flex cursor-pointer items-center gap-3 rounded-xl border border-outline-variant/10 px-4 py-3 transition-colors hover:bg-surface-container-highest">
                   <Checkbox checked={goals.includes(goal.value)} onCheckedChange={() => toggleGoal(goal.value)} />
-                  <span className="text-sm">{goal.label}</span>
+                  <span className="text-sm text-on-surface">{goal.label}</span>
                 </label>
               ))}
             </div>
@@ -389,15 +388,15 @@ export default function SettingsPage() {
 
         {/* Voice */}
         {activeTab === 'voice' && (
-          <div className="space-y-8">
-            {/* Voice description — free text by user */}
-            <div className="space-y-2">
-              <Label>Voice description</Label>
+          <div className="space-y-6">
+            {/* Voice description */}
+            <div className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/10 space-y-4">
+              <label className="text-[10px] uppercase tracking-widest text-on-surface-variant font-body">Voice description</label>
               <Textarea
                 value={voiceDescription}
                 onChange={(e) => setVoiceDescription(e.target.value)}
                 rows={4}
-                className="bg-surface-container-low"
+                className="bg-surface"
                 placeholder="Describe how you communicate — your tone, humor, boundaries, and style..."
               />
               <p className="text-xs text-on-surface-variant/60">
@@ -415,9 +414,9 @@ export default function SettingsPage() {
               if (!parsed || typeof parsed !== 'object') return null
 
               return (
-                <div className="space-y-3 border-t border-outline-variant/30 pt-6">
+                <div className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/10 space-y-4">
                   <div>
-                    <Label>Analyzed voice profile</Label>
+                    <label className="text-[10px] uppercase tracking-widest text-on-surface-variant font-body">Analyzed voice profile</label>
                     <p className="text-xs text-on-surface-variant/60 mt-1">Generated from your chat history. Used by the AI to match your writing style.</p>
                   </div>
 
@@ -432,18 +431,18 @@ export default function SettingsPage() {
                   {(parsed.tone?.length > 0 || parsed.personality_traits?.length > 0) && (
                     <div className="flex flex-wrap gap-1.5">
                       {(parsed.tone ?? []).map((t: string, i: number) => (
-                        <span key={`t${i}`} className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-primary">{t}</span>
+                        <span key={`t${i}`} className="bg-surface-container-highest rounded-full px-3 py-1 text-xs text-on-surface-variant">{t}</span>
                       ))}
                       {(parsed.personality_traits ?? []).map((t: string, i: number) => (
-                        <span key={`p${i}`} className="rounded-full bg-tertiary/10 px-2.5 py-0.5 text-xs text-tertiary">{t}</span>
+                        <span key={`p${i}`} className="bg-surface-container-highest rounded-full px-3 py-1 text-xs text-on-surface-variant">{t}</span>
                       ))}
                     </div>
                   )}
 
                   {/* Writing Style */}
                   {parsed.writing_style && (
-                    <div className="rounded-lg bg-surface border border-outline-variant/30/50 px-4 py-3 space-y-1.5 text-xs">
-                      <p className="text-on-surface-variant/60 font-medium uppercase tracking-wider text-[10px]">Writing style</p>
+                    <div className="rounded-lg bg-surface border border-outline-variant/10 px-4 py-3 space-y-1.5 text-xs">
+                      <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-body">Writing style</p>
                       {parsed.writing_style.sentence_length && (
                         <p><span className="text-on-surface-variant/60">Sentences:</span> <span className="text-on-surface">{parsed.writing_style.sentence_length}</span></p>
                       )}
@@ -456,7 +455,7 @@ export default function SettingsPage() {
                       {parsed.writing_style.quirks?.length > 0 && (
                         <div className="flex flex-wrap gap-1 pt-1">
                           {parsed.writing_style.quirks.map((q: string, i: number) => (
-                            <span key={i} className="rounded bg-surface-container-highest px-2 py-0.5 text-[11px] text-on-surface-variant">{q}</span>
+                            <span key={i} className="bg-surface-container-highest rounded-full px-3 py-1 text-xs text-on-surface-variant">{q}</span>
                           ))}
                         </div>
                       )}
@@ -467,16 +466,16 @@ export default function SettingsPage() {
                   {(parsed.do?.length > 0 || parsed.dont?.length > 0) && (
                     <div className="grid grid-cols-2 gap-3">
                       {parsed.do?.length > 0 && (
-                        <div className="rounded-lg bg-surface border border-outline-variant/30/50 px-4 py-3 space-y-1.5">
-                          <p className="text-[10px] text-tertiary font-medium uppercase tracking-wider">Do</p>
+                        <div className="rounded-lg bg-surface border border-outline-variant/10 px-4 py-3 space-y-1.5">
+                          <p className="text-[10px] uppercase tracking-widest text-tertiary font-body">Do</p>
                           {parsed.do.map((d: string, i: number) => (
                             <p key={i} className="text-xs text-on-surface-variant">&middot; {d}</p>
                           ))}
                         </div>
                       )}
                       {parsed.dont?.length > 0 && (
-                        <div className="rounded-lg bg-surface border border-outline-variant/30/50 px-4 py-3 space-y-1.5">
-                          <p className="text-[10px] text-error font-medium uppercase tracking-wider">Don&apos;t</p>
+                        <div className="rounded-lg bg-surface border border-outline-variant/10 px-4 py-3 space-y-1.5">
+                          <p className="text-[10px] uppercase tracking-widest text-error font-body">Don&apos;t</p>
                           {parsed.dont.map((d: string, i: number) => (
                             <p key={i} className="text-xs text-on-surface-variant">&middot; {d}</p>
                           ))}
@@ -489,7 +488,7 @@ export default function SettingsPage() {
                   {parsed.phrases?.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {parsed.phrases.map((p: string, i: number) => (
-                        <span key={i} className="rounded-full bg-surface-container-highest px-2.5 py-0.5 text-xs text-on-surface-variant italic">&ldquo;{p}&rdquo;</span>
+                        <span key={i} className="bg-surface-container-highest rounded-full px-3 py-1 text-xs text-on-surface-variant italic">&ldquo;{p}&rdquo;</span>
                       ))}
                     </div>
                   )}
@@ -501,7 +500,7 @@ export default function SettingsPage() {
                       value={voiceSample}
                       onChange={(e) => setVoiceSample(e.target.value)}
                       rows={12}
-                      className="bg-surface-container-low mt-2 font-mono text-xs"
+                      className="bg-surface mt-2 font-mono text-xs"
                     />
                     <Button
                       onClick={async () => {
@@ -523,9 +522,9 @@ export default function SettingsPage() {
             })()}
 
             {/* Chat history upload */}
-            <div className="space-y-3 border-t border-outline-variant/30 pt-6">
+            <div className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/10 space-y-4">
               <div>
-                <Label>Chat history</Label>
+                <label className="text-[10px] uppercase tracking-widest text-on-surface-variant font-body">Chat history</label>
                 <p className="text-xs text-on-surface-variant/60 mt-1">
                   Upload conversations with clients (.txt files). The AI analyzes your writing patterns and generates a voice profile.
                 </p>
@@ -552,10 +551,10 @@ export default function SettingsPage() {
                 <div className="space-y-1.5">
                   <p className="text-xs text-on-surface-variant/60">{chatFiles.length} file(s)</p>
                   {chatFiles.map((file) => (
-                    <div key={file.path} className="flex items-center justify-between rounded-lg border border-outline-variant/30 px-3 py-2">
+                    <div key={file.path} className="flex items-center justify-between rounded-lg border border-outline-variant/10 px-3 py-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <FileText className="h-3.5 w-3.5 text-on-surface-variant/60 shrink-0" />
-                        <span className="text-sm truncate">{file.name}</span>
+                        <span className="text-sm text-on-surface truncate">{file.name}</span>
                       </div>
                       <button onClick={() => removeChatFile(file.path)} className="text-on-surface-variant/60 hover:text-error p-1">
                         <Trash2 className="h-3.5 w-3.5" />
@@ -568,13 +567,13 @@ export default function SettingsPage() {
               {/* Participant selector */}
               {chatParticipants.length > 0 && (
                 <div className="space-y-2">
-                  <Label>Which one is you?</Label>
+                  <label className="text-[10px] uppercase tracking-widest text-on-surface-variant font-body">Which one is you?</label>
                   <div className="flex flex-wrap gap-2">
                     {chatParticipants.map((name) => (
                       <button
                         key={name}
                         onClick={() => setSelectedParticipant(name)}
-                        className={`bg-surface-container-highest text-on-surface-variant rounded-full px-3 py-1 text-xs transition-colors ${
+                        className={`bg-surface-container-highest rounded-full px-3 py-1 text-xs text-on-surface-variant transition-colors ${
                           selectedParticipant === name
                             ? 'ring-2 ring-primary text-primary'
                             : 'hover:text-on-surface'
@@ -604,8 +603,8 @@ export default function SettingsPage() {
 
         {/* Platforms */}
         {activeTab === 'platforms' && (
-          <div className="space-y-4">
-            <p className="text-on-surface-variant">
+          <div className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/10 space-y-4">
+            <p className="text-on-surface-variant text-sm">
               Manage your connected platforms, add new ones, and adjust settings.
             </p>
             <Link href="/platforms">
@@ -616,14 +615,15 @@ export default function SettingsPage() {
 
         {/* Planning */}
         {activeTab === 'planning' && (
-          <div className="space-y-4">
-            <p className="text-on-surface-variant">Set how often Feathr posts on each platform.</p>
+          <div className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/10 space-y-4">
+            <label className="text-[10px] uppercase tracking-widest text-on-surface-variant font-body">Posting frequency</label>
+            <p className="text-sm text-on-surface-variant">Set how often Feathr posts on each platform.</p>
             {accounts.length === 0 ? (
-              <p className="text-on-surface-variant/60">No platforms connected yet.</p>
+              <p className="text-sm text-on-surface-variant/60">No platforms connected yet.</p>
             ) : (
               <div className="space-y-3">
                 {accounts.map((account) => (
-                  <div key={account.id} className="flex items-center justify-between rounded-lg border border-outline-variant/30 px-4 py-3">
+                  <div key={account.id} className="flex items-center justify-between rounded-lg border border-outline-variant/10 px-4 py-3">
                     <span className="text-sm font-medium" style={{ color: account.platform_color }}>
                       {account.platform_name}
                     </span>
@@ -647,10 +647,10 @@ export default function SettingsPage() {
           </div>
         )}
 
-
         {/* Notifications */}
         {activeTab === 'notifications' && (
-          <div className="space-y-6">
+          <div className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/10 space-y-6">
+            <label className="text-[10px] uppercase tracking-widest text-on-surface-variant font-body">Notification preferences</label>
             <div className="space-y-3">
               {[
                 { label: 'New messages', checked: notifNewMessages, onChange: setNotifNewMessages },
@@ -658,8 +658,8 @@ export default function SettingsPage() {
                 { label: 'Lead qualified', checked: notifLeadQualified, onChange: setNotifLeadQualified },
                 { label: 'Listing expiring', checked: notifListingExpiring, onChange: setNotifListingExpiring },
               ].map((item) => (
-                <label key={item.label} className="flex cursor-pointer items-center justify-between rounded-xl border border-outline-variant/30 px-4 py-3 transition-colors hover:bg-surface-container-low">
-                  <span className="text-sm">{item.label}</span>
+                <label key={item.label} className="flex cursor-pointer items-center justify-between rounded-xl border border-outline-variant/10 px-4 py-3 transition-colors hover:bg-surface-container-highest">
+                  <span className="text-sm text-on-surface">{item.label}</span>
                   <Checkbox checked={item.checked} onCheckedChange={(c) => item.onChange(c === true)} />
                 </label>
               ))}
@@ -673,35 +673,38 @@ export default function SettingsPage() {
         {/* Account */}
         {activeTab === 'account' && (
           <div className="space-y-6">
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input value={userEmail} disabled className="bg-surface-container-low opacity-60" />
-              <p className="text-xs text-on-surface-variant/60">Contact support to change your email.</p>
+            <div className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/10 space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-widest text-on-surface-variant font-body">Email</label>
+                <Input value={userEmail} disabled className="bg-surface opacity-60" />
+                <p className="text-xs text-on-surface-variant/60">Contact support to change your email.</p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-widest text-on-surface-variant font-body">Password</label>
+                <p className="text-sm text-on-surface-variant/60">
+                  To change your password, sign out and use the &ldquo;Forgot password&rdquo; flow on the login page.
+                </p>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Password</Label>
-              <p className="text-sm text-on-surface-variant/60">
-                To change your password, sign out and use the &ldquo;Forgot password&rdquo; flow on the login page.
-              </p>
-            </div>
-            <div className="border-t border-outline-variant/30 pt-6">
-              <h3 className="text-error font-display">Danger zone</h3>
-              <p className="mt-1 text-xs text-on-surface-variant/60">
+
+            <div className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/10 space-y-3">
+              <h3 className="text-error font-display text-lg">Danger zone</h3>
+              <p className="text-xs text-on-surface-variant/60">
                 Permanently delete your account and all associated data. This cannot be undone.
               </p>
               <Button
                 variant="outline"
                 onClick={() => setDeleteDialogOpen(true)}
-                className="mt-3 text-error border border-error/30 hover:bg-error/10 rounded-full"
+                className="border border-error/30 text-error hover:bg-error/10 rounded-full"
               >
                 Delete account
               </Button>
             </div>
 
             <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-              <DialogContent className="bg-surface-container-low border-outline-variant/30 max-w-sm">
+              <DialogContent className="bg-surface-container-low border-outline-variant/10 max-w-sm">
                 <DialogHeader>
-                  <DialogTitle className="font-light">Delete account?</DialogTitle>
+                  <DialogTitle className="font-display">Delete account?</DialogTitle>
                 </DialogHeader>
                 <p className="text-sm text-on-surface-variant">
                   This will permanently delete your account, all your data, connected platforms, and content. This cannot be undone.
@@ -719,8 +722,8 @@ export default function SettingsPage() {
 
         {/* Billing */}
         {activeTab === 'billing' && (
-          <div className="bg-surface-container-low rounded-xl p-8 text-center">
-            <p className="text-on-surface-variant">Billing will be available soon. During early access, Feathr is free.</p>
+          <div className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/10 text-center">
+            <p className="text-on-surface-variant text-sm">Billing will be available soon. During early access, Feathr is free.</p>
           </div>
         )}
       </div>
