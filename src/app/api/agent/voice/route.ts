@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@supabase/supabase-js'
+import { createNotification } from '@/lib/notify'
 
 function createServiceClient() {
   return createServerClient(
@@ -100,6 +101,8 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  await createNotification(profile_id, 'system', 'Voice profile updated from chat analysis')
 
   return NextResponse.json({ ok: true })
 }

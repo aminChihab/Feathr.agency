@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@supabase/supabase-js'
+import { createNotification } from '@/lib/notify'
 
 function createServiceClient() {
   return createServerClient(
@@ -70,6 +71,10 @@ export async function POST(request: NextRequest) {
     } else {
       results.push({ id: created.id, platform: platform_slug, caption: caption.slice(0, 50) })
     }
+  }
+
+  if (results.length > 0) {
+    await createNotification(profile_id, 'system', `${results.length} new draft${results.length !== 1 ? 's' : ''} ready for review`)
   }
 
   return NextResponse.json({

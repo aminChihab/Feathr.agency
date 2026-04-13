@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@supabase/supabase-js'
+import { createNotification } from '@/lib/notify'
 
 function createServiceClient() {
   return createServerClient(
@@ -161,6 +162,18 @@ export async function POST(request: NextRequest) {
       errors.push(`${id}: ${updateError.message}`)
     } else {
       updated++
+    }
+  }
+
+  if (updated > 0) {
+    // Get profile_id from one of the updated items
+    const { data: sample } = await supabase
+      .from('content_library')
+      .select('profile_id')
+      .eq('id', items[0].id)
+      .single()
+    if (sample?.profile_id) {
+      await createNotification(sample.profile_id, 'system', `${updated} media item${updated !== 1 ? 's' : ''} analyzed`)
     }
   }
 

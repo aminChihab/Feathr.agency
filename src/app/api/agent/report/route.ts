@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@supabase/supabase-js'
+import { createNotification } from '@/lib/notify'
 
 function createServiceClient() {
   return createServerClient(
@@ -40,6 +41,13 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  const reportType = (report as any)?.type
+  const notifTitle = reportType === 'x_strategy' ? 'New X/Twitter strategy report'
+    : reportType === 'ig_strategy' ? 'New Instagram strategy report'
+    : reportType === 'performance' ? 'New performance analysis'
+    : `New research report: ${title}`
+  await createNotification(profile_id, 'system', notifTitle, { report_id: data.id, report_type: reportType })
 
   return NextResponse.json({ id: data.id, message: 'Report saved' })
 }
