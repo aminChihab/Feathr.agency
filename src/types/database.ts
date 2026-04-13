@@ -738,6 +738,7 @@ export type Database = {
           updated_at: string
           voice_description: string | null
           voice_sample: string | null
+          performance_rules: Json | null
         }
         Insert: {
           city?: string | null
@@ -751,6 +752,7 @@ export type Database = {
           updated_at?: string
           voice_description?: string | null
           voice_sample?: string | null
+          performance_rules?: Json | null
         }
         Update: {
           city?: string | null
@@ -764,8 +766,50 @@ export type Database = {
           updated_at?: string
           voice_description?: string | null
           voice_sample?: string | null
+          performance_rules?: Json | null
         }
         Relationships: []
+      }
+      notifications: {
+        Row: {
+          id: string
+          profile_id: string
+          type: string
+          title: string
+          body: Json
+          read: boolean
+          acted_on: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          type: string
+          title: string
+          body?: Json
+          read?: boolean
+          acted_on?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          type?: string
+          title?: string
+          body?: Json
+          read?: boolean
+          acted_on?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       research_reports: {
         Row: {
