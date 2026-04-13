@@ -19,19 +19,19 @@ interface AnalyticsChartProps {
 }
 
 const customTooltipStyle = {
-  backgroundColor: 'oklch(0.17 0.005 285)',
-  border: '1px solid oklch(0.25 0.005 285)',
-  borderRadius: '8px',
+  backgroundColor: '#2A2A2A',
+  border: 'none',
+  borderRadius: '12px',
   padding: '8px 12px',
   fontSize: '12px',
-  color: 'oklch(0.95 0 0)',
+  color: '#E5E2E1',
 }
 
 export function AnalyticsChart({ type, data, series, height = 300 }: AnalyticsChartProps) {
   if (data.length < 2) {
     return (
-      <div className="flex items-center justify-center rounded-lg border border-border bg-bg-surface" style={{ height }}>
-        <p className="text-sm text-text-muted">Not enough data yet. Check back after a few days.</p>
+      <div className="flex items-center justify-center bg-surface-container-low rounded-xl" style={{ height }}>
+        <p className="text-sm text-on-surface-variant/60">Not enough data yet. Check back after a few days.</p>
       </div>
     )
   }
@@ -39,20 +39,20 @@ export function AnalyticsChart({ type, data, series, height = 300 }: AnalyticsCh
   const Chart = type === 'line' ? LineChart : BarChart
 
   return (
-    <div className="rounded-lg border border-border bg-bg-surface p-4">
+    <div className="bg-surface-container-low rounded-xl p-4">
       <ResponsiveContainer width="100%" height={height}>
         <Chart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.25 0.005 285)" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
           <XAxis
             dataKey="date"
-            tick={{ fill: 'oklch(0.5 0 0)', fontSize: 11 }}
+            tick={{ fill: '#D5C2C5', fontSize: 11 }}
             tickLine={false}
-            axisLine={{ stroke: 'oklch(0.25 0.005 285)' }}
+            axisLine={{ stroke: '#2A2A2A' }}
           />
           <YAxis
-            tick={{ fill: 'oklch(0.5 0 0)', fontSize: 11 }}
+            tick={{ fill: '#D5C2C5', fontSize: 11 }}
             tickLine={false}
-            axisLine={{ stroke: 'oklch(0.25 0.005 285)' }}
+            axisLine={{ stroke: '#2A2A2A' }}
           />
           <Tooltip contentStyle={customTooltipStyle} />
           {series.map((s) =>

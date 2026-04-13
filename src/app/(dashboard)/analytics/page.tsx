@@ -122,7 +122,7 @@ export default function AnalyticsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     )
   }
@@ -130,8 +130,8 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-light">Analytics</h1>
-        <Button variant="outline" onClick={handleSync} disabled={syncing} className="text-xs">
+        <h1 className="font-display text-3xl text-primary">Analytics</h1>
+        <Button variant="ghost" onClick={handleSync} disabled={syncing} className="text-xs text-on-surface border border-outline-variant/20 rounded-full px-5 py-2 hover:opacity-80">
           <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${syncing ? 'animate-spin' : ''}`} />
           Sync
         </Button>
@@ -139,8 +139,8 @@ export default function AnalyticsPage() {
 
       {/* Platform Cards */}
       {platforms.length === 0 ? (
-        <div className="rounded-lg border border-border bg-bg-surface p-12 text-center">
-          <p className="text-text-muted">No analytics data yet. Connect platforms and sync to see your metrics.</p>
+        <div className="bg-surface-container-low rounded-xl p-12 text-center">
+          <p className="text-on-surface-variant/60">No analytics data yet. Connect platforms and sync to see your metrics.</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4">
@@ -166,21 +166,23 @@ export default function AnalyticsPage() {
 
       {/* Follower Growth Chart */}
       <div className="space-y-3">
-        <h2 className="text-lg font-light text-text-secondary">Follower growth</h2>
+        <h2 className="font-display text-xl text-on-surface">Follower growth</h2>
+        <p className="text-on-surface-variant text-sm">Platform performance over time</p>
         <AnalyticsChart type="line" data={followerData} series={chartSeries} />
       </div>
 
       {/* Engagement Chart */}
       <div className="space-y-3">
-        <h2 className="text-lg font-light text-text-secondary">Engagement</h2>
+        <h2 className="font-display text-xl text-on-surface">Engagement</h2>
+        <p className="text-on-surface-variant text-sm">Engagement metrics across platforms</p>
         <AnalyticsChart type="bar" data={engagementData} series={chartSeries} />
       </div>
 
       {/* Revenue */}
       <div className="space-y-3">
-        <h2 className="text-lg font-light text-text-secondary">Revenue</h2>
-        <div className="rounded-lg border border-border bg-bg-surface p-6 text-center">
-          <p className="text-text-muted">Revenue tracking will be available when income platforms are connected.</p>
+        <h2 className="font-display text-xl text-on-surface">Revenue</h2>
+        <div className="bg-surface-container-low rounded-xl p-6 text-center">
+          <p className="text-on-surface-variant/60">Revenue tracking will be available when income platforms are connected.</p>
         </div>
       </div>
     </div>
