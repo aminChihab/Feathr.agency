@@ -67,33 +67,37 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-light">Dashboard</h1>
-
       {/* Metric Cards */}
       <div className="grid grid-cols-4 gap-4">
-        <MetricCard label="New messages" value={messagesRes.count ?? 0} icon={<MessageSquare className="h-5 w-5" />} />
-        <MetricCard label="Pending approval" value={draftsRes.count ?? 0} icon={<Clock className="h-5 w-5" />} />
-        <MetricCard label="Scheduled today" value={scheduledRes.count ?? 0} icon={<CalendarDays className="h-5 w-5" />} />
-        <MetricCard label="Connected platforms" value={platformsRes.count ?? 0} icon={<Link2 className="h-5 w-5" />} />
+        <MetricCard label="New messages" value={messagesRes.count ?? 0} icon={<MessageSquare className="h-5 w-5" />} statusLabel="LIVE" />
+        <MetricCard label="Pending approval" value={draftsRes.count ?? 0} icon={<Clock className="h-5 w-5" />} statusLabel="ACTION REQUIRED" />
+        <MetricCard label="Scheduled today" value={scheduledRes.count ?? 0} icon={<CalendarDays className="h-5 w-5" />} statusLabel="ON TRACK" />
+        <MetricCard label="Connected platforms" value={platformsRes.count ?? 0} icon={<Link2 className="h-5 w-5" />} statusLabel="ACTIVE" />
       </div>
 
       <div className="grid grid-cols-2 gap-8">
         {/* Pending Approvals */}
         <div className="space-y-4">
-          <h2 className="text-lg font-light text-text-secondary">Pending approvals</h2>
+          <div className="flex items-end justify-between">
+            <div>
+              <h2 className="font-display text-xl text-on-surface">Pending Approvals</h2>
+              <p className="text-sm text-on-surface-variant mt-1">AI-generated drafts awaiting final refinement</p>
+            </div>
+            <a href="/content" className="text-primary text-sm">View All Drafts</a>
+          </div>
           {(!pendingPosts || pendingPosts.length === 0) ? (
-            <div className="rounded-lg border border-border bg-bg-surface p-6 text-center">
-              <p className="text-text-muted">No pending approvals. Your assistants will create drafts here.</p>
+            <div className="bg-surface-container-low rounded-xl p-6 text-center">
+              <p className="text-on-surface-variant">No pending approvals. Your assistants will create drafts here.</p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {pendingPosts.map((post: any) => {
                 const platform = (post as any).platform_accounts?.platforms
                 return (
-                  <div key={post.id} className="flex items-center justify-between rounded-lg border border-border bg-bg-surface px-4 py-3">
+                  <div key={post.id} className="flex items-center justify-between bg-surface-container-low rounded-xl px-5 py-4">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: platform?.color ?? '#666' }} />
-                      <p className="truncate text-sm">{post.caption || 'No caption'}</p>
+                      <p className="truncate text-sm text-on-surface">{post.caption || 'No caption'}</p>
                     </div>
                     <StatusBadge status={post.status} />
                   </div>
@@ -105,27 +109,27 @@ export default async function DashboardPage() {
 
         {/* Hot Leads */}
         <div className="space-y-4">
-          <h2 className="text-lg font-light text-text-secondary">Hot leads</h2>
+          <h2 className="font-display text-xl text-on-surface">Hot Leads</h2>
           {(!hotLeads || hotLeads.length === 0) ? (
-            <div className="rounded-lg border border-border bg-bg-surface p-6 text-center">
-              <p className="text-text-muted">No leads yet. Leads will appear here when clients reach out.</p>
+            <div className="bg-surface-container-low rounded-xl p-6 text-center">
+              <p className="text-on-surface-variant">No leads yet. Leads will appear here when clients reach out.</p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {hotLeads.map((lead: any) => {
                 const conversation = (lead as any).conversations
                 const platform = conversation?.platform_accounts?.platforms
                 return (
-                  <div key={lead.id} className="flex items-center justify-between rounded-lg border border-border bg-bg-surface px-4 py-3">
+                  <div key={lead.id} className="flex items-center justify-between bg-surface-container-low rounded-xl px-5 py-4">
                     <div className="flex items-center gap-3">
                       <div className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: platform?.color ?? '#666' }} />
                       <div>
-                        <p className="text-sm font-medium">{conversation?.contact_name ?? 'Unknown'}</p>
-                        <p className="text-xs text-text-muted">{conversation?.contact_handle}</p>
+                        <p className="text-sm font-medium text-on-surface">{conversation?.contact_name ?? 'Unknown'}</p>
+                        <p className="text-xs text-on-surface-variant">{conversation?.contact_handle}</p>
                       </div>
                     </div>
                     {lead.score && (
-                      <span className="rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-medium text-accent">
+                      <span className="bg-primary/15 text-primary rounded-full px-2.5 py-0.5 text-xs font-medium">
                         {lead.score}
                       </span>
                     )}
@@ -137,23 +141,23 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Scheduled Today */}
+      {/* This Week (formerly Scheduled Today) */}
       <div className="space-y-4">
-        <h2 className="text-lg font-light text-text-secondary">Scheduled today</h2>
+        <h2 className="font-display text-xl text-on-surface">This Week</h2>
         {(!todayPosts || todayPosts.length === 0) ? (
-          <div className="rounded-lg border border-border bg-bg-surface p-6 text-center">
-            <p className="text-text-muted">Nothing scheduled for today.</p>
+          <div className="bg-surface-container-low rounded-xl p-6 text-center">
+            <p className="text-on-surface-variant">Nothing scheduled for today.</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {todayPosts.map((post: any) => {
               const platform = (post as any).platform_accounts?.platforms
               const time = post.scheduled_at ? new Date(post.scheduled_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''
               return (
-                <div key={post.id} className="flex items-center gap-4 rounded-lg border border-border bg-bg-surface px-4 py-3">
-                  <span className="text-sm text-text-muted w-16">{time}</span>
+                <div key={post.id} className="flex items-center gap-4 bg-surface-container-low rounded-xl px-5 py-4">
+                  <span className="text-sm text-on-surface-variant w-16">{time}</span>
                   <div className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: platform?.color ?? '#666' }} />
-                  <p className="truncate text-sm flex-1">{post.caption || 'No caption'}</p>
+                  <p className="truncate text-sm text-on-surface flex-1">{post.caption || 'No caption'}</p>
                   <StatusBadge status={post.status} />
                 </div>
               )
@@ -164,9 +168,9 @@ export default async function DashboardPage() {
 
       {/* This Week Stats */}
       <div className="space-y-4">
-        <h2 className="text-lg font-light text-text-secondary">This week</h2>
-        <div className="rounded-lg border border-border bg-bg-surface p-6 text-center">
-          <p className="text-text-muted">No data yet. Stats will appear once your platforms are active.</p>
+        <h2 className="font-display text-xl text-on-surface">This Week</h2>
+        <div className="bg-surface-container-low rounded-xl p-6 text-center">
+          <p className="text-on-surface-variant">No data yet. Stats will appear once your platforms are active.</p>
         </div>
       </div>
     </div>
