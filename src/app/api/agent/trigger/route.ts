@@ -30,7 +30,9 @@ export async function POST(request: NextRequest) {
 
   const agentMap: Record<string, string> = {
     'media-analyst': process.env.PAPERCLIP_MEDIA_ANALYST_ID ?? '',
-    'research': process.env.PAPERCLIP_RESEARCH_AGENT_ID ?? '',
+    'x-strategist': process.env.PAPERCLIP_X_STRATEGIST_ID ?? '',
+    'ig-strategist': process.env.PAPERCLIP_IG_STRATEGIST_ID ?? '',
+    'performance-analyst': process.env.PAPERCLIP_PERFORMANCE_ANALYST_ID ?? '',
     'content-writer': process.env.PAPERCLIP_CONTENT_WRITER_ID ?? '',
     'chat-analyzer': process.env.PAPERCLIP_CHAT_ANALYZER_ID ?? '',
   }
