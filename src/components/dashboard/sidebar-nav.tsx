@@ -124,8 +124,8 @@ export function SidebarNav({ profileName, email }: SidebarNavProps) {
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-outline-variant/15 bg-surface-container-lowest">
       {/* Logo */}
       <div className="mb-10 px-6 pt-8">
-        <h1 className="font-display text-2xl italic text-primary">Feathr</h1>
-        <p className="font-body text-xs tracking-widest uppercase opacity-40 mt-1">Marketing Atelier</p>
+        <h1 className="font-display text-4xl italic text-primary">Feathr</h1>
+        <p className="font-body text-[9px] tracking-[0.25em] uppercase opacity-40 mt-1.5">Marketing Atelier</p>
       </div>
 
       {/* Navigation */}
