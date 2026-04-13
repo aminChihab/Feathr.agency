@@ -60,9 +60,9 @@ export function ConversationList({
   })
 
   return (
-    <div className="flex h-full w-80 flex-col border-r border-border">
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <h2 className="text-sm font-medium">Conversations</h2>
+    <div className="flex h-full w-80 flex-col border-r border-outline-variant/10 bg-surface-container-lowest">
+      <div className="flex items-center justify-between border-b border-outline-variant/15 px-4 py-3">
+        <h2 className="text-sm font-medium text-on-surface">Conversations</h2>
         <Button
           variant="ghost"
           size="sm"
@@ -88,7 +88,7 @@ export function ConversationList({
 
       <div className="flex-1 overflow-y-auto">
         {filtered.length === 0 ? (
-          <p className="p-4 text-center text-xs text-text-muted">No conversations found.</p>
+          <p className="p-4 text-center text-xs text-on-surface-variant/60">No conversations found.</p>
         ) : (
           filtered.map((conv) => (
             <ConversationItem

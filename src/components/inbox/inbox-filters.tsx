@@ -39,12 +39,12 @@ export function InboxFilters({
   onStatusChange, onPriorityChange, onTypeChange, onPlatformChange, onSearchChange, onCategoryChange,
 }: InboxFiltersProps) {
   return (
-    <div className="space-y-3 p-3 border-b border-border">
+    <div className="space-y-3 p-3 border-b border-outline-variant/15">
       <Input
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
         placeholder="Search conversations..."
-        className="bg-bg-base h-8 text-xs"
+        className="bg-surface-container-low h-8 text-xs text-on-surface placeholder:text-on-surface-variant/50"
       />
 
       <div className="flex gap-1">
@@ -55,8 +55,8 @@ export function InboxFilters({
             className={cn(
               'flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] transition-colors',
               category === c.value
-                ? 'bg-accent text-white'
-                : 'bg-bg-elevated text-text-secondary hover:text-text-primary'
+                ? 'bg-surface-container-high text-on-surface'
+                : 'text-on-surface-variant hover:bg-surface-container-high'
             )}
           >
             {c.label}
@@ -72,8 +72,8 @@ export function InboxFilters({
             className={cn(
               'flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] transition-colors',
               priority === p.value
-                ? 'bg-accent text-white'
-                : 'bg-bg-elevated text-text-secondary hover:text-text-primary'
+                ? 'bg-surface-container-high text-on-surface'
+                : 'text-on-surface-variant hover:bg-surface-container-high'
             )}
           >
             {p.color && <div className={cn('h-1.5 w-1.5 rounded-full', p.color)} />}
@@ -84,7 +84,7 @@ export function InboxFilters({
 
       <div className="flex gap-2">
         <Select value={status} onValueChange={onStatusChange}>
-          <SelectTrigger className="bg-bg-base h-7 text-[10px] flex-1">
+          <SelectTrigger className="bg-surface-container-low h-7 text-[10px] flex-1">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -98,7 +98,7 @@ export function InboxFilters({
         </Select>
 
         <Select value={type} onValueChange={onTypeChange}>
-          <SelectTrigger className="bg-bg-base h-7 text-[10px] flex-1">
+          <SelectTrigger className="bg-surface-container-low h-7 text-[10px] flex-1">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -112,7 +112,7 @@ export function InboxFilters({
         </Select>
 
         <Select value={platform} onValueChange={onPlatformChange}>
-          <SelectTrigger className="bg-bg-base h-7 text-[10px] flex-1">
+          <SelectTrigger className="bg-surface-container-low h-7 text-[10px] flex-1">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

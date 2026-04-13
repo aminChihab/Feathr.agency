@@ -50,8 +50,8 @@ export function ConversationItem({ conversation, isActive, isClient, onClick }: 
     <button
       onClick={onClick}
       className={cn(
-        'w-full text-left px-4 py-3 border-b border-border transition-colors',
-        isActive ? 'bg-bg-elevated' : 'hover:bg-bg-surface'
+        'w-full text-left px-4 py-3 border-b border-outline-variant/15 transition-colors',
+        isActive ? 'bg-surface-container-low border-l-2 border-l-primary' : 'hover:bg-surface-container-lowest'
       )}
     >
       <div className="flex items-start gap-2">
@@ -61,21 +61,21 @@ export function ConversationItem({ conversation, isActive, isClient, onClick }: 
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0">
-              {isClient && <Users className="h-3 w-3 flex-shrink-0 text-accent" />}
-              <p className={cn('truncate text-sm', isNew ? 'font-semibold' : 'font-normal')}>
+              {isClient && <Users className="h-3 w-3 flex-shrink-0 text-primary" />}
+              <p className={cn('truncate text-sm font-body text-on-surface', isNew ? 'font-semibold' : 'font-medium')}>
                 {conversation.contact_name ?? conversation.contact_handle ?? 'Unknown'}
               </p>
             </div>
-            <span className="text-[10px] text-text-muted flex-shrink-0">
+            <span className="text-[10px] text-on-surface-variant/60 flex-shrink-0">
               {conversation.last_message_at ? relativeTime(conversation.last_message_at) : ''}
             </span>
           </div>
           {conversation.contact_handle && conversation.contact_name && (
-            <p className="truncate text-xs text-text-muted">{conversation.contact_handle}</p>
+            <p className="truncate text-xs text-on-surface-variant/60">{conversation.contact_handle}</p>
           )}
           <div className="flex items-center justify-between mt-0.5">
             {conversation.ai_summary ? (
-              <p className="truncate text-xs text-text-muted flex-1">{conversation.ai_summary}</p>
+              <p className="truncate text-xs text-on-surface-variant flex-1">{conversation.ai_summary}</p>
             ) : (
               <div />
             )}

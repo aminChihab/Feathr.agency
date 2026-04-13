@@ -31,8 +31,8 @@ export function ReplyBox({ onSend, disabled }: ReplyBoxProps) {
   }
 
   return (
-    <div className="border-t border-border p-4">
-      <div className="flex gap-2">
+    <div className="border-t border-outline-variant/15 p-4 bg-surface-container-low/20">
+      <div className="flex gap-2 bg-surface-container-high/50 p-2 rounded-2xl border border-outline-variant/10 focus-within:border-primary/30 transition-all">
         <Textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -40,13 +40,13 @@ export function ReplyBox({ onSend, disabled }: ReplyBoxProps) {
           placeholder="Type a message..."
           rows={2}
           disabled={disabled}
-          className="bg-bg-surface resize-none"
+          className="bg-transparent text-on-surface placeholder:text-on-surface-variant/50 resize-none border-none focus:ring-0"
         />
         <Button
           onClick={handleSend}
           disabled={!text.trim() || sending || disabled}
           size="icon"
-          className="h-auto bg-accent text-white hover:bg-accent-hover"
+          className="h-auto bg-primary text-on-primary-container rounded-full shadow-lg shadow-primary/10 hover:bg-primary/80"
         >
           <Send className="h-4 w-4" />
         </Button>

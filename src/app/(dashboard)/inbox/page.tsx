@@ -243,7 +243,7 @@ export default function InboxPage() {
   if (loading || !userId) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     )
   }
@@ -283,10 +283,10 @@ export default function InboxPage() {
           onRejectMessage={handleRejectMessage}
         />
       ) : (
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex flex-1 items-center justify-center bg-surface">
           <div className="text-center space-y-2">
-            <MessageSquare className="h-12 w-12 text-text-muted mx-auto" />
-            <p className="text-text-muted">Select a conversation to view messages</p>
+            <MessageSquare className="h-12 w-12 text-on-surface-variant/60 mx-auto" />
+            <p className="text-on-surface-variant/60">Select a conversation to view messages</p>
           </div>
         </div>
       )}

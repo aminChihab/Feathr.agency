@@ -59,13 +59,13 @@ export function MessageThread({
   return (
     <div className="flex flex-1 flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border px-6 py-3">
+      <div className="flex items-center justify-between border-b border-outline-variant/5 px-6 py-3 bg-surface-container-low/30">
         <div className="flex items-center gap-3">
           <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: conversation.platform_color }} />
           <div>
-            <p className="text-sm font-medium">{conversation.contact_name ?? 'Unknown'}</p>
+            <p className="text-sm font-bold tracking-tight text-on-surface">{conversation.contact_name ?? 'Unknown'}</p>
             {conversation.contact_handle && (
-              <p className="text-xs text-text-muted">{conversation.contact_handle}</p>
+              <p className="text-xs text-on-surface-variant/60">{conversation.contact_handle}</p>
             )}
           </div>
         </div>
@@ -75,7 +75,7 @@ export function MessageThread({
             conversation.status === 'qualified' ? 'bg-status-scheduled/15 text-status-scheduled' :
             conversation.status === 'active' ? 'bg-status-approved/15 text-status-approved' :
             conversation.status === 'new' ? 'bg-status-draft/15 text-status-draft' :
-            conversation.status === 'archived' ? 'bg-bg-elevated text-text-muted' :
+            conversation.status === 'archived' ? 'bg-surface-container-high text-on-surface-variant/60' :
             'bg-status-failed/15 text-status-failed'
           )}>
             {conversation.status}
@@ -84,7 +84,7 @@ export function MessageThread({
             'rounded-full px-2.5 py-0.5 text-[10px] font-medium capitalize',
             conversation.priority === 'hot' ? 'bg-priority-hot/15 text-priority-hot' :
             conversation.priority === 'warm' ? 'bg-priority-warm/15 text-priority-warm' :
-            'bg-bg-elevated text-text-muted'
+            'bg-surface-container-high text-on-surface-variant/60'
           )}>
             {conversation.priority}
           </span>
@@ -94,7 +94,7 @@ export function MessageThread({
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4">
         {messages.length === 0 ? (
-          <p className="text-center text-sm text-text-muted py-12">No messages yet.</p>
+          <p className="text-center text-sm text-on-surface-variant/60 py-12">No messages yet.</p>
         ) : (
           messages.map((msg) => (
             <MessageBubble

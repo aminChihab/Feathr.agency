@@ -51,7 +51,7 @@ export function LeadModal({ open, onClose, supabase, userId, conversationId, onC
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="bg-bg-surface border-border max-w-sm">
+      <DialogContent className="bg-surface-container-low border-outline-variant/15 max-w-sm">
         <DialogHeader>
           <DialogTitle className="font-light">Mark as lead</DialogTitle>
         </DialogHeader>
@@ -64,7 +64,7 @@ export function LeadModal({ open, onClose, supabase, userId, conversationId, onC
               max={100}
               value={score}
               onChange={(e) => setScore(Number(e.target.value))}
-              className="bg-bg-base"
+              className="bg-surface-container-lowest"
             />
           </div>
           <div className="space-y-2">
@@ -73,7 +73,7 @@ export function LeadModal({ open, onClose, supabase, userId, conversationId, onC
               type="date"
               value={requestedDate}
               onChange={(e) => setRequestedDate(e.target.value)}
-              className="bg-bg-base"
+              className="bg-surface-container-lowest"
             />
           </div>
           <div className="space-y-2">
@@ -82,7 +82,7 @@ export function LeadModal({ open, onClose, supabase, userId, conversationId, onC
               value={requestedDuration}
               onChange={(e) => setRequestedDuration(e.target.value)}
               placeholder="e.g. 1 hour"
-              className="bg-bg-base"
+              className="bg-surface-container-lowest"
             />
           </div>
           <div className="space-y-2">
@@ -91,13 +91,13 @@ export function LeadModal({ open, onClose, supabase, userId, conversationId, onC
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              className="bg-bg-base"
+              className="bg-surface-container-lowest"
               placeholder="Additional details..."
             />
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={onClose}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving} className="bg-accent text-white hover:bg-accent-hover">
+            <Button onClick={handleSave} disabled={saving} className="bg-primary text-on-primary hover:bg-primary/80">
               {saving ? 'Saving...' : 'Create lead'}
             </Button>
           </div>
