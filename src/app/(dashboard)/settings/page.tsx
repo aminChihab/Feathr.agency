@@ -329,7 +329,7 @@ export default function SettingsPage() {
   if (loading || !userId) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     )
   }
@@ -344,8 +344,8 @@ export default function SettingsPage() {
             onClick={() => setActiveTab(tab.id)}
             className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
               activeTab === tab.id
-                ? 'bg-bg-elevated text-text-primary'
-                : 'text-text-secondary hover:bg-bg-surface hover:text-text-primary'
+                ? 'bg-surface-container-low rounded-lg text-on-surface'
+                : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
             <tab.icon className="h-4 w-4" />
@@ -357,8 +357,8 @@ export default function SettingsPage() {
       {/* Tab content */}
       <div className="flex-1 max-w-xl space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-light">Settings</h1>
-          {saved && <span className="text-sm text-status-scheduled">Saved</span>}
+          <h1 className="font-display text-3xl">Settings</h1>
+          {saved && <span className="text-sm text-tertiary">Saved</span>}
         </div>
 
         {/* Profile */}
@@ -366,22 +366,22 @@ export default function SettingsPage() {
           <div className="space-y-6">
             <div className="space-y-2">
               <Label>Professional name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} className="bg-bg-surface" />
+              <Input value={name} onChange={(e) => setName(e.target.value)} className="bg-surface-container-low" />
             </div>
             <div className="space-y-2">
               <Label>City</Label>
-              <Input value={city} onChange={(e) => setCity(e.target.value)} className="bg-bg-surface" />
+              <Input value={city} onChange={(e) => setCity(e.target.value)} className="bg-surface-container-low" />
             </div>
             <div className="space-y-3">
               <Label>Goals</Label>
               {GOALS.map((goal) => (
-                <label key={goal.value} className="flex cursor-pointer items-center gap-3 rounded-lg border border-border px-4 py-3 transition-colors hover:bg-bg-surface">
+                <label key={goal.value} className="flex cursor-pointer items-center gap-3 rounded-xl border border-outline-variant/30 px-4 py-3 transition-colors hover:bg-surface-container-low">
                   <Checkbox checked={goals.includes(goal.value)} onCheckedChange={() => toggleGoal(goal.value)} />
                   <span className="text-sm">{goal.label}</span>
                 </label>
               ))}
             </div>
-            <Button onClick={saveProfile} disabled={saving} className="bg-accent text-white hover:bg-accent-hover">
+            <Button onClick={saveProfile} disabled={saving} className="gradient-cta text-white">
               {saving ? 'Saving...' : 'Save profile'}
             </Button>
           </div>
@@ -397,13 +397,13 @@ export default function SettingsPage() {
                 value={voiceDescription}
                 onChange={(e) => setVoiceDescription(e.target.value)}
                 rows={4}
-                className="bg-bg-surface"
+                className="bg-surface-container-low"
                 placeholder="Describe how you communicate — your tone, humor, boundaries, and style..."
               />
-              <p className="text-xs text-text-muted">
+              <p className="text-xs text-on-surface-variant/60">
                 Describe your voice in your own words. This is read by the AI alongside the analyzed voice profile below.
               </p>
-              <Button onClick={saveVoice} disabled={saving} className="bg-accent text-white hover:bg-accent-hover">
+              <Button onClick={saveVoice} disabled={saving} className="gradient-cta text-white">
                 {saving ? 'Saving...' : 'Save'}
               </Button>
             </div>
@@ -415,16 +415,16 @@ export default function SettingsPage() {
               if (!parsed || typeof parsed !== 'object') return null
 
               return (
-                <div className="space-y-3 border-t border-border pt-6">
+                <div className="space-y-3 border-t border-outline-variant/30 pt-6">
                   <div>
                     <Label>Analyzed voice profile</Label>
-                    <p className="text-xs text-text-muted mt-1">Generated from your chat history. Used by the AI to match your writing style.</p>
+                    <p className="text-xs text-on-surface-variant/60 mt-1">Generated from your chat history. Used by the AI to match your writing style.</p>
                   </div>
 
                   {/* Summary */}
                   {parsed.summary && (
-                    <div className="rounded-lg bg-accent/5 border border-accent/10 p-4">
-                      <p className="text-sm text-text-primary leading-relaxed">{parsed.summary}</p>
+                    <div className="rounded-lg bg-primary/5 border border-primary/10 p-4">
+                      <p className="text-sm text-on-surface leading-relaxed">{parsed.summary}</p>
                     </div>
                   )}
 
@@ -432,31 +432,31 @@ export default function SettingsPage() {
                   {(parsed.tone?.length > 0 || parsed.personality_traits?.length > 0) && (
                     <div className="flex flex-wrap gap-1.5">
                       {(parsed.tone ?? []).map((t: string, i: number) => (
-                        <span key={`t${i}`} className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs text-accent">{t}</span>
+                        <span key={`t${i}`} className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-primary">{t}</span>
                       ))}
                       {(parsed.personality_traits ?? []).map((t: string, i: number) => (
-                        <span key={`p${i}`} className="rounded-full bg-status-scheduled/10 px-2.5 py-0.5 text-xs text-status-scheduled">{t}</span>
+                        <span key={`p${i}`} className="rounded-full bg-tertiary/10 px-2.5 py-0.5 text-xs text-tertiary">{t}</span>
                       ))}
                     </div>
                   )}
 
                   {/* Writing Style */}
                   {parsed.writing_style && (
-                    <div className="rounded-lg bg-bg-base border border-border/50 px-4 py-3 space-y-1.5 text-xs">
-                      <p className="text-text-muted font-medium uppercase tracking-wider text-[10px]">Writing style</p>
+                    <div className="rounded-lg bg-surface border border-outline-variant/30/50 px-4 py-3 space-y-1.5 text-xs">
+                      <p className="text-on-surface-variant/60 font-medium uppercase tracking-wider text-[10px]">Writing style</p>
                       {parsed.writing_style.sentence_length && (
-                        <p><span className="text-text-muted">Sentences:</span> <span className="text-text-primary">{parsed.writing_style.sentence_length}</span></p>
+                        <p><span className="text-on-surface-variant/60">Sentences:</span> <span className="text-on-surface">{parsed.writing_style.sentence_length}</span></p>
                       )}
                       {parsed.writing_style.punctuation && (
-                        <p><span className="text-text-muted">Punctuation:</span> <span className="text-text-primary">{parsed.writing_style.punctuation}</span></p>
+                        <p><span className="text-on-surface-variant/60">Punctuation:</span> <span className="text-on-surface">{parsed.writing_style.punctuation}</span></p>
                       )}
                       {parsed.writing_style.capitalization && (
-                        <p><span className="text-text-muted">Capitalization:</span> <span className="text-text-primary">{parsed.writing_style.capitalization}</span></p>
+                        <p><span className="text-on-surface-variant/60">Capitalization:</span> <span className="text-on-surface">{parsed.writing_style.capitalization}</span></p>
                       )}
                       {parsed.writing_style.quirks?.length > 0 && (
                         <div className="flex flex-wrap gap-1 pt-1">
                           {parsed.writing_style.quirks.map((q: string, i: number) => (
-                            <span key={i} className="rounded bg-bg-elevated px-2 py-0.5 text-[11px] text-text-secondary">{q}</span>
+                            <span key={i} className="rounded bg-surface-container-highest px-2 py-0.5 text-[11px] text-on-surface-variant">{q}</span>
                           ))}
                         </div>
                       )}
@@ -467,18 +467,18 @@ export default function SettingsPage() {
                   {(parsed.do?.length > 0 || parsed.dont?.length > 0) && (
                     <div className="grid grid-cols-2 gap-3">
                       {parsed.do?.length > 0 && (
-                        <div className="rounded-lg bg-bg-base border border-border/50 px-4 py-3 space-y-1.5">
-                          <p className="text-[10px] text-status-scheduled font-medium uppercase tracking-wider">Do</p>
+                        <div className="rounded-lg bg-surface border border-outline-variant/30/50 px-4 py-3 space-y-1.5">
+                          <p className="text-[10px] text-tertiary font-medium uppercase tracking-wider">Do</p>
                           {parsed.do.map((d: string, i: number) => (
-                            <p key={i} className="text-xs text-text-secondary">&middot; {d}</p>
+                            <p key={i} className="text-xs text-on-surface-variant">&middot; {d}</p>
                           ))}
                         </div>
                       )}
                       {parsed.dont?.length > 0 && (
-                        <div className="rounded-lg bg-bg-base border border-border/50 px-4 py-3 space-y-1.5">
-                          <p className="text-[10px] text-status-failed font-medium uppercase tracking-wider">Don&apos;t</p>
+                        <div className="rounded-lg bg-surface border border-outline-variant/30/50 px-4 py-3 space-y-1.5">
+                          <p className="text-[10px] text-error font-medium uppercase tracking-wider">Don&apos;t</p>
                           {parsed.dont.map((d: string, i: number) => (
-                            <p key={i} className="text-xs text-text-secondary">&middot; {d}</p>
+                            <p key={i} className="text-xs text-on-surface-variant">&middot; {d}</p>
                           ))}
                         </div>
                       )}
@@ -489,19 +489,19 @@ export default function SettingsPage() {
                   {parsed.phrases?.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {parsed.phrases.map((p: string, i: number) => (
-                        <span key={i} className="rounded-full bg-bg-elevated px-2.5 py-0.5 text-xs text-text-secondary italic">&ldquo;{p}&rdquo;</span>
+                        <span key={i} className="rounded-full bg-surface-container-highest px-2.5 py-0.5 text-xs text-on-surface-variant italic">&ldquo;{p}&rdquo;</span>
                       ))}
                     </div>
                   )}
 
                   {/* Raw JSON editor */}
                   <details>
-                    <summary className="text-xs text-text-muted cursor-pointer hover:text-text-secondary">Edit raw JSON</summary>
+                    <summary className="text-xs text-on-surface-variant/60 cursor-pointer hover:text-on-surface-variant">Edit raw JSON</summary>
                     <Textarea
                       value={voiceSample}
                       onChange={(e) => setVoiceSample(e.target.value)}
                       rows={12}
-                      className="bg-bg-surface mt-2 font-mono text-xs"
+                      className="bg-surface-container-low mt-2 font-mono text-xs"
                     />
                     <Button
                       onClick={async () => {
@@ -523,18 +523,18 @@ export default function SettingsPage() {
             })()}
 
             {/* Chat history upload */}
-            <div className="space-y-3 border-t border-border pt-6">
+            <div className="space-y-3 border-t border-outline-variant/30 pt-6">
               <div>
                 <Label>Chat history</Label>
-                <p className="text-xs text-text-muted mt-1">
+                <p className="text-xs text-on-surface-variant/60 mt-1">
                   Upload conversations with clients (.txt files). The AI analyzes your writing patterns and generates a voice profile.
                 </p>
               </div>
 
               {/* Upload button */}
-              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border px-4 py-3 transition-colors hover:border-accent hover:bg-accent/5">
-                <Upload className="h-4 w-4 text-text-muted" />
-                <span className="text-sm text-text-secondary">
+              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-outline-variant/30 px-4 py-3 transition-colors hover:border-primary hover:bg-primary/5">
+                <Upload className="h-4 w-4 text-on-surface-variant/60" />
+                <span className="text-sm text-on-surface-variant">
                   {uploadingChats ? 'Uploading...' : 'Upload .txt files'}
                 </span>
                 <input
@@ -550,14 +550,14 @@ export default function SettingsPage() {
               {/* File list */}
               {chatFiles.length > 0 && (
                 <div className="space-y-1.5">
-                  <p className="text-xs text-text-muted">{chatFiles.length} file(s)</p>
+                  <p className="text-xs text-on-surface-variant/60">{chatFiles.length} file(s)</p>
                   {chatFiles.map((file) => (
-                    <div key={file.path} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                    <div key={file.path} className="flex items-center justify-between rounded-lg border border-outline-variant/30 px-3 py-2">
                       <div className="flex items-center gap-2 min-w-0">
-                        <FileText className="h-3.5 w-3.5 text-text-muted shrink-0" />
+                        <FileText className="h-3.5 w-3.5 text-on-surface-variant/60 shrink-0" />
                         <span className="text-sm truncate">{file.name}</span>
                       </div>
-                      <button onClick={() => removeChatFile(file.path)} className="text-text-muted hover:text-status-failed p-1">
+                      <button onClick={() => removeChatFile(file.path)} className="text-on-surface-variant/60 hover:text-error p-1">
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
@@ -576,8 +576,8 @@ export default function SettingsPage() {
                         onClick={() => setSelectedParticipant(name)}
                         className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
                           selectedParticipant === name
-                            ? 'bg-accent text-white'
-                            : 'bg-bg-base border border-border text-text-secondary hover:border-accent'
+                            ? 'bg-primary text-on-primary'
+                            : 'bg-surface border border-outline-variant/30 text-on-surface-variant hover:border-primary'
                         }`}
                       >
                         {name}
@@ -605,7 +605,7 @@ export default function SettingsPage() {
         {/* Platforms */}
         {activeTab === 'platforms' && (
           <div className="space-y-4">
-            <p className="text-text-secondary">
+            <p className="text-on-surface-variant">
               Manage your connected platforms, add new ones, and adjust settings.
             </p>
             <Link href="/platforms">
@@ -617,13 +617,13 @@ export default function SettingsPage() {
         {/* Planning */}
         {activeTab === 'planning' && (
           <div className="space-y-4">
-            <p className="text-text-secondary">Set how often Feathr posts on each platform.</p>
+            <p className="text-on-surface-variant">Set how often Feathr posts on each platform.</p>
             {accounts.length === 0 ? (
-              <p className="text-text-muted">No platforms connected yet.</p>
+              <p className="text-on-surface-variant/60">No platforms connected yet.</p>
             ) : (
               <div className="space-y-3">
                 {accounts.map((account) => (
-                  <div key={account.id} className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
+                  <div key={account.id} className="flex items-center justify-between rounded-lg border border-outline-variant/30 px-4 py-3">
                     <span className="text-sm font-medium" style={{ color: account.platform_color }}>
                       {account.platform_name}
                     </span>
@@ -631,7 +631,7 @@ export default function SettingsPage() {
                       value={account.schedule_json?.frequency ?? ''}
                       onValueChange={(val) => updateSchedule(account.id, val)}
                     >
-                      <SelectTrigger className="w-40 bg-bg-base">
+                      <SelectTrigger className="w-40 bg-surface">
                         <SelectValue placeholder="Frequency" />
                       </SelectTrigger>
                       <SelectContent>
@@ -658,13 +658,13 @@ export default function SettingsPage() {
                 { label: 'Lead qualified', checked: notifLeadQualified, onChange: setNotifLeadQualified },
                 { label: 'Listing expiring', checked: notifListingExpiring, onChange: setNotifListingExpiring },
               ].map((item) => (
-                <label key={item.label} className="flex cursor-pointer items-center justify-between rounded-lg border border-border px-4 py-3 transition-colors hover:bg-bg-surface">
+                <label key={item.label} className="flex cursor-pointer items-center justify-between rounded-lg border border-outline-variant/30 px-4 py-3 transition-colors hover:bg-bg-surface">
                   <span className="text-sm">{item.label}</span>
                   <Checkbox checked={item.checked} onCheckedChange={(c) => item.onChange(c === true)} />
                 </label>
               ))}
             </div>
-            <Button onClick={saveNotifications} disabled={saving} className="bg-accent text-white hover:bg-accent-hover">
+            <Button onClick={saveNotifications} disabled={saving} className="gradient-cta text-white">
               {saving ? 'Saving...' : 'Save preferences'}
             </Button>
           </div>
@@ -675,40 +675,40 @@ export default function SettingsPage() {
           <div className="space-y-6">
             <div className="space-y-2">
               <Label>Email</Label>
-              <Input value={userEmail} disabled className="bg-bg-surface opacity-60" />
-              <p className="text-xs text-text-muted">Contact support to change your email.</p>
+              <Input value={userEmail} disabled className="bg-surface-container-low opacity-60" />
+              <p className="text-xs text-on-surface-variant/60">Contact support to change your email.</p>
             </div>
             <div className="space-y-2">
               <Label>Password</Label>
-              <p className="text-sm text-text-muted">
+              <p className="text-sm text-on-surface-variant/60">
                 To change your password, sign out and use the &ldquo;Forgot password&rdquo; flow on the login page.
               </p>
             </div>
-            <div className="border-t border-border pt-6">
-              <h3 className="text-sm font-medium text-status-failed">Danger zone</h3>
-              <p className="mt-1 text-xs text-text-muted">
+            <div className="border-t border-outline-variant/30 pt-6">
+              <h3 className="text-error font-display">Danger zone</h3>
+              <p className="mt-1 text-xs text-on-surface-variant/60">
                 Permanently delete your account and all associated data. This cannot be undone.
               </p>
               <Button
                 variant="outline"
                 onClick={() => setDeleteDialogOpen(true)}
-                className="mt-3 border-status-failed/50 text-status-failed hover:bg-status-failed/10"
+                className="mt-3 text-error border border-error/30 hover:bg-error/10 rounded-full"
               >
                 Delete account
               </Button>
             </div>
 
             <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-              <DialogContent className="bg-bg-surface border-border max-w-sm">
+              <DialogContent className="bg-surface-container-low border-outline-variant/30 max-w-sm">
                 <DialogHeader>
                   <DialogTitle className="font-light">Delete account?</DialogTitle>
                 </DialogHeader>
-                <p className="text-sm text-text-secondary">
+                <p className="text-sm text-on-surface-variant">
                   This will permanently delete your account, all your data, connected platforms, and content. This cannot be undone.
                 </p>
                 <div className="flex justify-end gap-2 pt-2">
                   <Button variant="ghost" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-                  <Button onClick={handleDeleteAccount} className="bg-status-failed text-white hover:bg-status-failed/90">
+                  <Button onClick={handleDeleteAccount} className="bg-error text-white hover:bg-error/90">
                     Delete my account
                   </Button>
                 </div>
@@ -719,8 +719,8 @@ export default function SettingsPage() {
 
         {/* Billing */}
         {activeTab === 'billing' && (
-          <div className="rounded-lg border border-border bg-bg-surface p-8 text-center">
-            <p className="text-text-muted">Billing will be available soon. During early access, Feathr is free.</p>
+          <div className="bg-surface-container-low rounded-xl p-8 text-center">
+            <p className="text-on-surface-variant">Billing will be available soon. During early access, Feathr is free.</p>
           </div>
         )}
       </div>
