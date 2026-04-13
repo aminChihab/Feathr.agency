@@ -74,30 +74,27 @@ export async function POST(request: NextRequest) {
 
   if (actorType === 'profile') {
     // crawlerbros/instagram-profile-scraper output
-    // Results can be profile data + posts mixed, or just posts
+    // Each result is a post with: description, post_url, pub_date, like_count, comment_count,
+    // view_count, media_urls, post_type, username, scraped_at, authorMeta
     const handle = handles[0] ?? 'unknown'
 
-    // Check if we got profile-level data or individual posts
-    const profileItem = allResults.find((item: any) => item.profileData || item.biography || item.fullName)
-    const posts = allResults.filter((item: any) => item.caption !== undefined || item.shortCode || item.mediaUrl)
+    // Extract profile data from authorMeta of first post
+    const firstPost = allResults[0] ?? {}
+    const authorMeta = firstPost.authorMeta ?? {}
 
-    // Build profile info from whatever we have
-    const profileData = profileItem ?? allResults[0] ?? {}
-
-    const recentPosts = posts.map((post: any) => ({
-      caption: post.caption ?? post.text ?? '',
-      timestamp: post.timestamp ?? post.takenAt ?? post.date ?? null,
-      likes: post.likesCount ?? post.likes ?? 0,
-      comments: post.commentsCount ?? post.comments ?? 0,
-      media_type: post.type ?? post.mediaType ?? 'Image',
-      permalink: post.url ?? (post.shortCode ? `https://www.instagram.com/p/${post.shortCode}/` : ''),
-      media_url: post.displayUrl ?? post.mediaUrl ?? post.imageUrl ?? null,
+    const recentPosts = allResults.map((post: any) => ({
+      caption: post.description ?? post.caption ?? post.text ?? '',
+      timestamp: post.pub_date ?? post.timestamp ?? null,
+      likes: post.like_count ?? post.likesCount ?? 0,
+      comments: post.comment_count ?? post.commentsCount ?? 0,
+      views: post.view_count ?? 0,
+      media_type: post.post_type ?? post.type ?? 'Image',
+      permalink: post.post_url ?? post.url ?? '',
+      media_urls: post.media_urls ?? [],
       hashtags: post.hashtags ?? [],
     }))
 
-    console.log(`[apify-webhook] @${handle}: profile found=${!!profileItem}, posts=${recentPosts.length}`)
-    console.log(`[apify-webhook] @${handle}: profile keys: ${Object.keys(profileData).slice(0, 15).join(', ')}`)
-    if (posts[0]) console.log(`[apify-webhook] @${handle}: post keys: ${Object.keys(posts[0]).slice(0, 15).join(', ')}`)
+    console.log(`[apify-webhook] @${handle}: ${recentPosts.length} posts, authorMeta keys: ${Object.keys(authorMeta).join(', ')}`)
 
     await supabase.from('research_reports').insert({
       profile_id: report.profile_id,
@@ -108,13 +105,13 @@ export async function POST(request: NextRequest) {
         platform: 'instagram',
         scraped_at: new Date().toISOString(),
         profile: {
-          display_name: profileData.fullName ?? profileData.full_name ?? handle,
-          bio: profileData.biography ?? profileData.bio ?? '',
-          followers: profileData.followersCount ?? profileData.follower_count ?? profileData.followedBy ?? 0,
-          following: profileData.followsCount ?? profileData.following_count ?? profileData.follows ?? 0,
-          post_count: profileData.postsCount ?? profileData.media_count ?? 0,
-          profile_pic: profileData.profilePicUrl ?? profileData.profile_pic_url ?? null,
-          external_url: profileData.externalUrl ?? profileData.external_url ?? null,
+          display_name: authorMeta.fullName ?? authorMeta.full_name ?? authorMeta.name ?? handle,
+          bio: authorMeta.biography ?? authorMeta.bio ?? '',
+          followers: authorMeta.followersCount ?? authorMeta.follower_count ?? authorMeta.followers ?? 0,
+          following: authorMeta.followsCount ?? authorMeta.following_count ?? authorMeta.following ?? 0,
+          post_count: authorMeta.postsCount ?? authorMeta.media_count ?? 0,
+          profile_pic: authorMeta.profilePicUrl ?? authorMeta.profile_pic_url ?? null,
+          external_url: authorMeta.externalUrl ?? authorMeta.external_url ?? null,
         },
         recent_posts: recentPosts,
       },
