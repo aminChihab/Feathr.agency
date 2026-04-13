@@ -89,11 +89,11 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid rgba(81, 67, 70, 0.15);
 }
 
-/* Hide scrollbar but keep scroll functionality */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
+/* Hide all scrollbars globally but keep scroll functionality */
+*::-webkit-scrollbar {
+  display: none !important;
 }
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+* {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
