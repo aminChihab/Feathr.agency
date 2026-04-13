@@ -99,7 +99,7 @@ export default async function DashboardPage() {
   })
 
   return (
-    <div className="space-y-10">
+    <>
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
@@ -290,6 +290,6 @@ export default async function DashboardPage() {
           </div>
         </section>
       </div>
-    </div>
+    </>
   )
 }
