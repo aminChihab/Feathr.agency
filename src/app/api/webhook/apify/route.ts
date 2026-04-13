@@ -153,6 +153,8 @@ export async function POST(request: NextRequest) {
 
     } else {
       console.log(`[apify-webhook] Unknown item type:`, Object.keys(item).join(', '))
+      if (item.error) console.log(`[apify-webhook] Error:`, item.error, item.errorDescription ?? '')
+      if (item.inputUrl) console.log(`[apify-webhook] Input URL:`, item.inputUrl)
     }
   }
 
