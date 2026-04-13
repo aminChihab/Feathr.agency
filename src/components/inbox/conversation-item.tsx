@@ -1,7 +1,6 @@
 // src/components/inbox/conversation-item.tsx
 'use client'
 
-import { Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ConversationItemProps {
@@ -22,10 +21,16 @@ interface ConversationItemProps {
   onClick: () => void
 }
 
-const PRIORITY_COLORS: Record<string, string> = {
-  hot: 'bg-priority-hot',
-  warm: 'bg-priority-warm',
-  cold: 'bg-priority-cold',
+const PRIORITY_BADGE: Record<string, { bg: string; text: string; label: string }> = {
+  hot: { bg: 'bg-error-container', text: 'text-error', label: 'Hot' },
+  warm: { bg: 'bg-tertiary-container', text: 'text-on-tertiary-container', label: 'Warm' },
+  cold: { bg: 'bg-surface-container-highest', text: 'text-on-surface-variant/60', label: 'Cold' },
+}
+
+const PLATFORM_ICON: Record<string, string> = {
+  Instagram: 'alternate_email',
+  WhatsApp: 'chat_bubble',
+  Direct: 'mail',
 }
 
 function relativeTime(dateStr: string): string {
@@ -45,47 +50,58 @@ function relativeTime(dateStr: string): string {
 
 export function ConversationItem({ conversation, isActive, isClient, onClick }: ConversationItemProps) {
   const isNew = conversation.status === 'new'
+  const badge = PRIORITY_BADGE[conversation.priority] ?? PRIORITY_BADGE.cold
+  const platformIcon = PLATFORM_ICON[conversation.platform_name] ?? 'mail'
 
   return (
     <button
       onClick={onClick}
       className={cn(
-        'w-full text-left px-4 py-3 border-b border-outline-variant/15 transition-colors',
-        isActive ? 'bg-surface-container-low border-l-2 border-l-primary' : 'hover:bg-surface-container-lowest'
+        'w-full text-left px-4 py-3 cursor-pointer transition-all border-l-2',
+        isActive
+          ? 'bg-surface-container-high/40 border-l-primary'
+          : 'border-l-transparent hover:bg-surface-container-low hover:border-l-outline-variant/20'
       )}
     >
-      <div className="flex items-start gap-2">
-        {conversation.priority !== 'cold' && (
-          <div className={cn('h-1.5 w-1.5 rounded-full flex-shrink-0 mt-2', PRIORITY_COLORS[conversation.priority])} />
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 min-w-0">
-              {isClient && <Users className="h-3 w-3 flex-shrink-0 text-primary" />}
-              <p className={cn('truncate text-sm font-body text-on-surface', isNew ? 'font-semibold' : 'font-medium')}>
-                {conversation.contact_name ?? conversation.contact_handle ?? 'Unknown'}
-              </p>
-            </div>
-            <span className="text-[10px] text-on-surface-variant/60 flex-shrink-0">
-              {conversation.last_message_at ? relativeTime(conversation.last_message_at) : ''}
-            </span>
-          </div>
-          {conversation.contact_handle && conversation.contact_name && (
-            <p className="truncate text-xs text-on-surface-variant/60">{conversation.contact_handle}</p>
-          )}
-          <div className="flex items-center justify-between mt-0.5">
-            {conversation.ai_summary ? (
-              <p className="truncate text-xs text-on-surface-variant flex-1">{conversation.ai_summary}</p>
-            ) : (
-              <div />
-            )}
-            <span
-              className="text-[10px] font-medium flex-shrink-0 ml-2"
-              style={{ color: conversation.platform_color }}
-            >
-              {conversation.platform_name}
-            </span>
-          </div>
+      {/* Row 1: Name + time */}
+      <div className="flex justify-between items-start mb-1">
+        <span className={cn(
+          'text-xs font-bold tracking-tight',
+          isActive ? 'text-on-surface' : 'text-on-surface/80'
+        )}>
+          {conversation.contact_handle
+            ? `@${conversation.contact_handle.replace(/^@/, '')}`
+            : conversation.contact_name ?? 'Unknown'}
+        </span>
+        <span className="text-[10px] text-on-surface-variant/40">
+          {conversation.last_message_at ? relativeTime(conversation.last_message_at) : ''}
+        </span>
+      </div>
+
+      {/* Row 2: Preview text */}
+      <div className="flex items-center gap-2 mb-2">
+        {isNew && <span className="w-2 h-2 rounded-full bg-primary animate-pulse flex-shrink-0" />}
+        <p className={cn(
+          'text-sm line-clamp-1',
+          isActive ? 'text-on-surface font-medium italic' : 'text-on-surface-variant/60'
+        )}>
+          {conversation.ai_summary
+            ? (isActive ? `"${conversation.ai_summary}"` : conversation.ai_summary)
+            : 'No messages yet'}
+        </p>
+      </div>
+
+      {/* Row 3: Priority badge + platform */}
+      <div className="flex items-center gap-2">
+        <span className={cn(
+          'text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter',
+          badge.bg, badge.text
+        )}>
+          {badge.label}
+        </span>
+        <div className="flex items-center gap-1 opacity-60">
+          <span className="material-symbols-outlined text-[14px]">{platformIcon}</span>
+          <span className="text-[10px]">{conversation.platform_name}</span>
         </div>
       </div>
     </button>

@@ -2,8 +2,6 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Bot } from 'lucide-react'
 
 interface MessageBubbleProps {
   body: string
@@ -26,43 +24,86 @@ export function MessageBubble({
 }: MessageBubbleProps) {
   const isInbound = direction === 'inbound'
   const isPendingApproval = aiGenerated && aiApproved === null
+  const time = new Date(sentAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 
-  return (
-    <div className={cn('flex', isInbound ? 'justify-start' : 'justify-end')}>
-      <div className="max-w-[70%] space-y-1">
-        <div
-          className={cn(
-            'px-4 py-2.5 text-sm text-on-surface',
-            isInbound ? 'bg-surface-container-high rounded-2xl rounded-tl-sm' : 'bg-primary/15 rounded-2xl rounded-tr-sm',
-            isPendingApproval && 'ring-2 ring-status-draft/50'
-          )}
-        >
+  if (isInbound) {
+    return (
+      <div className="flex flex-col items-start max-w-[80%]">
+        <div className={cn(
+          'bg-surface-container-high px-4 py-3 rounded-2xl rounded-tl-none text-sm leading-relaxed text-on-surface shadow-sm',
+          isPendingApproval && 'ring-2 ring-status-draft/50'
+        )}>
           {aiGenerated && (
             <div className="mb-1 flex items-center gap-1">
-              <Bot className="h-3 w-3 text-on-surface-variant/60" />
+              <span className="material-symbols-outlined text-[14px] text-on-surface-variant/60">smart_toy</span>
               <span className="text-[10px] uppercase tracking-wider text-on-surface-variant/60">AI</span>
             </div>
           )}
           <p className="whitespace-pre-wrap">{body}</p>
         </div>
-
-        <div className={cn('flex items-center gap-2', isInbound ? 'justify-start' : 'justify-end')}>
-          <span className="text-[10px] text-on-surface-variant/60">
-            {new Date(sentAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-          </span>
-        </div>
+        <span className="text-[10px] text-on-surface-variant/40 mt-1 ml-1">{time}</span>
 
         {isPendingApproval && (
-          <div className="flex gap-2">
-            <Button size="sm" onClick={onApprove} className="h-7 bg-primary text-on-primary hover:bg-primary/80 text-xs">
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={onApprove}
+              className="px-3 py-1.5 bg-primary text-on-primary-container text-xs font-bold rounded-lg shadow-sm transition-transform active:scale-95"
+            >
               Approve
-            </Button>
-            <Button size="sm" variant="ghost" onClick={onReject} className="h-7 text-xs text-status-failed">
+            </button>
+            <button
+              onClick={onReject}
+              className="px-3 py-1.5 text-xs font-bold text-error hover:bg-error-container/30 rounded-lg transition-colors"
+            >
               Reject
-            </Button>
+            </button>
           </div>
         )}
       </div>
+    )
+  }
+
+  // Outbound message
+  return (
+    <div className="flex flex-col items-end ml-auto max-w-[80%]">
+      <div className={cn(
+        'bg-gradient-to-br from-primary/80 to-primary-container text-on-primary-container px-4 py-3 rounded-2xl rounded-tr-none text-sm leading-relaxed font-medium',
+        isPendingApproval && 'ring-2 ring-status-draft/50'
+      )}>
+        {aiGenerated && (
+          <div className="mb-1 flex items-center gap-1">
+            <span className="material-symbols-outlined text-[14px] text-on-primary-container/60">smart_toy</span>
+            <span className="text-[10px] uppercase tracking-wider text-on-primary-container/60">AI Draft</span>
+          </div>
+        )}
+        <p className="whitespace-pre-wrap">{body}</p>
+      </div>
+      <div className="flex items-center gap-1 mt-1 mr-1">
+        <span className="text-[10px] text-on-surface-variant/40">{time}</span>
+        <span
+          className="material-symbols-outlined text-[12px] text-primary"
+          style={{ fontVariationSettings: "'FILL' 1" }}
+        >
+          done_all
+        </span>
+      </div>
+
+      {isPendingApproval && (
+        <div className="flex gap-2 mt-2">
+          <button
+            onClick={onApprove}
+            className="px-3 py-1.5 bg-primary text-on-primary-container text-xs font-bold rounded-lg shadow-sm transition-transform active:scale-95"
+          >
+            Approve
+          </button>
+          <button
+            onClick={onReject}
+            className="px-3 py-1.5 text-xs font-bold text-error hover:bg-error-container/30 rounded-lg transition-colors"
+          >
+            Reject
+          </button>
+        </div>
+      )}
     </div>
   )
 }

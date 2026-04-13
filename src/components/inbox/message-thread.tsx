@@ -6,7 +6,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import { MessageBubble } from './message-bubble'
 import { ReplyBox } from './reply-box'
-import { cn } from '@/lib/utils'
+
 type Message = Database['public']['Tables']['messages']['Row']
 type Conversation = {
   id: string
@@ -56,63 +56,100 @@ export function MessageThread({
     onMessageSent()
   }
 
+  // Group messages by date for "Today" / date dividers
+  function getDateLabel(dateStr: string): string {
+    const d = new Date(dateStr)
+    const today = new Date()
+    if (d.toDateString() === today.toDateString()) return 'Today'
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
+    if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+
+  // Build date separators
+  let lastDateLabel = ''
+
   return (
-    <div className="flex flex-1 flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-outline-variant/5 px-6 py-3 bg-surface-container-low/30">
-        <div className="flex items-center gap-3">
-          <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: conversation.platform_color }} />
+    <section className="flex-1 flex flex-col bg-surface overflow-hidden">
+      {/* Chat Header */}
+      <header className="h-16 px-6 flex items-center justify-between border-b border-outline-variant/5 bg-surface-container-low/30">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            {/* Avatar placeholder with platform color */}
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-on-primary-container"
+              style={{ backgroundColor: conversation.platform_color + '40' }}
+            >
+              {(conversation.contact_name ?? '?')[0]?.toUpperCase()}
+            </div>
+            <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-tertiary-container border-2 border-surface" />
+          </div>
           <div>
-            <p className="text-sm font-bold tracking-tight text-on-surface">{conversation.contact_name ?? 'Unknown'}</p>
-            {conversation.contact_handle && (
-              <p className="text-xs text-on-surface-variant/60">{conversation.contact_handle}</p>
-            )}
+            <h3 className="text-sm font-bold tracking-tight">
+              {conversation.contact_name ?? 'Unknown'}
+              {conversation.contact_handle && (
+                <span className="text-on-surface-variant/40 font-normal ml-1">{conversation.contact_handle}</span>
+              )}
+            </h3>
+            <p className="text-[10px] text-on-surface-variant/60 flex items-center gap-1">
+              <span className="material-symbols-outlined text-[12px] text-tertiary">bolt</span>
+              Active on {conversation.platform_name}
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className={cn(
-            'rounded-full px-2.5 py-0.5 text-[10px] font-medium capitalize',
-            conversation.status === 'qualified' ? 'bg-status-scheduled/15 text-status-scheduled' :
-            conversation.status === 'active' ? 'bg-status-approved/15 text-status-approved' :
-            conversation.status === 'new' ? 'bg-status-draft/15 text-status-draft' :
-            conversation.status === 'archived' ? 'bg-surface-container-high text-on-surface-variant/60' :
-            'bg-status-failed/15 text-status-failed'
-          )}>
-            {conversation.status}
-          </span>
-          <span className={cn(
-            'rounded-full px-2.5 py-0.5 text-[10px] font-medium capitalize',
-            conversation.priority === 'hot' ? 'bg-priority-hot/15 text-priority-hot' :
-            conversation.priority === 'warm' ? 'bg-priority-warm/15 text-priority-warm' :
-            'bg-surface-container-high text-on-surface-variant/60'
-          )}>
-            {conversation.priority}
-          </span>
+        <div className="flex items-center gap-3">
+          <button className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors">
+            <span className="material-symbols-outlined">call</span>
+          </button>
+          <button className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors">
+            <span className="material-symbols-outlined">video_call</span>
+          </button>
+          <button className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors">
+            <span className="material-symbols-outlined">more_vert</span>
+          </button>
         </div>
-      </div>
+      </header>
 
-      {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4">
+      {/* Message History */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-6">
         {messages.length === 0 ? (
-          <p className="text-center text-sm text-on-surface-variant/60 py-12">No messages yet.</p>
+          <div className="flex flex-col items-center justify-center py-20">
+            <span className="material-symbols-outlined text-[36px] text-on-surface-variant/20 mb-2">chat</span>
+            <p className="text-sm text-on-surface-variant/40">No messages yet.</p>
+          </div>
         ) : (
-          messages.map((msg) => (
-            <MessageBubble
-              key={msg.id}
-              body={msg.body}
-              direction={msg.direction}
-              aiGenerated={msg.ai_generated}
-              aiApproved={msg.ai_approved}
-              sentAt={msg.sent_at}
-              onApprove={() => onApproveMessage(msg.id)}
-              onReject={() => onRejectMessage(msg.id)}
-            />
-          ))
+          messages.map((msg) => {
+            const dateLabel = getDateLabel(msg.sent_at)
+            const showDateDivider = dateLabel !== lastDateLabel
+            lastDateLabel = dateLabel
+
+            return (
+              <div key={msg.id}>
+                {showDateDivider && (
+                  <div className="flex justify-center mb-6">
+                    <span className="text-[10px] text-on-surface-variant/30 uppercase tracking-[0.2em] font-semibold">
+                      {dateLabel}
+                    </span>
+                  </div>
+                )}
+                <MessageBubble
+                  body={msg.body}
+                  direction={msg.direction}
+                  aiGenerated={msg.ai_generated}
+                  aiApproved={msg.ai_approved}
+                  sentAt={msg.sent_at}
+                  onApprove={() => onApproveMessage(msg.id)}
+                  onReject={() => onRejectMessage(msg.id)}
+                />
+              </div>
+            )
+          })
         )}
       </div>
 
-      {/* Reply */}
+      {/* Text Input Area */}
       <ReplyBox onSend={handleSend} />
-    </div>
+    </section>
   )
 }

@@ -3,7 +3,6 @@
 
 import { ConversationItem } from './conversation-item'
 import { InboxFilters } from './inbox-filters'
-import { Button } from '@/components/ui/button'
 import { RefreshCw } from 'lucide-react'
 
 interface ConversationData {
@@ -60,35 +59,29 @@ export function ConversationList({
   })
 
   return (
-    <div className="flex h-full w-80 flex-col border-r border-outline-variant/10 bg-surface-container-lowest">
-      <div className="flex items-center justify-between border-b border-outline-variant/15 px-4 py-3">
-        <h2 className="text-sm font-medium text-on-surface">Conversations</h2>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onSync}
-          disabled={syncing}
-          className="h-7 text-xs"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 mr-1 ${syncing ? 'animate-spin' : ''}`} />
-          Sync
-        </Button>
+    <section className="w-80 flex flex-col bg-surface-container-lowest border-r border-outline-variant/10 overflow-hidden">
+      {/* Tab filters + sync */}
+      <div className="p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <InboxFilters
+            category={filters.category}
+            onCategoryChange={(v) => onFilterChange('category', v)}
+          />
+          <button
+            onClick={onSync}
+            disabled={syncing}
+            className="p-1.5 text-on-surface-variant/40 hover:text-on-surface transition-colors"
+            title="Sync"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${syncing ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
       </div>
 
-      <InboxFilters
-        {...filters}
-        platforms={platforms}
-        onStatusChange={(v) => onFilterChange('status', v)}
-        onPriorityChange={(v) => onFilterChange('priority', v)}
-        onTypeChange={(v) => onFilterChange('type', v)}
-        onPlatformChange={(v) => onFilterChange('platform', v)}
-        onSearchChange={(v) => onFilterChange('search', v)}
-        onCategoryChange={(v) => onFilterChange('category', v)}
-      />
-
-      <div className="flex-1 overflow-y-auto">
+      {/* Conversation items */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
         {filtered.length === 0 ? (
-          <p className="p-4 text-center text-xs text-on-surface-variant/60">No conversations found.</p>
+          <p className="px-4 py-8 text-center text-xs text-on-surface-variant/40">No conversations found.</p>
         ) : (
           filtered.map((conv) => (
             <ConversationItem
@@ -101,6 +94,6 @@ export function ConversationList({
           ))
         )}
       </div>
-    </div>
+    </section>
   )
 }
