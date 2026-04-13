@@ -45,12 +45,14 @@ export async function POST() {
 
   const settings = (profile?.settings as any) ?? {}
   const competitorHandles: string[] = settings.instagram_handles ?? []
+  const searchTerms: string[] = settings.instagram_terms ?? []
 
   console.log('[ig-sync] Competitor handles:', competitorHandles.join(', ') || 'none')
+  console.log('[ig-sync] Search terms:', searchTerms.join(', ') || 'none')
 
-  if (competitorHandles.length === 0) {
-    console.log('[ig-sync] No competitor handles configured')
-    return NextResponse.json({ competitor_reports: 0, message: 'No competitor handles configured' })
+  if (competitorHandles.length === 0 && searchTerms.length === 0) {
+    console.log('[ig-sync] No Instagram targets configured')
+    return NextResponse.json({ competitor_reports: 0, hashtag_reports: 0, message: 'No Instagram targets configured' })
   }
 
   let competitorReports = 0
@@ -125,10 +127,87 @@ export async function POST() {
     }
   }
 
-  console.log(`[ig-sync] Done: ${competitorReports} reports, ${errors.length} errors`)
+  // Hashtag search
+  let hashtagReports = 0
+
+  for (const term of searchTerms) {
+    try {
+      const cleanTag = term.replace(/^#/, '').toLowerCase()
+      console.log(`[ig-sync] Searching hashtag #${cleanTag}...`)
+
+      // Step 1: Get hashtag ID
+      const searchRes = await fetch(
+        `https://graph.instagram.com/v22.0/ig_hashtag_search?q=${encodeURIComponent(cleanTag)}&user_id=${igUserId}&access_token=${accessToken}`
+      )
+
+      if (!searchRes.ok) {
+        const errBody = await searchRes.text()
+        console.error(`[ig-sync] Hashtag #${cleanTag}: ${searchRes.status}`, errBody.slice(0, 200))
+        errors.push(`#${cleanTag}: ${searchRes.status} — ${errBody.slice(0, 100)}`)
+        await new Promise((r) => setTimeout(r, 1000))
+        continue
+      }
+
+      const searchData = await searchRes.json()
+      const hashtagId = searchData.data?.[0]?.id
+
+      if (!hashtagId) {
+        console.log(`[ig-sync] Hashtag #${cleanTag}: not found`)
+        errors.push(`#${cleanTag}: not found`)
+        continue
+      }
+
+      // Step 2: Get recent media for this hashtag
+      const mediaRes = await fetch(
+        `https://graph.instagram.com/v22.0/${hashtagId}/recent_media?user_id=${igUserId}&fields=caption,timestamp,like_count,comments_count,media_type,permalink&access_token=${accessToken}`
+      )
+
+      if (!mediaRes.ok) {
+        const errBody = await mediaRes.text()
+        console.error(`[ig-sync] Hashtag #${cleanTag} media: ${mediaRes.status}`, errBody.slice(0, 200))
+        errors.push(`#${cleanTag} media: ${mediaRes.status}`)
+        await new Promise((r) => setTimeout(r, 1000))
+        continue
+      }
+
+      const mediaData = await mediaRes.json()
+      const posts = (mediaData.data ?? []).map((m: any) => ({
+        caption: m.caption ?? '',
+        timestamp: m.timestamp,
+        likes: m.like_count ?? 0,
+        comments: m.comments_count ?? 0,
+        media_type: m.media_type,
+        permalink: m.permalink,
+      }))
+
+      console.log(`[ig-sync] Hashtag #${cleanTag}: ${posts.length} recent posts`)
+
+      await supabase.from('research_reports').insert({
+        profile_id: user.id,
+        type: 'trend',
+        title: `IG Trending: #${cleanTag}`,
+        body: {
+          term: `#${cleanTag}`,
+          platform: 'instagram',
+          scraped_at: new Date().toISOString(),
+          post_count: posts.length,
+          posts,
+        },
+      })
+
+      hashtagReports++
+      await new Promise((r) => setTimeout(r, 1000))
+    } catch (err) {
+      console.error(`[ig-sync] Hashtag ${term}: exception:`, err)
+      errors.push(`${term}: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    }
+  }
+
+  console.log(`[ig-sync] Done: ${competitorReports} competitor reports, ${hashtagReports} hashtag reports, ${errors.length} errors`)
 
   return NextResponse.json({
     competitor_reports: competitorReports,
+    hashtag_reports: hashtagReports,
     errors: errors.length > 0 ? errors : undefined,
   })
 }
