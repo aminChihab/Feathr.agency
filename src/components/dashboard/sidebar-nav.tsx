@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import Image from 'next/image'
 import {
   LayoutDashboard, Inbox, CalendarDays, BarChart3, Link2,
   Search, ListChecks, Users, Plane, Bot, Settings, Bell, X,
@@ -122,11 +121,11 @@ export function SidebarNav({ profileName, email }: SidebarNavProps) {
   }
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-border bg-bg-surface">
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-outline-variant/15 bg-surface-container-lowest">
       {/* Logo */}
-      <div className="flex h-16 items-center px-6">
-        <span className="font-display text-2xl font-semibold text-text-primary uppercase tracking-widest" style={{ marginRight: '-10px' }}>Feathr</span>
-        <Image src="/logo.png" alt="Feathr" width={50} height={50} className="h-[50px] w-[50px] object-contain" />
+      <div className="mb-10 px-6 pt-8">
+        <h1 className="font-display text-2xl italic text-primary">Feathr</h1>
+        <p className="font-body text-xs tracking-widest uppercase opacity-40 mt-1">Marketing Atelier</p>
       </div>
 
       {/* Navigation */}
@@ -140,11 +139,11 @@ export function SidebarNav({ profileName, email }: SidebarNavProps) {
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
                 active
-                  ? 'bg-accent/10 text-accent font-medium'
-                  : 'text-text-secondary hover:bg-bg-elevated hover:text-text-primary'
+                  ? 'bg-primary/10 text-primary font-medium'
+                  : 'text-on-surface-variant/70 hover:bg-surface-container-high hover:text-on-surface'
               )}
             >
-              <item.icon className={cn('h-4 w-4', active && 'text-accent')} />
+              <item.icon className={cn('h-4 w-4', active && 'text-primary')} />
               <span>{item.label}</span>
             </Link>
           )
@@ -159,11 +158,11 @@ export function SidebarNav({ profileName, email }: SidebarNavProps) {
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
                 active
-                  ? 'bg-accent/10 text-accent font-medium'
-                  : 'text-text-secondary hover:bg-bg-elevated hover:text-text-primary'
+                  ? 'bg-primary/10 text-primary font-medium'
+                  : 'text-on-surface-variant/70 hover:bg-surface-container-high hover:text-on-surface'
               )}
             >
-              <settingsItem.icon className={cn('h-4 w-4', active && 'text-accent')} />
+              <settingsItem.icon className={cn('h-4 w-4', active && 'text-primary')} />
               <span>{settingsItem.label}</span>
             </Link>
           )
@@ -171,18 +170,18 @@ export function SidebarNav({ profileName, email }: SidebarNavProps) {
       </nav>
 
       {/* Profile + Notifications */}
-      <div className="relative border-t border-border px-4 py-4" ref={popoverRef}>
+      <div className="relative border-t border-outline-variant/15 px-4 py-4" ref={popoverRef}>
         <div className="flex items-center justify-between">
-          <p className="truncate text-sm text-text-primary">
+          <p className="truncate text-sm text-on-surface">
             {profileName || email}
           </p>
           <button
             onClick={openNotifications}
-            className="relative p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-elevated transition-colors"
+            className="relative p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
           >
             <Bell className="h-4 w-4" />
             {notifCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center h-4 min-w-[1rem] rounded-full bg-accent text-white text-[9px] font-medium px-1">
+              <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center h-4 min-w-[1rem] rounded-full bg-primary text-white text-[9px] font-medium px-1">
                 {notifCount > 99 ? '99+' : notifCount}
               </span>
             )}
@@ -191,10 +190,10 @@ export function SidebarNav({ profileName, email }: SidebarNavProps) {
 
         {/* Notification popover */}
         {notifOpen && (
-          <div className="absolute bottom-full left-2 right-2 mb-2 rounded-xl border border-border bg-bg-surface shadow-xl shadow-black/30 overflow-hidden max-h-80 flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <div className="absolute bottom-full left-2 right-2 mb-2 rounded-xl border border-outline-variant/15 bg-surface-container-high shadow-[0_20px_40px_rgba(0,0,0,0.4)] overflow-hidden max-h-80 flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-outline-variant/15">
               <h3 className="text-sm font-medium">Notifications</h3>
-              <button onClick={() => setNotifOpen(false)} className="text-text-muted hover:text-text-primary">
+              <button onClick={() => setNotifOpen(false)} className="text-on-surface-variant hover:text-on-surface">
                 <X className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -202,27 +201,27 @@ export function SidebarNav({ profileName, email }: SidebarNavProps) {
             <div className="overflow-y-auto flex-1">
               {loadingNotifs ? (
                 <div className="flex items-center justify-center py-6">
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                 </div>
               ) : notifications.length === 0 ? (
-                <p className="px-4 py-6 text-center text-xs text-text-muted">No notifications</p>
+                <p className="px-4 py-6 text-center text-xs text-on-surface-variant">No notifications</p>
               ) : (
-                <div className="divide-y divide-border/50">
+                <div className="divide-y divide-outline-variant/15">
                   {notifications.slice(0, 10).map((notif) => (
                     <Link
                       key={notif.id}
                       href={notifLink(notif)}
                       onClick={() => { if (!notif.read) markRead(notif.id); setNotifOpen(false) }}
                       className={cn(
-                        'block px-4 py-3 hover:bg-bg-elevated transition-colors',
-                        !notif.read && 'bg-accent/5'
+                        'block px-4 py-3 hover:bg-surface-container-high transition-colors',
+                        !notif.read && 'bg-primary/5'
                       )}
                     >
                       <div className="flex items-start gap-2">
-                        {!notif.read && <span className="mt-1.5 h-2 w-2 rounded-full bg-accent shrink-0" />}
+                        {!notif.read && <span className="mt-1.5 h-2 w-2 rounded-full bg-primary shrink-0" />}
                         <div className="min-w-0">
-                          <p className="text-xs font-medium text-text-primary truncate">{notif.title}</p>
-                          <p className="text-[10px] text-text-muted mt-0.5">{relativeTime(notif.created_at)}</p>
+                          <p className="text-xs font-medium text-on-surface truncate">{notif.title}</p>
+                          <p className="text-[10px] text-on-surface-variant mt-0.5">{relativeTime(notif.created_at)}</p>
                         </div>
                       </div>
                     </Link>

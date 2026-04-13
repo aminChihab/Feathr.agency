@@ -17,12 +17,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .single()
 
   return (
-    <div className="flex min-h-screen bg-bg-base">
+    <div className="flex min-h-screen bg-surface">
       <SidebarNav
         profileName={profile?.professional_name ?? null}
         email={user.email ?? ''}
       />
-      <main className="ml-64 flex-1 p-8">{children}</main>
+      <main className="ml-64 flex-1 px-10 py-8">{children}</main>
     </div>
   )
 }
