@@ -1,5 +1,4 @@
-import { MessageCircle, Video, AtSign, HeartHandshake, Globe } from 'lucide-react'
-import Image from 'next/image'
+import { MessageCircle, Video, AtSign, HeartHandshake, Globe, Camera, Hash } from 'lucide-react'
 
 interface PlatformIconProps {
   slug: string
@@ -7,22 +6,22 @@ interface PlatformIconProps {
   className?: string
 }
 
-const PLATFORM_CONFIG: Record<string, { bg: string; type: 'lucide' | 'svg'; icon?: any; svg?: string; color?: string }> = {
-  instagram: { bg: 'bg-gradient-to-tr from-[#f09433] via-[#e6683c] to-[#bc1888]', type: 'svg', svg: '/instagram.svg' },
-  twitter: { bg: 'bg-black', type: 'svg', svg: '/twitter.svg' },
-  x: { bg: 'bg-black', type: 'svg', svg: '/twitter.svg' },
-  whatsapp: { bg: 'bg-[#25D366]', type: 'lucide', icon: MessageCircle, color: 'text-white' },
-  facebook: { bg: 'bg-[#1877F2]', type: 'lucide', icon: Globe, color: 'text-white' },
-  linkedin: { bg: 'bg-[#0A66C2]', type: 'lucide', icon: Globe, color: 'text-white' },
-  tiktok: { bg: 'bg-black', type: 'lucide', icon: Video, color: 'text-white' },
-  threads: { bg: 'bg-black', type: 'lucide', icon: AtSign, color: 'text-white' },
-  youtube: { bg: 'bg-[#FF0000]', type: 'lucide', icon: Video, color: 'text-white' },
+const PLATFORM_CONFIG: Record<string, { bg: string; icon: any; color?: string }> = {
+  instagram: { bg: 'bg-gradient-to-tr from-[#f09433] via-[#e6683c] to-[#bc1888]', icon: Camera, color: 'text-white' },
+  twitter: { bg: 'bg-black', icon: Hash, color: 'text-white' },
+  x: { bg: 'bg-black', icon: Hash, color: 'text-white' },
+  whatsapp: { bg: 'bg-[#25D366]', icon: MessageCircle, color: 'text-white' },
+  facebook: { bg: 'bg-[#1877F2]', icon: Globe, color: 'text-white' },
+  linkedin: { bg: 'bg-[#0A66C2]', icon: Globe, color: 'text-white' },
+  tiktok: { bg: 'bg-black', icon: Video, color: 'text-white' },
+  threads: { bg: 'bg-black', icon: AtSign, color: 'text-white' },
+  youtube: { bg: 'bg-[#FF0000]', icon: Video, color: 'text-white' },
   // Directory / listing sites
-  tryst: { bg: 'bg-[#D4A574]', type: 'lucide', icon: HeartHandshake, color: 'text-white' },
-  'tryst.link': { bg: 'bg-[#D4A574]', type: 'lucide', icon: HeartHandshake, color: 'text-white' },
-  slixa: { bg: 'bg-[#8B5CF6]', type: 'lucide', icon: HeartHandshake, color: 'text-white' },
-  eurogirlescorts: { bg: 'bg-[#E91E63]', type: 'lucide', icon: HeartHandshake, color: 'text-white' },
-  adultwork: { bg: 'bg-[#3B82F6]', type: 'lucide', icon: HeartHandshake, color: 'text-white' },
+  tryst: { bg: 'bg-[#D4A574]', icon: HeartHandshake, color: 'text-white' },
+  'tryst.link': { bg: 'bg-[#D4A574]', icon: HeartHandshake, color: 'text-white' },
+  slixa: { bg: 'bg-[#8B5CF6]', icon: HeartHandshake, color: 'text-white' },
+  eurogirlescorts: { bg: 'bg-[#E91E63]', icon: HeartHandshake, color: 'text-white' },
+  adultwork: { bg: 'bg-[#3B82F6]', icon: HeartHandshake, color: 'text-white' },
 }
 
 export function PlatformIcon({ slug, size = 20, className = '' }: PlatformIconProps) {
@@ -44,16 +43,14 @@ export function PlatformIcon({ slug, size = 20, className = '' }: PlatformIconPr
     )
   }
 
+  const IconComponent = config.icon
+
   return (
     <div
       className={`rounded-full ${config.bg} flex items-center justify-center ${className}`}
       style={{ width: containerSize, height: containerSize }}
     >
-      {config.type === 'svg' && config.svg ? (
-        <Image src={config.svg} alt={slug} width={size} height={size} className="invert" />
-      ) : config.icon ? (
-        <config.icon className={`${config.color ?? 'text-white'}`} style={{ width: size, height: size }} />
-      ) : null}
+      <IconComponent className={config.color ?? 'text-white'} style={{ width: size, height: size }} />
     </div>
   )
 }
