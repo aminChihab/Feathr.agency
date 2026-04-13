@@ -11,6 +11,9 @@ import {
   Hash,
   Sparkles,
   Eye,
+  MessageCircle,
+  Video,
+  Camera,
 } from 'lucide-react'
 
 interface ResearchReportCardProps {
@@ -41,6 +44,12 @@ function getSectionCount(body: any): { topics: number; ideas: number; competitor
     competitors: body.competitor_strategies?.length ?? 0,
     gaps: body.content_gaps?.length ?? 0,
   }
+}
+
+function isAgentReport(body: any): boolean {
+  return !!(body.summary || body.content_ideas || body.trending_topics || body.competitor_strategies ||
+    body.type === 'x_strategy' || body.type === 'ig_strategy' || body.type === 'performance' ||
+    body.reply_opportunities || body.trending_formats || body.top_posts)
 }
 
 export function ResearchReportCard({ type, title, createdAt, body, defaultOpen = false }: ResearchReportCardProps) {
@@ -268,6 +277,107 @@ export function ResearchReportCard({ type, title, createdAt, body, defaultOpen =
                   )}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Reply Opportunities (X Strategy) */}
+          {body.reply_opportunities?.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/10">
+                  <MessageCircle className="h-3.5 w-3.5 text-sky-400" />
+                </div>
+                <h4 className="text-sm font-medium text-text-primary">Reply Opportunities</h4>
+              </div>
+              <div className="grid gap-2">
+                {body.reply_opportunities.map((opp: any, i: number) => (
+                  <div key={i} className="rounded-lg bg-bg-base px-4 py-3 border border-border/50">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium text-text-primary">{opp.author}</span>
+                      {opp.tweet_url && (
+                        <a href={opp.tweet_url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline">View tweet</a>
+                      )}
+                    </div>
+                    <p className="text-xs text-text-secondary">{opp.why}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Trending Formats (IG Strategy) */}
+          {body.trending_formats?.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-purple-500/10">
+                  <Video className="h-3.5 w-3.5 text-purple-400" />
+                </div>
+                <h4 className="text-sm font-medium text-text-primary">Trending Formats</h4>
+              </div>
+              <div className="grid gap-2">
+                {body.trending_formats.map((fmt: any, i: number) => (
+                  <div key={i} className="rounded-lg bg-bg-base px-4 py-3 border border-border/50">
+                    <p className="text-sm font-medium text-text-primary">{fmt.format}</p>
+                    <p className="text-xs text-text-secondary mt-1">{fmt.why}</p>
+                    {fmt.example_accounts?.length > 0 && <p className="text-xs text-accent mt-1">{fmt.example_accounts.join(', ')}</p>}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Media Style Tips (IG Strategy) */}
+          {body.media_style_tips?.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-500/10">
+                  <Camera className="h-3.5 w-3.5 text-amber-400" />
+                </div>
+                <h4 className="text-sm font-medium text-text-primary">Media Style Tips</h4>
+              </div>
+              <div className="grid gap-2">
+                {body.media_style_tips.map((tip: any, i: number) => (
+                  <div key={i} className="rounded-lg bg-bg-base px-4 py-3 border border-border/50">
+                    <p className="text-sm text-text-primary">{tip.tip}</p>
+                    <p className="text-xs text-text-muted mt-1">{tip.based_on}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Top Posts (Performance) */}
+          {body.top_posts?.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-500/10">
+                  <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
+                </div>
+                <h4 className="text-sm font-medium text-text-primary">Top Performing Posts</h4>
+              </div>
+              <div className="grid gap-2">
+                {body.top_posts.map((post: any, i: number) => (
+                  <div key={i} className="rounded-lg bg-bg-base px-4 py-3 border border-border/50">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-text-muted">{post.platform}</span>
+                      <span className="text-xs font-medium text-emerald-400">{post.engagement} engagement</span>
+                    </div>
+                    <p className="text-sm text-text-primary">{post.caption_preview}</p>
+                    <p className="text-xs text-text-secondary mt-1">{post.why}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Growth Status (Performance) */}
+          {body.growth_status && (
+            <div className="rounded-lg bg-bg-base border border-border/50 px-4 py-3 text-center">
+              <span className="text-xs text-text-muted">Growth status: </span>
+              <span className={`text-xs font-medium ${
+                body.growth_status === 'growing' ? 'text-emerald-400' :
+                body.growth_status === 'declining' ? 'text-status-failed' : 'text-text-secondary'
+              }`}>{body.growth_status}</span>
             </div>
           )}
         </div>
