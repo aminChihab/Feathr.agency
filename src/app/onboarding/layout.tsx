@@ -1,9 +1,7 @@
 export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-surface">
-      <div className="flex min-h-screen items-center justify-center px-4">
-        <div className="w-full max-w-2xl">{children}</div>
-      </div>
+    <div className="relative min-h-screen w-full overflow-x-hidden bg-surface text-on-surface font-body">
+      {children}
     </div>
   )
 }

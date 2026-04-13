@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { ProgressBar } from '@/components/ui/progress-bar'
 import { Welcome } from './steps/welcome'
 import { Profile } from './steps/profile'
 import { Voice } from './steps/voice'
@@ -66,18 +65,16 @@ export default function OnboardingPage() {
 
   if (step === null || !userId) {
     return (
-      <div className="flex items-center justify-center py-20">
+      <div className="flex min-h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     )
   }
 
-  const stepProps = { userId, supabase, onNext: advanceStep, onBack: goBack }
+  const stepProps = { userId, supabase, onNext: advanceStep, onBack: goBack, currentStep: step, totalSteps: TOTAL_STEPS }
 
   return (
-    <div className="space-y-8">
-      {step > 1 && <ProgressBar currentStep={step} totalSteps={TOTAL_STEPS} />}
-
+    <>
       {step === 1 && <Welcome onNext={advanceStep} />}
       {step === 2 && <Profile {...stepProps} />}
       {step === 3 && <Voice {...stepProps} />}
@@ -97,6 +94,6 @@ export default function OnboardingPage() {
       )}
       {step === 7 && <MediaUpload {...stepProps} />}
       {step === 8 && <Launch {...stepProps} />}
-    </div>
+    </>
   )
 }
