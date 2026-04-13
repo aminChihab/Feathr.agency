@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
@@ -124,7 +125,10 @@ export function SidebarNav({ profileName, email }: SidebarNavProps) {
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-outline-variant/15 bg-surface-container-lowest">
       {/* Logo */}
       <div className="mb-10 px-6 pt-8">
-        <h1 className="font-display text-4xl italic text-primary">Feathr</h1>
+        <div className="flex items-center gap-1">
+          <h1 className="font-display text-4xl italic text-primary">Feathr</h1>
+          <Image src="/logo.png" alt="" width={40} height={40} className="h-10 w-10 object-contain opacity-80" />
+        </div>
         <p className="font-body text-[9px] tracking-[0.25em] uppercase opacity-40 mt-1.5">Marketing Atelier</p>
       </div>
 
