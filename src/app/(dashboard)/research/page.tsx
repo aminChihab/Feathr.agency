@@ -5,8 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { ResearchReportCard } from '@/components/dashboard/research-report-card'
 import { ResearchSuggestions } from '@/components/dashboard/research-suggestions'
 import { ResearchTargets } from '@/components/dashboard/research-targets'
-import { Button } from '@/components/ui/button'
-import { Sparkles, Loader2, Search } from 'lucide-react'
+import { Loader2, Search, Download, Plus } from 'lucide-react'
 
 interface ReportSection {
   section_type: string
@@ -33,6 +32,7 @@ export default function ResearchPage() {
   const [notifications, setNotifications] = useState<any[]>([])
   const [twitterTargets, setTwitterTargets] = useState({ handles: [] as string[], terms: [] as string[], discoveredHandles: [] as string[], discoveredTerms: [] as string[] })
   const [instagramTargets, setInstagramTargets] = useState({ handles: [] as string[], terms: [] as string[], discoveredHandles: [] as string[], discoveredTerms: [] as string[] })
+  const [searchQuery, setSearchQuery] = useState('')
 
   async function loadAll() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -177,6 +177,19 @@ export default function ResearchPage() {
 
   const filteredReports = filter === 'all' ? reports : reports.filter((r) => r.report_type === filter)
 
+  // Compute last-updated timestamp from most recent report
+  function lastUpdatedLabel(): string {
+    if (reports.length === 0) return 'No data yet'
+    const latest = new Date(reports[0].created_at).getTime()
+    const mins = Math.floor((Date.now() - latest) / 60000)
+    if (mins < 1) return 'Just now'
+    if (mins < 60) return `${mins} min ago`
+    const hours = Math.floor(mins / 60)
+    if (hours < 24) return `${hours}h ago`
+    const days = Math.floor(hours / 24)
+    return `${days}d ago`
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -186,89 +199,112 @@ export default function ResearchPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-3xl text-primary">Research</h1>
-          {reports.length > 0 && (
-            <p className="text-sm text-on-surface-variant/60 mt-1">{reports.length} report{reports.length !== 1 ? 's' : ''}</p>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" className="text-xs" onClick={async () => {
-            const res = await fetch('/api/research/sync', { method: 'POST' })
-            const data = await res.json()
-            console.log('[research] Twitter sync:', data)
-            alert(`Twitter: ${data.trend_reports ?? 0} trends, ${data.competitor_reports ?? 0} competitors, ${(data.errors ?? []).length} errors`)
-          }}>Test Twitter</Button>
-          <Button variant="outline" className="text-xs" onClick={async () => {
-            const res = await fetch('/api/research/sync-instagram', { method: 'POST' })
-            const data = await res.json()
-            console.log('[research] IG sync:', data)
-            alert(`IG: ${data.runs_started ?? 0} runs started, ${(data.errors ?? []).length} errors`)
-          }}>Test IG</Button>
-          <button onClick={handleNewResearch} disabled={triggering} className="silk-gradient text-on-primary px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 active:opacity-70 transition-all shadow-lg shadow-primary/10 disabled:opacity-50">
-            {triggering ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-1.5" />}
+    <div className="space-y-10">
+      {/* Top bar: title + search + export + new research */}
+      <div className="flex justify-between items-center">
+        <h1 className="font-display text-3xl text-primary">Research</h1>
+        <div className="flex items-center gap-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-on-surface-variant" />
+            <input
+              type="text"
+              placeholder="Search insights..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-surface-container-low border-none border-b-2 border-surface-variant focus:border-primary focus:ring-0 text-sm py-2 pl-10 pr-4 w-64 rounded-none transition-all placeholder:text-on-surface-variant/40"
+            />
+          </div>
+          <button className="flex items-center gap-2 text-on-surface-variant hover:text-on-surface text-sm transition-opacity">
+            <Download className="h-4 w-4" />
+            <span>Export</span>
+          </button>
+          <button
+            onClick={handleNewResearch}
+            disabled={triggering}
+            className="silk-gradient text-on-primary px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 active:opacity-70 transition-all shadow-lg shadow-primary/10 disabled:opacity-50"
+          >
+            {triggering ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Plus className="h-3.5 w-3.5" />
+            )}
             {triggering ? 'Running...' : 'New Research'}
           </button>
         </div>
       </div>
 
+      {/* Suggestions (if any) */}
       <ResearchSuggestions notifications={notifications} onAccept={handleAcceptSuggestion} onDismiss={handleDismissNotification} />
 
-      <ResearchTargets
-        twitter={twitterTargets}
-        instagram={instagramTargets}
-        onAddTerm={handleAddTerm}
-        onRemoveTerm={handleRemoveTerm}
-        onAddHandle={handleAddHandle}
-        onRemoveHandle={handleRemoveHandle}
-      />
-
-      <div className="flex gap-2">
-        {([
-          { key: 'all', label: 'All' },
-          { key: 'x_strategy', label: 'X/Twitter' },
-          { key: 'ig_strategy', label: 'Instagram' },
-          { key: 'performance', label: 'Performance' },
-        ] as const).map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => setFilter(key)}
-            className={`rounded-full px-3 py-1 text-xs transition-colors ${
-              filter === key ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {filteredReports.length === 0 ? (
-        <div className="bg-surface-container-low rounded-xl p-16 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-            <Search className="h-6 w-6 text-primary" />
-          </div>
-          <p className="text-on-surface font-medium">No reports yet</p>
-          <p className="text-sm text-on-surface-variant/60 mt-1.5 max-w-sm mx-auto">
-            Click &ldquo;New Research&rdquo; to have your AI strategists analyze the market and your performance.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {filteredReports.map((report, i) => (
-            <ResearchReportCard
-              key={report.id}
-              reportType={report.report_type}
-              title={report.title}
-              summary={report.summary}
-              createdAt={report.created_at}
-              sections={report.research_report_sections ?? []}
-              defaultOpen={i === 0}
-            />
+      {/* Filter tabs */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-8 border-b border-outline-variant/15">
+          {([
+            { key: 'all', label: 'All Sources' },
+            { key: 'x_strategy', label: 'X / Twitter' },
+            { key: 'ig_strategy', label: 'Instagram' },
+            { key: 'performance', label: 'Performance' },
+          ] as const).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setFilter(key)}
+              className={`pb-4 text-sm font-medium transition-all ${
+                filter === key
+                  ? 'border-b-2 border-primary text-primary'
+                  : 'text-on-surface-variant/60 hover:text-on-surface'
+              }`}
+            >
+              {label}
+            </button>
           ))}
         </div>
-      )}
+        <div className="flex items-center gap-2 text-[10px] text-on-surface-variant/60 uppercase tracking-tight">
+          <Loader2 className="h-3 w-3" />
+          Last updated: {lastUpdatedLabel()}
+        </div>
+      </div>
+
+      {/* Two-column layout */}
+      <div className="grid grid-cols-12 gap-8">
+        {/* Left Column: Research Targets */}
+        <aside className="col-span-12 lg:col-span-4 space-y-6">
+          <ResearchTargets
+            twitter={twitterTargets}
+            instagram={instagramTargets}
+            onAddTerm={handleAddTerm}
+            onRemoveTerm={handleRemoveTerm}
+            onAddHandle={handleAddHandle}
+            onRemoveHandle={handleRemoveHandle}
+          />
+        </aside>
+
+        {/* Right Column: Report Feed */}
+        <div className="col-span-12 lg:col-span-8 space-y-8">
+          {filteredReports.length === 0 ? (
+            <div className="bg-surface-container-low rounded-xl p-16 text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                <Search className="h-6 w-6 text-primary" />
+              </div>
+              <p className="text-on-surface font-medium">No reports yet</p>
+              <p className="text-sm text-on-surface-variant/60 mt-1.5 max-w-sm mx-auto">
+                Click &ldquo;New Research&rdquo; to have your AI strategists analyze the market and your performance.
+              </p>
+            </div>
+          ) : (
+            filteredReports.map((report, i) => (
+              <ResearchReportCard
+                key={report.id}
+                reportType={report.report_type}
+                title={report.title}
+                summary={report.summary}
+                createdAt={report.created_at}
+                sections={report.research_report_sections ?? []}
+                defaultOpen={i === 0}
+              />
+            ))
+          )}
+        </div>
+      </div>
     </div>
   )
 }
