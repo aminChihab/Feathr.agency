@@ -1,21 +1,54 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: 'Cinzel', serif;
-  --font-body: 'Jost', sans-serif;
+  --font-display: 'Instrument Serif', serif;
+  --font-body: 'Instrument Sans', sans-serif;
 
-  --color-bg-base: oklch(0.13 0.005 285);
-  --color-bg-surface: oklch(0.17 0.005 285);
-  --color-bg-elevated: oklch(0.21 0.005 285);
-  --color-bg-overlay: oklch(0.25 0.008 285);
+  --color-surface: #131313;
+  --color-surface-dim: #0A0A0A;
+  --color-surface-container-lowest: #0E0E0E;
+  --color-surface-container-low: #1C1B1B;
+  --color-surface-container: #201F1F;
+  --color-surface-container-high: #2A2A2A;
+  --color-surface-container-highest: #353534;
+  --color-surface-bright: #3A3939;
+  --color-surface-variant: #353534;
+  --color-surface-tint: #F7B5C5;
 
-  --color-accent: #c87f8a;
-  --color-accent-hover: #d4939c;
-  --color-accent-muted: #8a575f;
+  --color-on-surface: #E5E2E1;
+  --color-on-surface-variant: #D5C2C5;
+  --color-on-background: #E5E2E1;
 
-  --color-text-primary: oklch(0.95 0 0);
-  --color-text-secondary: oklch(0.7 0 0);
-  --color-text-muted: oklch(0.5 0 0);
+  --color-primary: #FEBBCB;
+  --color-primary-container: #E0A0B0;
+  --color-primary-fixed: #FFD9E1;
+  --color-primary-fixed-dim: #F7B5C5;
+  --color-on-primary: #4E2230;
+  --color-on-primary-container: #653543;
+  --color-inverse-primary: #834F5D;
+
+  --color-secondary: #E0BEC5;
+  --color-secondary-container: #594046;
+  --color-on-secondary: #402A30;
+  --color-on-secondary-container: #CEADB4;
+
+  --color-tertiary: #AED7AE;
+  --color-tertiary-container: #93BB94;
+  --color-on-tertiary: #14371B;
+  --color-on-tertiary-container: #284B2D;
+
+  --color-error: #FFB4AB;
+  --color-error-container: #93000A;
+  --color-on-error: #690005;
+  --color-on-error-container: #FFDAD6;
+
+  --color-outline: #9D8D90;
+  --color-outline-variant: #514346;
+
+  --color-inverse-surface: #E5E2E1;
+  --color-inverse-on-surface: #313030;
+
+  --color-background: #131313;
 
   --color-status-draft: oklch(0.75 0.15 85);
   --color-status-approved: oklch(0.65 0.15 250);
@@ -26,17 +59,32 @@
   --color-priority-hot: oklch(0.6 0.2 25);
   --color-priority-warm: oklch(0.7 0.15 60);
   --color-priority-cold: oklch(0.5 0 0);
-
-  --color-border: oklch(0.25 0.005 285);
-  --color-border-hover: oklch(0.35 0.01 285);
 }
 
 body {
   font-family: var(--font-body);
-  background-color: var(--color-bg-base);
-  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
+}
+
+.serif-italic {
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+.glass-panel {
+  background: rgba(42, 42, 42, 0.6);
+  backdrop-filter: blur(12px);
+}
+
+.gradient-cta {
+  background: linear-gradient(135deg, #FEBBCB, #E0A0B0);
+}
+
+.ghost-border {
+  border: 1px solid rgba(81, 67, 70, 0.15);
 }
