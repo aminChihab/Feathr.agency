@@ -180,7 +180,7 @@ export default function ResearchPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     )
   }
@@ -189,9 +189,9 @@ export default function ResearchPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-light">Research</h1>
+          <h1 className="font-display text-3xl text-primary">Research</h1>
           {reports.length > 0 && (
-            <p className="text-sm text-text-muted mt-1">{reports.length} report{reports.length !== 1 ? 's' : ''}</p>
+            <p className="text-sm text-on-surface-variant/60 mt-1">{reports.length} report{reports.length !== 1 ? 's' : ''}</p>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -207,10 +207,10 @@ export default function ResearchPage() {
             console.log('[research] IG sync:', data)
             alert(`IG: ${data.runs_started ?? 0} runs started, ${(data.errors ?? []).length} errors`)
           }}>Test IG</Button>
-          <Button onClick={handleNewResearch} disabled={triggering}>
+          <button onClick={handleNewResearch} disabled={triggering} className="silk-gradient text-on-primary px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 active:opacity-70 transition-all shadow-lg shadow-primary/10 disabled:opacity-50">
             {triggering ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-1.5" />}
             {triggering ? 'Running...' : 'New Research'}
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -236,7 +236,7 @@ export default function ResearchPage() {
             key={key}
             onClick={() => setFilter(key)}
             className={`rounded-full px-3 py-1 text-xs transition-colors ${
-              filter === key ? 'bg-accent text-white' : 'bg-bg-elevated text-text-secondary hover:text-text-primary'
+              filter === key ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface-variant hover:text-on-surface'
             }`}
           >
             {label}
@@ -245,12 +245,12 @@ export default function ResearchPage() {
       </div>
 
       {filteredReports.length === 0 ? (
-        <div className="rounded-xl border border-border bg-bg-surface p-16 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10">
-            <Search className="h-6 w-6 text-accent" />
+        <div className="bg-surface-container-low rounded-xl p-16 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+            <Search className="h-6 w-6 text-primary" />
           </div>
-          <p className="text-text-primary font-medium">No reports yet</p>
-          <p className="text-sm text-text-muted mt-1.5 max-w-sm mx-auto">
+          <p className="text-on-surface font-medium">No reports yet</p>
+          <p className="text-sm text-on-surface-variant/60 mt-1.5 max-w-sm mx-auto">
             Click &ldquo;New Research&rdquo; to have your AI strategists analyze the market and your performance.
           </p>
         </div>

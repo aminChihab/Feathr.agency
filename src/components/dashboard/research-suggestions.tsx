@@ -41,14 +41,14 @@ export function ResearchSuggestions({ notifications, onAccept, onDismiss }: Rese
   }
 
   return (
-    <div className="rounded-xl border border-accent/20 bg-accent/5 overflow-hidden">
-      <div className="flex items-center gap-2 px-5 py-3 border-b border-accent/10">
-        <Sparkles className="h-4 w-4 text-accent" />
+    <div className="bg-surface-container-low rounded-xl overflow-hidden">
+      <div className="flex items-center gap-2 px-5 py-3 border-b border-outline-variant/10">
+        <Sparkles className="h-4 w-4 text-primary" />
         <h2 className="text-sm font-medium">Research Suggestions</h2>
-        <span className="text-xs text-text-muted">from your AI strategists</span>
+        <span className="text-xs text-on-surface-variant/60">from your AI strategists</span>
       </div>
 
-      <div className="divide-y divide-border/50">
+      <div className="divide-y divide-outline-variant/10">
         {notifications.map((notif) => {
           const b = notif.body
           const allItems = [
@@ -62,10 +62,10 @@ export function ResearchSuggestions({ notifications, onAccept, onDismiss }: Rese
             <div key={notif.id} className="px-5 py-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-accent">{sourceLabel(b.source)}</span>
-                  <span className="text-xs text-text-muted">{notif.title}</span>
+                  <span className="text-xs font-medium text-primary">{sourceLabel(b.source)}</span>
+                  <span className="text-xs text-on-surface-variant/60">{notif.title}</span>
                 </div>
-                <Button variant="ghost" size="sm" className="text-xs text-text-muted" onClick={() => onDismiss(notif.id)}>
+                <Button variant="ghost" size="sm" className="text-xs text-on-surface-variant/60" onClick={() => onDismiss(notif.id)}>
                   Dismiss all
                 </Button>
               </div>
@@ -74,11 +74,11 @@ export function ResearchSuggestions({ notifications, onAccept, onDismiss }: Rese
                   const isRemove = item.type.startsWith('remove')
                   const key = `${notif.id}-${i}`
                   return (
-                    <div key={key} className="flex items-center justify-between rounded-lg bg-bg-surface px-3 py-2">
+                    <div key={key} className="flex items-center justify-between rounded-lg bg-surface-container-high px-3 py-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <item.icon className={`h-3 w-3 shrink-0 ${isRemove ? 'text-status-failed' : 'text-status-scheduled'}`} />
                         <span className="text-sm font-medium truncate">{item.value}</span>
-                        <span className="text-xs text-text-muted truncate">{item.reason}</span>
+                        <span className="text-xs text-on-surface-variant/60 truncate">{item.reason}</span>
                       </div>
                       <Button size="sm" variant="outline" className="text-xs shrink-0 ml-2" disabled={processing === key}
                         onClick={async () => { setProcessing(key); await onAccept(notif.id, item.type, item.value); setProcessing(null) }}>

@@ -50,9 +50,9 @@ function TargetList({
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <Icon className="h-3 w-3 text-text-muted" />
-        <span className="text-xs text-text-muted">{label}</span>
-        <span className="text-[10px] text-text-muted bg-bg-base rounded-full px-1.5 py-0.5">{items.length}</span>
+        <Icon className="h-3 w-3 text-on-surface-variant/60" />
+        <span className="text-[10px] uppercase tracking-widest text-on-surface-variant/60 font-semibold">{label}</span>
+        <span className="text-[10px] text-on-surface-variant/60 bg-surface-container-highest rounded-full px-1.5 py-0.5">{items.length}</span>
       </div>
       <div className="flex gap-2">
         <input
@@ -61,7 +61,7 @@ function TargetList({
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && submit()}
-          className="flex-1 rounded-lg bg-bg-base border border-border px-3 py-1.5 text-xs focus:outline-none focus:border-accent/60"
+          className="flex-1 rounded-lg bg-surface-container border-none px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/60"
         />
         <Button size="sm" variant="outline" className="text-xs px-2" onClick={submit}>
           <Plus className="h-3 w-3" />
@@ -73,10 +73,10 @@ function TargetList({
           return (
             <span
               key={item}
-              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs ${
+              className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm ${
                 isDiscovered
-                  ? 'bg-accent/10 text-accent border border-accent/20'
-                  : 'bg-bg-base text-text-secondary border border-border'
+                  ? 'bg-primary/10 text-primary border border-primary/20'
+                  : 'bg-surface-container-highest text-on-surface-variant'
               }`}
             >
               {label === 'Accounts' ? `@${item}` : item}
@@ -86,7 +86,7 @@ function TargetList({
             </span>
           )
         })}
-        {items.length === 0 && <span className="text-xs text-text-muted">None yet</span>}
+        {items.length === 0 && <span className="text-xs text-on-surface-variant/60">None yet</span>}
       </div>
     </div>
   )
@@ -96,13 +96,13 @@ export function ResearchTargets({
   twitter, instagram, onAddTerm, onRemoveTerm, onAddHandle, onRemoveHandle,
 }: ResearchTargetsProps) {
   return (
-    <div className="rounded-xl border border-border bg-bg-surface overflow-hidden">
-      <div className="px-5 py-4 border-b border-border">
-        <h2 className="text-base font-medium">Active Research Targets</h2>
-        <p className="text-xs text-text-muted mt-0.5">Accounts and terms per platform</p>
+    <div className="bg-surface-container-low rounded-xl p-6 overflow-hidden">
+      <div className="mb-6">
+        <h2 className="font-display text-2xl">Active Targets</h2>
+        <p className="text-[10px] uppercase tracking-widest text-on-surface-variant/60 mt-1">Accounts and terms per platform</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Twitter */}
         <div className="p-4 space-y-4">
           <div className="flex items-center gap-2">
@@ -122,6 +122,12 @@ export function ResearchTargets({
           <TargetList label="Accounts" icon={Users} items={instagram.handles} discoveredItems={instagram.discoveredHandles} placeholder="@handle" platform="instagram" onAdd={onAddHandle} onRemove={onRemoveHandle} />
           <TargetList label="Search Terms" icon={Hash} items={instagram.terms} discoveredItems={instagram.discoveredTerms} placeholder="hashtag or term" platform="instagram" onAdd={onAddTerm} onRemove={onRemoveTerm} />
         </div>
+      </div>
+
+      <div className="pt-6 mt-2 border-t border-outline-variant/10">
+        <button className="w-full py-3 text-xs font-semibold text-primary border border-primary/20 rounded-lg hover:bg-primary/5 transition-colors uppercase tracking-widest">
+          Manage Targets
+        </button>
       </div>
     </div>
   )
