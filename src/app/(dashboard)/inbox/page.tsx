@@ -269,7 +269,7 @@ export default function InboxPage() {
         </div>
       </div>
     </header>
-    <div className="flex flex-1 overflow-hidden h-[calc(100vh-5rem)] -m-8">
+    <div className="flex flex-1 overflow-hidden" style={{ height: 'calc(100vh - 5rem)' }}>
       {/* Left Column: Conversation List */}
       <ConversationList
         conversations={conversations}

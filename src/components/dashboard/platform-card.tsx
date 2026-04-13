@@ -1,6 +1,9 @@
 // src/components/dashboard/platform-card.tsx
 'use client'
 
+import { PlatformIcon } from '@/components/ui/platform-icon'
+import { MoreVertical } from 'lucide-react'
+
 interface PlatformCardProps {
   account: {
     id: string
@@ -44,37 +47,12 @@ const FREQUENCY_OPTIONS = [
   { value: 'on_trigger', label: 'On Trigger' },
 ]
 
-/* Icon config per platform slug */
-const PLATFORM_VISUALS: Record<string, { bg: string; icon: string; iconColor?: string }> = {
-  instagram: { bg: 'bg-gradient-to-tr from-[#f09433] via-[#e6683c] to-[#bc1888]', icon: 'photo_camera' },
-  twitter: { bg: 'bg-black', icon: 'close', iconColor: 'text-white' },
-  x: { bg: 'bg-black', icon: 'close', iconColor: 'text-white' },
-  whatsapp: { bg: 'bg-[#25D366]', icon: 'chat', iconColor: 'text-white' },
-  facebook: { bg: 'bg-[#1877F2]', icon: 'social_leaderboard', iconColor: 'text-white' },
-  tiktok: { bg: 'bg-black', icon: 'linked_camera', iconColor: 'text-white' },
-  linkedin: { bg: 'bg-[#0A66C2]', icon: 'work', iconColor: 'text-white' },
-  threads: { bg: 'bg-black', icon: 'alternate_email', iconColor: 'text-white' },
-  youtube: { bg: 'bg-[#FF0000]', icon: 'youtube_activity', iconColor: 'text-white' },
-}
-
 export function PlatformCard({ account, onDisconnect, onReconnect, onScheduleChange }: PlatformCardProps) {
-  const visuals = PLATFORM_VISUALS[account.platform_slug] ?? {
-    bg: '',
-    icon: 'hub',
-  }
-
   return (
     <div className="group flex items-center justify-between p-4 bg-surface-container hover:bg-surface-bright transition-all duration-300 rounded-lg">
       {/* Left: icon + name */}
       <div className="flex items-center gap-4">
-        <div
-          className={`w-12 h-12 rounded-full flex items-center justify-center ${visuals.bg}`}
-          style={!visuals.bg ? { backgroundColor: account.platform_color } : undefined}
-        >
-          <span className={`material-symbols-outlined text-xl ${visuals.iconColor ?? 'text-white'}`}>
-            {visuals.icon}
-          </span>
-        </div>
+        <PlatformIcon slug={account.platform_slug} size={20} />
         <div>
           <h4 className="text-on-surface font-semibold text-sm">{account.platform_name}</h4>
           <p className="text-on-surface-variant text-xs">{account.username ?? 'No username'}</p>
@@ -122,7 +100,7 @@ export function PlatformCard({ account, onDisconnect, onReconnect, onScheduleCha
               Reconnect
             </button>
           )}
-          <span className="material-symbols-outlined text-on-surface-variant/40 cursor-pointer">more_vert</span>
+          <MoreVertical className="h-4 w-4 text-on-surface-variant/40 cursor-pointer" />
         </div>
       </div>
     </div>

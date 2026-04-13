@@ -2,6 +2,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import { PlatformIcon } from '@/components/ui/platform-icon'
 
 interface ConversationItemProps {
   conversation: {
@@ -27,11 +28,6 @@ const PRIORITY_BADGE: Record<string, { bg: string; text: string; label: string }
   cold: { bg: 'bg-surface-container-highest', text: 'text-on-surface-variant/60', label: 'Cold' },
 }
 
-const PLATFORM_ICON: Record<string, string> = {
-  Instagram: 'alternate_email',
-  WhatsApp: 'chat_bubble',
-  Direct: 'mail',
-}
 
 function relativeTime(dateStr: string): string {
   const now = Date.now()
@@ -51,7 +47,8 @@ function relativeTime(dateStr: string): string {
 export function ConversationItem({ conversation, isActive, isClient, onClick }: ConversationItemProps) {
   const isNew = conversation.status === 'new'
   const badge = PRIORITY_BADGE[conversation.priority] ?? PRIORITY_BADGE.cold
-  const platformIcon = PLATFORM_ICON[conversation.platform_name] ?? 'mail'
+  // Derive slug from platform name for icon lookup
+  const platformSlug = conversation.platform_name.toLowerCase().replace(/[\s\/]/g, '').replace('business', '')
 
   return (
     <button
@@ -99,8 +96,8 @@ export function ConversationItem({ conversation, isActive, isClient, onClick }: 
         )}>
           {badge.label}
         </span>
-        <div className="flex items-center gap-1 opacity-60">
-          <span className="material-symbols-outlined text-[14px]">{platformIcon}</span>
+        <div className="flex items-center gap-1.5 opacity-60">
+          <PlatformIcon slug={platformSlug} size={10} />
           <span className="text-[10px]">{conversation.platform_name}</span>
         </div>
       </div>
