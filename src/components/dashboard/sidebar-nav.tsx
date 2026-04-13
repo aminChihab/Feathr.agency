@@ -16,7 +16,6 @@ const navItems = [
   { href: '/content', label: 'Content', icon: CalendarDays },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/platforms', label: 'Platforms', icon: Link2 },
-  { href: '/research', label: 'Research', icon: Search },
   { href: '/listings', label: 'Listings', icon: ListChecks },
   { href: '/clients', label: 'Clients', icon: Users },
   { href: '/touring', label: 'Touring', icon: Plane },
