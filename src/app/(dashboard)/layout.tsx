@@ -22,10 +22,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
         profileName={profile?.professional_name ?? null}
         email={user.email ?? ''}
       />
-      <main className="ml-64 flex-1 h-screen overflow-hidden">
-        <div className="p-10 space-y-6 h-full overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
-          {children}
-        </div>
+      <main className="ml-64 flex-1 h-screen overflow-y-auto">
+        {children}
       </main>
     </div>
   )

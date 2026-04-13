@@ -101,7 +101,7 @@ export default async function DashboardPage() {
   return (
     <>
       {/* Top App Bar */}
-      <header className="sticky top-0 z-40 -mx-10 -mt-10 mb-4 w-[calc(100%+80px)] bg-[#131313]/80 backdrop-blur-xl flex justify-between items-center h-20 px-10 shadow-2xl shadow-black/40">
+      <header className="sticky top-0 z-40 bg-[#131313]/80 backdrop-blur-xl flex justify-between items-center h-20 px-10 shadow-2xl shadow-black/40">
         <h2 className="font-display text-3xl font-light text-primary">Dashboard</h2>
         <div className="flex items-center gap-8">
           <div className="relative hidden lg:block">
@@ -122,6 +122,9 @@ export default async function DashboardPage() {
           </div>
         </div>
       </header>
+
+      {/* Dashboard Content */}
+      <div className="p-10 space-y-6">
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -313,6 +316,7 @@ export default async function DashboardPage() {
           </div>
         </section>
       </div>
+    </div>
     </>
   )
 }
