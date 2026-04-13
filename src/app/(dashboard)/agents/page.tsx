@@ -70,7 +70,7 @@ export default function AgentsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     )
   }
@@ -80,11 +80,14 @@ export default function AgentsPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-light">Assistants</h1>
+      <div>
+        <h1 className="font-display text-3xl">Assistants</h1>
+        <p className="text-on-surface-variant mt-1">High-level cognitive agents managing strategy and synthesis.</p>
+      </div>
 
       {/* AI Assistants */}
       <div className="space-y-3">
-        <h2 className="text-sm font-medium uppercase tracking-wider text-text-muted">AI Assistants</h2>
+        <h2 className="text-[10px] uppercase tracking-widest text-on-surface-variant/60">AI Assistants</h2>
         <div className="grid grid-cols-2 gap-4">
           {aiAgents.map((agent) => (
             <AgentCard
@@ -102,7 +105,7 @@ export default function AgentsPage() {
 
       {/* Automated Scripts */}
       <div className="space-y-3">
-        <h2 className="text-sm font-medium uppercase tracking-wider text-text-muted">Automated</h2>
+        <h2 className="text-[10px] uppercase tracking-widest text-on-surface-variant/60">Automated</h2>
         <div className="grid grid-cols-2 gap-4">
           {scriptAgents.map((agent) => (
             <AgentCard
@@ -120,10 +123,10 @@ export default function AgentsPage() {
 
       {/* Approval Queue */}
       <div className="space-y-3">
-        <h2 className="text-sm font-medium uppercase tracking-wider text-text-muted">Pending Approvals</h2>
+        <h2 className="text-[10px] uppercase tracking-widest text-on-surface-variant/60">Pending Approvals</h2>
         {drafts.length === 0 ? (
-          <div className="rounded-lg border border-border bg-bg-surface p-6 text-center">
-            <p className="text-text-muted">No pending actions. Your assistants will submit work here for your approval.</p>
+          <div className="bg-surface-container-low rounded-xl p-6 text-center">
+            <p className="text-on-surface-variant">No pending actions. Your assistants will submit work here for your approval.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -145,9 +148,9 @@ export default function AgentsPage() {
 
       {/* Activity Log */}
       <div className="space-y-3">
-        <h2 className="text-sm font-medium uppercase tracking-wider text-text-muted">Activity Log</h2>
-        <div className="rounded-lg border border-border bg-bg-surface p-6 text-center">
-          <p className="text-text-muted">No activity yet. Activity will appear here once your assistants are running.</p>
+        <h2 className="text-[10px] uppercase tracking-widest text-on-surface-variant/60">Activity Log</h2>
+        <div className="bg-surface-container-low rounded-xl p-6 text-center">
+          <p className="text-on-surface-variant">No activity yet. Activity will appear here once your assistants are running.</p>
         </div>
       </div>
     </div>

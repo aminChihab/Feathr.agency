@@ -11,10 +11,10 @@ interface AgentCardProps {
 }
 
 const STATUS_CONFIG: Record<string, { color: string; label: string; pulse?: boolean }> = {
-  active: { color: 'bg-status-scheduled', label: 'Active', pulse: true },
-  idle: { color: 'bg-text-muted', label: 'Idle' },
+  active: { color: 'bg-tertiary', label: 'Active', pulse: true },
+  idle: { color: 'bg-on-surface-variant/40', label: 'Idle' },
   paused: { color: 'bg-status-draft', label: 'Paused' },
-  error: { color: 'bg-status-failed', label: 'Error' },
+  error: { color: 'bg-error', label: 'Error' },
 }
 
 function relativeTime(dateStr: string): string {
@@ -32,40 +32,40 @@ export function AgentCard({ name, type, description, status, lastActivityAt, las
   const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.idle
 
   return (
-    <div className="rounded-lg border border-border bg-bg-surface p-5 space-y-3">
+    <div className="bg-surface-container-low rounded-xl p-8 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {type === 'ai' ? (
-            <Bot className="h-5 w-5 text-accent" />
+            <Bot className="h-5 w-5 text-primary" />
           ) : (
-            <Cog className="h-5 w-5 text-text-muted" />
+            <Cog className="h-5 w-5 text-on-surface-variant/60" />
           )}
           <div>
-            <p className="text-sm font-medium">{name}</p>
-            <span className="text-[10px] uppercase tracking-wider text-text-muted">
+            <p className="font-display text-xl">{name}</p>
+            <span className="text-[10px] uppercase tracking-widest text-on-surface-variant/60">
               {type === 'ai' ? 'AI Assistant' : 'Automated'}
             </span>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <div className={cn('h-2 w-2 rounded-full', config.color, config.pulse && 'animate-pulse')} />
-          <span className="text-xs text-text-muted">{config.label}</span>
+          <span className="bg-surface-container-highest text-on-surface-variant text-xs rounded-full px-2 py-0.5">{config.label}</span>
         </div>
       </div>
 
       {description && (
-        <p className="text-xs text-text-secondary">{description}</p>
+        <p className="text-on-surface-variant text-sm">{description}</p>
       )}
 
       {lastActivityAt && (
-        <div className="text-[10px] text-text-muted">
+        <div className="text-[10px] text-on-surface-variant/60">
           <span>{relativeTime(lastActivityAt)}</span>
           {lastActivityDescription && <span> — {lastActivityDescription}</span>}
         </div>
       )}
 
       {!lastActivityAt && (
-        <p className="text-[10px] text-text-muted">No activity yet</p>
+        <p className="text-on-surface-variant/50 text-xs">No activity yet</p>
       )}
     </div>
   )
