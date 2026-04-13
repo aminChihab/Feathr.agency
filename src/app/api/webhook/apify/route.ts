@@ -15,12 +15,14 @@ const APIFY_TOKEN = process.env.APIFY_API_TOKEN
 export async function POST(request: NextRequest) {
   const body = await request.json()
 
+  console.log('[apify-webhook] Received:', JSON.stringify(body).slice(0, 500))
+
+  const eventType = body.eventType
   const runId = body.resource?.id ?? body.eventData?.actorRunId
-  const status = body.resource?.status ?? body.eventData?.status
 
-  console.log(`[apify-webhook] Run ${runId} status: ${status}`)
+  console.log(`[apify-webhook] Event: ${eventType}, Run: ${runId}`)
 
-  if (!runId || status !== 'SUCCEEDED') {
+  if (!runId || eventType !== 'ACTOR.RUN.SUCCEEDED') {
     console.log('[apify-webhook] Ignoring non-success event')
     return NextResponse.json({ ok: true })
   }
@@ -46,13 +48,27 @@ export async function POST(request: NextRequest) {
 
   console.log(`[apify-webhook] Processing results for ${handle ? `@${handle}` : term}`)
 
-  // Fetch results from Apify
-  const datasetId = body.resource?.defaultDatasetId
-  if (!datasetId) {
-    console.error('[apify-webhook] No dataset ID in webhook payload')
+  // Get the run details to find the dataset ID
+  const runRes = await fetch(
+    `https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_TOKEN}`
+  )
+
+  if (!runRes.ok) {
+    console.error('[apify-webhook] Failed to get run details:', runRes.status)
     return NextResponse.json({ ok: true })
   }
 
+  const runData = await runRes.json()
+  const datasetId = runData.data?.defaultDatasetId
+
+  if (!datasetId) {
+    console.error('[apify-webhook] No dataset ID in run details')
+    return NextResponse.json({ ok: true })
+  }
+
+  console.log(`[apify-webhook] Dataset ID: ${datasetId}`)
+
+  // Fetch results from dataset
   const resultsRes = await fetch(
     `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}`
   )
@@ -65,8 +81,15 @@ export async function POST(request: NextRequest) {
   const results = await resultsRes.json()
   console.log(`[apify-webhook] Got ${results.length} results`)
 
+  if (results.length === 0) {
+    await supabase.from('research_reports').update({
+      title: handle ? `IG Competitor: @${handle} (no data)` : `IG Trending: ${term} (no data)`,
+      body: { ...reportBody, status: 'completed', scraped_at: new Date().toISOString(), error: 'No results returned' },
+    }).eq('id', report.id)
+    return NextResponse.json({ ok: true })
+  }
+
   if (report.type === 'competitor' && handle) {
-    // Competitor profile scrape
     const first = results[0]
     const recentPosts = results.map((post: any) => ({
       caption: post.caption ?? '',
@@ -101,7 +124,6 @@ export async function POST(request: NextRequest) {
     await createNotification(report.profile_id, 'system', `IG research: @${handle} scraped (${recentPosts.length} posts)`)
 
   } else if (report.type === 'trend' && term) {
-    // Hashtag scrape
     const posts = results.map((post: any) => ({
       caption: post.caption ?? '',
       timestamp: post.timestamp,

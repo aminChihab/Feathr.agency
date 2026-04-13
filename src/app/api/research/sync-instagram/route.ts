@@ -45,7 +45,7 @@ export async function POST() {
       console.log(`[ig-sync] Starting async scrape for @${handle}...`)
 
       const res = await fetch(
-        `https://api.apify.com/v2/acts/${APIFY_ACTOR}/runs?token=${APIFY_TOKEN}&webhooks=${encodeURIComponent(JSON.stringify([{ eventTypes: ['ACTOR.RUN.SUCCEEDED'], requestUrl: webhookUrl }]))}`,
+        `https://api.apify.com/v2/acts/${APIFY_ACTOR}/runs?token=${APIFY_TOKEN}&webhooks=${Buffer.from(JSON.stringify([{ eventTypes: ['ACTOR.RUN.SUCCEEDED'], requestUrl: webhookUrl }])).toString('base64')}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -96,7 +96,7 @@ export async function POST() {
       console.log(`[ig-sync] Starting async scrape for #${cleanTag}...`)
 
       const res = await fetch(
-        `https://api.apify.com/v2/acts/${APIFY_ACTOR}/runs?token=${APIFY_TOKEN}&webhooks=${encodeURIComponent(JSON.stringify([{ eventTypes: ['ACTOR.RUN.SUCCEEDED'], requestUrl: webhookUrl }]))}`,
+        `https://api.apify.com/v2/acts/${APIFY_ACTOR}/runs?token=${APIFY_TOKEN}&webhooks=${Buffer.from(JSON.stringify([{ eventTypes: ['ACTOR.RUN.SUCCEEDED'], requestUrl: webhookUrl }])).toString('base64')}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
