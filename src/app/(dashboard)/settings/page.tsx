@@ -332,13 +332,13 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Top bar */}
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-3xl text-primary">Settings</h1>
+    <>
+      <header className="sticky top-0 z-40 bg-[#131313]/80 backdrop-blur-xl flex justify-between items-center h-20 px-10 shadow-2xl shadow-black/40">
+        <h2 className="font-display text-3xl font-light text-primary">Settings</h2>
         {saved && <span className="text-sm text-tertiary">Saved</span>}
-      </div>
+      </header>
 
+      <div className="p-10 space-y-6">
       {/* Sub-navigation pills */}
       <nav className="flex flex-wrap gap-1">
         {TABS.map((tab) => (
@@ -727,6 +727,7 @@ export default function SettingsPage() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   )
 }

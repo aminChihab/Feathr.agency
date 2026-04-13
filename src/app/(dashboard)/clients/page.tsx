@@ -81,31 +81,32 @@ export default function ClientsPage() {
   if (!userId) return null
 
   return (
-    <div className="space-y-0">
-      {/* Top App Bar */}
-      <header className="flex justify-between items-center mb-8">
+    <>
+      <header className="sticky top-0 z-40 bg-[#131313]/80 backdrop-blur-xl flex justify-between items-center h-20 px-10 shadow-2xl shadow-black/40">
         <h2 className="font-display text-3xl font-light text-primary">Clients</h2>
-        <div className="flex items-center gap-6 flex-1 max-w-2xl justify-end">
-          <div className="relative w-full max-w-sm">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+        <div className="flex items-center gap-8">
+          <div className="relative hidden lg:block">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
             <input
-              className="w-full bg-surface-container-low border-b-2 border-surface-variant focus:border-primary transition-colors text-sm px-10 py-2 outline-none"
-              placeholder="Search clients, tags, or status..."
+              className="bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:ring-1 focus:ring-primary/30 transition-all outline-none font-body text-on-surface placeholder:text-on-surface-variant/50"
+              placeholder="Search clients..."
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <button
-            onClick={handleNew}
-            className="bg-gradient-to-br from-primary to-primary-container text-on-primary-container px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all"
-          >
-            <span className="material-symbols-outlined text-sm">person_add</span>
-            New client
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleNew}
+              className="bg-gradient-to-br from-primary to-primary-container text-on-primary font-semibold px-5 py-2.5 rounded-lg text-sm shadow-lg shadow-primary/10 hover:opacity-90 transition-opacity font-body"
+            >
+              New Client
+            </button>
+          </div>
         </div>
       </header>
 
+      <div className="p-10 space-y-6">
       {/* Quick Stats Bento Section */}
       <section className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div className="md:col-span-1 bg-surface-container-low p-6 rounded-xl border border-outline-variant/10">
@@ -251,6 +252,7 @@ export default function ClientsPage() {
         editClient={editClient}
         onSaved={() => loadClients(userId!)}
       />
-    </div>
+      </div>
+    </>
   )
 }

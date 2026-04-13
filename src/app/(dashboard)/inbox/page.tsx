@@ -250,6 +250,25 @@ export default function InboxPage() {
   const activeConv = conversations.find((c) => c.id === activeConvId)
 
   return (
+    <>
+    <header className="sticky top-0 z-40 bg-[#131313]/80 backdrop-blur-xl flex justify-between items-center h-20 px-10 shadow-2xl shadow-black/40">
+      <h2 className="font-display text-3xl font-light text-primary">Inbox</h2>
+      <div className="flex items-center gap-8">
+        <div className="relative hidden lg:block">
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
+          <input
+            className="bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:ring-1 focus:ring-primary/30 transition-all outline-none font-body text-on-surface placeholder:text-on-surface-variant/50"
+            placeholder="Search conversations..."
+            type="text"
+          />
+        </div>
+        <div className="flex items-center gap-4">
+          <button className="bg-gradient-to-br from-primary to-primary-container text-on-primary font-semibold px-5 py-2.5 rounded-lg text-sm shadow-lg shadow-primary/10 hover:opacity-90 transition-opacity font-body">
+            Create Campaign
+          </button>
+        </div>
+      </div>
+    </header>
     <div className="flex flex-1 overflow-hidden h-[calc(100vh-5rem)] -m-8">
       {/* Left Column: Conversation List */}
       <ConversationList
@@ -329,5 +348,6 @@ export default function InboxPage() {
         />
       )}
     </div>
+    </>
   )
 }

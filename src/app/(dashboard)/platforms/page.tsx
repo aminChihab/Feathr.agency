@@ -176,33 +176,31 @@ export default function PlatformsPage() {
 
   return (
     <>
-      {/* Top bar area - handled by layout, but we add search + CTA */}
-      <header className="flex justify-between items-center mb-0">
-        <div className="flex flex-col">
-          <h2 className="font-display text-3xl font-light text-primary">Platforms</h2>
-          <span className="text-[10px] text-on-surface-variant tracking-widest uppercase">Connection Hub</span>
-        </div>
-        <div className="flex items-center gap-6">
-          <div className="relative group hidden lg:block">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+      <header className="sticky top-0 z-40 bg-[#131313]/80 backdrop-blur-xl flex justify-between items-center h-20 px-10 shadow-2xl shadow-black/40">
+        <h2 className="font-display text-3xl font-light text-primary">Platforms</h2>
+        <div className="flex items-center gap-8">
+          <div className="relative hidden lg:block">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
             <input
-              className="bg-surface-container-low border-b-2 border-surface-variant focus:border-primary transition-all duration-300 text-sm py-2 pl-10 pr-4 w-64 outline-none placeholder:text-on-surface-variant/40"
+              className="bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:ring-1 focus:ring-primary/30 transition-all outline-none font-body text-on-surface placeholder:text-on-surface-variant/50"
               placeholder="Search platforms..."
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <button
-            onClick={() => { setReconnectPlatform(null); setModalOpen(true) }}
-            className="bg-gradient-to-br from-primary to-primary-container text-on-primary-container px-6 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 active:scale-95 transition-all flex items-center gap-2"
-          >
-            <span className="material-symbols-outlined text-lg">add</span>
-            Add Platform
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => { setReconnectPlatform(null); setModalOpen(true) }}
+              className="bg-gradient-to-br from-primary to-primary-container text-on-primary font-semibold px-5 py-2.5 rounded-lg text-sm shadow-lg shadow-primary/10 hover:opacity-90 transition-opacity font-body"
+            >
+              Add Platform
+            </button>
+          </div>
         </div>
       </header>
 
+      <div className="p-10 space-y-6">
       {/* Expired tokens banner */}
       {expiredPlatforms.length > 0 && (
         <div className="flex items-start gap-3 rounded-xl bg-error/5 px-4 py-3 mt-4">
@@ -369,6 +367,7 @@ export default function PlatformsPage() {
             </div>
           </section>
         )}
+      </div>
       </div>
 
       <ConnectPlatformModal

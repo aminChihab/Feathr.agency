@@ -199,40 +199,33 @@ export default function ResearchPage() {
   }
 
   return (
-    <div className="space-y-10">
-      {/* Top bar: title + search + export + new research */}
-      <div className="flex justify-between items-center">
-        <h1 className="font-display text-3xl text-primary">Research</h1>
-        <div className="flex items-center gap-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-on-surface-variant" />
+    <>
+      <header className="sticky top-0 z-40 bg-[#131313]/80 backdrop-blur-xl flex justify-between items-center h-20 px-10 shadow-2xl shadow-black/40">
+        <h2 className="font-display text-3xl font-light text-primary">Research</h2>
+        <div className="flex items-center gap-8">
+          <div className="relative hidden lg:block">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
             <input
-              type="text"
+              className="bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:ring-1 focus:ring-primary/30 transition-all outline-none font-body text-on-surface placeholder:text-on-surface-variant/50"
               placeholder="Search insights..."
+              type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-surface-container-low border-none border-b-2 border-surface-variant focus:border-primary focus:ring-0 text-sm py-2 pl-10 pr-4 w-64 rounded-none transition-all placeholder:text-on-surface-variant/40"
             />
           </div>
-          <button className="flex items-center gap-2 text-on-surface-variant hover:text-on-surface text-sm transition-opacity">
-            <Download className="h-4 w-4" />
-            <span>Export</span>
-          </button>
-          <button
-            onClick={handleNewResearch}
-            disabled={triggering}
-            className="silk-gradient text-on-primary px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 active:opacity-70 transition-all shadow-lg shadow-primary/10 disabled:opacity-50"
-          >
-            {triggering ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Plus className="h-3.5 w-3.5" />
-            )}
-            {triggering ? 'Running...' : 'New Research'}
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleNewResearch}
+              disabled={triggering}
+              className="bg-gradient-to-br from-primary to-primary-container text-on-primary font-semibold px-5 py-2.5 rounded-lg text-sm shadow-lg shadow-primary/10 hover:opacity-90 transition-opacity font-body disabled:opacity-50"
+            >
+              {triggering ? 'Running...' : 'New Research'}
+            </button>
+          </div>
         </div>
-      </div>
+      </header>
 
+      <div className="p-10 space-y-6">
       {/* Suggestions (if any) */}
       <ResearchSuggestions notifications={notifications} onAccept={handleAcceptSuggestion} onDismiss={handleDismissNotification} />
 
@@ -305,6 +298,7 @@ export default function ResearchPage() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

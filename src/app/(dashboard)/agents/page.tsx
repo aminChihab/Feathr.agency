@@ -114,28 +114,29 @@ export default function AgentsPage() {
     })
 
   return (
-    <div className="space-y-16">
-      {/* Top App Bar */}
-      <header className="flex justify-between items-center">
+    <>
+      <header className="sticky top-0 z-40 bg-[#131313]/80 backdrop-blur-xl flex justify-between items-center h-20 px-10 shadow-2xl shadow-black/40">
         <h2 className="font-display text-3xl font-light text-primary">Assistants</h2>
-        <div className="flex items-center gap-6">
-          <div className="relative group">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/40">search</span>
+        <div className="flex items-center gap-8">
+          <div className="relative hidden lg:block">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
             <input
-              className="bg-surface-container-low border-none rounded-full pl-10 pr-4 py-2 text-sm focus:ring-1 focus:ring-primary w-64 transition-all duration-300"
+              className="bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:ring-1 focus:ring-primary/30 transition-all outline-none font-body text-on-surface placeholder:text-on-surface-variant/50"
               placeholder="Search agents..."
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="flex items-center gap-2">
-            <button className="px-5 py-2 text-sm font-medium border border-outline-variant/20 rounded-md hover:opacity-80 transition-opacity">Export</button>
-            <button className="px-5 py-2 text-sm font-medium bg-gradient-to-br from-primary to-primary-container text-on-primary-container rounded-md hover:opacity-90 transition-opacity">Deploy New Agent</button>
+          <div className="flex items-center gap-4">
+            <button className="bg-gradient-to-br from-primary to-primary-container text-on-primary font-semibold px-5 py-2.5 rounded-lg text-sm shadow-lg shadow-primary/10 hover:opacity-90 transition-opacity font-body">
+              Deploy New Agent
+            </button>
           </div>
         </div>
       </header>
 
+      <div className="p-10 space-y-6">
       {/* SECTION 1: AI Assistants */}
       <section>
         <div className="flex items-baseline justify-between mb-8">
@@ -254,6 +255,7 @@ export default function AgentsPage() {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   )
 }

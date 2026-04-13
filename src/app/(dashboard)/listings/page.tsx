@@ -70,35 +70,29 @@ export default function ListingsPage() {
   }
 
   return (
-    <div className="space-y-0">
-      {/* Top App Bar */}
-      <header className="flex justify-between items-center mb-10">
-        <div className="flex items-center gap-6">
-          <h2 className="font-display text-3xl font-light text-primary">Listings</h2>
-          <div className="h-6 w-[1px] bg-outline-variant/30" />
-          <div className="flex items-center gap-1 text-sm text-on-surface-variant font-medium tracking-tight">
-            <span className="material-symbols-outlined text-sm">language</span>
-            Active Sites: {activeCount}
-          </div>
-        </div>
-        <div className="flex items-center gap-6">
-          <div className="relative group">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/40">search</span>
+    <>
+      <header className="sticky top-0 z-40 bg-[#131313]/80 backdrop-blur-xl flex justify-between items-center h-20 px-10 shadow-2xl shadow-black/40">
+        <h2 className="font-display text-3xl font-light text-primary">Listings</h2>
+        <div className="flex items-center gap-8">
+          <div className="relative hidden lg:block">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
             <input
-              className="bg-surface-container-low border-none focus:ring-1 focus:ring-primary rounded-xl pl-10 pr-4 py-2 text-sm w-64 transition-all"
+              className="bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:ring-1 focus:ring-primary/30 transition-all outline-none font-body text-on-surface placeholder:text-on-surface-variant/50"
               placeholder="Search directories..."
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <button className="bg-gradient-to-br from-primary to-primary-container text-on-primary-container px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 active:scale-95 transition-all flex items-center gap-2">
-            <span className="material-symbols-outlined text-lg">add_circle</span>
-            Create Campaign
-          </button>
+          <div className="flex items-center gap-4">
+            <button className="bg-gradient-to-br from-primary to-primary-container text-on-primary font-semibold px-5 py-2.5 rounded-lg text-sm shadow-lg shadow-primary/10 hover:opacity-90 transition-opacity font-body">
+              Create Campaign
+            </button>
+          </div>
         </div>
       </header>
 
+      <div className="p-10 space-y-6">
       {/* Quick Insights Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         <div className="bg-surface-container-low p-6 rounded-xl border border-outline-variant/10 flex justify-between items-end">
@@ -212,6 +206,7 @@ export default function ListingsPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   )
 }
