@@ -6,7 +6,7 @@ const APIFY_HASHTAG_ACTOR = 'apify~instagram-scraper'
 const APIFY_PROFILE_ACTOR = 'crawlerbros~instagram-profile-scraper'
 
 // Instagram cookies for authenticated scraping (restricted/21+ profiles)
-const IG_COOKIES = JSON.parse(process.env.INSTAGRAM_SCRAPER_COOKIES ?? '[]')
+const IG_COOKIES = process.env.INSTAGRAM_SCRAPER_COOKIES ?? ''
 
 export async function POST() {
   const supabase = await createClient()
