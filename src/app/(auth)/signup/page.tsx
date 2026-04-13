@@ -32,48 +32,69 @@ export default function SignupPage() {
 
   if (emailSent) {
     return (
-      <div className="space-y-6 text-center">
-        <h1 className="text-4xl font-light tracking-tight">Check je e-mail</h1>
-        <p className="text-text-secondary">
-          We hebben een bevestigingslink gestuurd naar <span className="text-text-primary">{email}</span>.
-          Klik op de link om je account te activeren.
+      <div className="bg-surface-container-low rounded-xl p-12 w-full max-w-md text-center space-y-6">
+        <h1 className="font-display text-3xl italic text-primary">Feathr</h1>
+        <p className="font-body text-[10px] tracking-[0.3em] uppercase text-on-surface-variant/40">
+          Marketing Atelier
         </p>
-        <p className="text-sm text-text-muted">
-          Geen e-mail ontvangen? Check je spam folder.
+        <h2 className="font-display text-xl text-on-surface mt-8">Check your email</h2>
+        <p className="text-sm text-on-surface-variant">
+          We sent a confirmation link to <span className="text-on-surface">{email}</span>.
+          Click the link to activate your account.
+        </p>
+        <p className="text-xs text-on-surface-variant/60">
+          No email received? Check your spam folder.
         </p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-8">
+    <div className="bg-surface-container-low rounded-xl p-12 w-full max-w-md">
+      {/* Brand */}
       <div className="text-center">
-        <h1 className="text-4xl font-light tracking-tight">Feathr</h1>
-        <p className="mt-2 text-text-secondary">Start je AI marketing agency</p>
+        <h1 className="font-display text-3xl italic text-primary">Feathr</h1>
+        <p className="font-body text-[10px] tracking-[0.3em] uppercase text-on-surface-variant/40 mt-1">
+          Marketing Atelier
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Heading */}
+      <div className="mt-8">
+        <h2 className="font-display text-xl text-on-surface">Create your account</h2>
+        <p className="text-sm text-on-surface-variant mt-1">
+          Start your AI marketing atelier.
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         {error && (
-          <div className="rounded-lg bg-status-failed/10 px-4 py-3 text-sm text-status-failed">
+          <div className="bg-error-container/20 text-error text-sm rounded-lg p-3">
             {error}
           </div>
         )}
 
-        <div className="space-y-2">
-          <label htmlFor="email" className="text-sm text-text-secondary">E-mail</label>
+        {/* Email */}
+        <div>
+          <label htmlFor="email" className="block text-xs uppercase tracking-wider text-on-surface-variant mb-2">
+            Email
+          </label>
           <input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-lg border border-border bg-bg-surface px-4 py-3 text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-            placeholder="je@email.com"
+            className="w-full bg-transparent border-0 border-b-2 border-surface-variant focus:border-primary focus:ring-0 text-on-surface placeholder:text-on-surface-variant/20 py-3 transition-all duration-300 outline-none"
+            placeholder="name@atelier.com"
           />
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="password" className="text-sm text-text-secondary">Wachtwoord</label>
+        {/* Password */}
+        <div>
+          <label htmlFor="password" className="block text-xs uppercase tracking-wider text-on-surface-variant mb-2">
+            Password
+          </label>
           <input
             id="password"
             type="password"
@@ -81,20 +102,26 @@ export default function SignupPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
-            className="w-full rounded-lg border border-border bg-bg-surface px-4 py-3 text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-            placeholder="Minimaal 6 tekens"
+            className="w-full bg-transparent border-0 border-b-2 border-surface-variant focus:border-primary focus:ring-0 text-on-surface placeholder:text-on-surface-variant/20 py-3 transition-all duration-300 outline-none"
+            placeholder="Minimum 6 characters"
           />
         </div>
 
-        <Button type="submit" disabled={loading} className="w-full bg-accent text-white hover:bg-accent-hover disabled:opacity-50">
-          {loading ? 'Bezig...' : 'Account aanmaken'}
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full gradient-cta mt-2 py-4 text-on-primary font-semibold text-sm tracking-wide rounded-lg hover:shadow-xl hover:shadow-primary/10 active:scale-[0.98] transition-all duration-200 disabled:opacity-50"
+        >
+          {loading ? 'Creating account...' : 'Create Account'}
         </Button>
       </form>
 
-      <p className="text-center text-sm text-text-muted">
-        Al een account?{' '}
-        <Link href="/login" className="text-accent hover:text-accent-hover">Inloggen</Link>
-      </p>
+      <div className="mt-10 text-center">
+        <p className="text-sm text-on-surface-variant">Already have an account?</p>
+        <Link href="/login" className="text-primary text-sm mt-1 inline-block hover:opacity-70 transition-opacity">
+          Sign in
+        </Link>
+      </div>
     </div>
   )
 }

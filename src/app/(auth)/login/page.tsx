@@ -31,54 +31,82 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="bg-surface-container-low rounded-xl p-12 w-full max-w-md">
+      {/* Brand */}
       <div className="text-center">
-        <h1 className="text-4xl font-light tracking-tight">Feathr</h1>
-        <p className="mt-2 text-text-secondary">Log in op je account</p>
+        <h1 className="font-display text-3xl italic text-primary">Feathr</h1>
+        <p className="font-body text-[10px] tracking-[0.3em] uppercase text-on-surface-variant/40 mt-1">
+          Marketing Atelier
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Heading */}
+      <div className="mt-8">
+        <h2 className="font-display text-xl text-on-surface">Welcome back</h2>
+        <p className="text-sm text-on-surface-variant mt-1">
+          Please enter your credentials to access your atelier.
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         {error && (
-          <div className="rounded-lg bg-status-failed/10 px-4 py-3 text-sm text-status-failed">
+          <div className="bg-error-container/20 text-error text-sm rounded-lg p-3">
             {error}
           </div>
         )}
 
-        <div className="space-y-2">
-          <label htmlFor="email" className="text-sm text-text-secondary">E-mail</label>
+        {/* Email */}
+        <div>
+          <label htmlFor="email" className="block text-xs uppercase tracking-wider text-on-surface-variant mb-2">
+            Email
+          </label>
           <input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-lg border border-border bg-bg-surface px-4 py-3 text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-            placeholder="je@email.com"
+            className="w-full bg-transparent border-0 border-b-2 border-surface-variant focus:border-primary focus:ring-0 text-on-surface placeholder:text-on-surface-variant/20 py-3 transition-all duration-300 outline-none"
+            placeholder="name@atelier.com"
           />
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="password" className="text-sm text-text-secondary">Wachtwoord</label>
+        {/* Password */}
+        <div>
+          <div className="flex justify-between items-end mb-2">
+            <label htmlFor="password" className="block text-xs uppercase tracking-wider text-on-surface-variant">
+              Password
+            </label>
+            <Link href="#" className="text-primary text-xs uppercase tracking-wider hover:opacity-70 transition-opacity">
+              Forgot?
+            </Link>
+          </div>
           <input
             id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full rounded-lg border border-border bg-bg-surface px-4 py-3 text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+            className="w-full bg-transparent border-0 border-b-2 border-surface-variant focus:border-primary focus:ring-0 text-on-surface placeholder:text-on-surface-variant/20 py-3 transition-all duration-300 outline-none"
             placeholder="••••••••"
           />
         </div>
 
-        <Button type="submit" disabled={loading} className="w-full bg-accent text-white hover:bg-accent-hover disabled:opacity-50">
-          {loading ? 'Bezig...' : 'Inloggen'}
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full gradient-cta mt-2 py-4 text-on-primary font-semibold text-sm tracking-wide rounded-lg hover:shadow-xl hover:shadow-primary/10 active:scale-[0.98] transition-all duration-200 disabled:opacity-50"
+        >
+          {loading ? 'Signing in...' : 'Enter Dashboard'}
         </Button>
       </form>
 
-      <p className="text-center text-sm text-text-muted">
-        Nog geen account?{' '}
-        <Link href="/signup" className="text-accent hover:text-accent-hover">Aanmelden</Link>
-      </p>
+      <div className="mt-10 text-center">
+        <p className="text-sm text-on-surface-variant">New to the atelier?</p>
+        <Link href="/signup" className="text-primary text-sm mt-1 inline-block hover:opacity-70 transition-opacity">
+          Request an Invitation
+        </Link>
+      </div>
     </div>
   )
 }
