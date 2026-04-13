@@ -67,30 +67,30 @@ export default function ClientsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-light">Clients</h1>
-        <Button onClick={handleNew} className="bg-accent text-white hover:bg-accent-hover">
+        <h1 className="font-display text-3xl">Clients</h1>
+        <Button onClick={handleNew} className="gradient-cta text-white">
           <UserPlus className="h-4 w-4 mr-1.5" />
           New client
         </Button>
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant/60" />
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search clients by name or tag..."
-          className="bg-bg-surface pl-10"
+          className="bg-surface-container-low pl-10"
         />
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-lg border border-border bg-bg-surface p-12 text-center">
-          <p className="text-text-muted">
+        <div className="bg-surface-container-low rounded-xl p-6 text-center text-on-surface-variant">
+          <p>
             {search ? 'No clients match your search.' : 'No clients yet. Clients are created when bookings are confirmed.'}
           </p>
         </div>

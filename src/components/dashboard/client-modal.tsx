@@ -104,22 +104,22 @@ export function ClientModal({ open, onClose, supabase, userId, editClient, onSav
   return (
     <>
       <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-        <DialogContent className="bg-bg-surface border-border max-w-md">
+        <DialogContent className="bg-surface-container-high border-outline-variant/30 max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-light">{editClient ? 'Edit client' : 'New client'}</DialogTitle>
+            <DialogTitle className="font-display">{editClient ? 'Edit client' : 'New client'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} className="bg-bg-base" placeholder="Client name or alias" />
+              <Input value={name} onChange={(e) => setName(e.target.value)} className="bg-surface" placeholder="Client name or alias" />
             </div>
             <div className="space-y-2">
               <Label>Preferences</Label>
-              <Textarea value={preferences} onChange={(e) => setPreferences(e.target.value)} rows={3} className="bg-bg-base" placeholder="Notes about this client..." />
+              <Textarea value={preferences} onChange={(e) => setPreferences(e.target.value)} rows={3} className="bg-surface" placeholder="Notes about this client..." />
             </div>
             <div className="space-y-2">
               <Label>Tags</Label>
-              <Input value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} className="bg-bg-base" placeholder="regular, polite, generous (comma-separated)" />
+              <Input value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} className="bg-surface" placeholder="regular, polite, generous (comma-separated)" />
             </div>
             <label className="flex items-center gap-3 cursor-pointer">
               <Checkbox checked={isVip} onCheckedChange={(c) => setIsVip(c === true)} />
@@ -128,10 +128,10 @@ export function ClientModal({ open, onClose, supabase, userId, editClient, onSav
 
             {editClient && (
               <>
-                <div className="rounded-lg bg-bg-base p-3 space-y-1 text-xs text-text-muted">
-                  <p>Total bookings: <span className="text-text-primary">{editClient.total_bookings}</span></p>
+                <div className="rounded-xl bg-surface p-3 space-y-1 text-xs text-on-surface-variant">
+                  <p>Total bookings: <span className="text-on-surface">{editClient.total_bookings}</span></p>
                   {editClient.last_booking_at && (
-                    <p>Last booking: <span className="text-text-primary">{new Date(editClient.last_booking_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span></p>
+                    <p>Last booking: <span className="text-on-surface">{new Date(editClient.last_booking_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span></p>
                   )}
                 </div>
 
@@ -144,19 +144,19 @@ export function ClientModal({ open, onClose, supabase, userId, editClient, onSav
                     </Button>
                   </div>
                   {bookings.length === 0 ? (
-                    <p className="text-xs text-text-muted">No bookings yet.</p>
+                    <p className="text-xs text-on-surface-variant/60">No bookings yet.</p>
                   ) : (
                     <div className="space-y-1 max-h-40 overflow-y-auto">
                       {bookings.map((b) => (
-                        <div key={b.id} className="flex items-center justify-between rounded bg-bg-base px-3 py-2 text-xs">
+                        <div key={b.id} className="flex items-center justify-between rounded-xl bg-surface px-3 py-2 text-xs">
                           <div>
-                            <span className="text-text-primary">
+                            <span className="text-on-surface">
                               {new Date(b.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                             </span>
-                            {b.duration && <span className="ml-2 text-text-muted">{b.duration}</span>}
+                            {b.duration && <span className="ml-2 text-on-surface-variant/60">{b.duration}</span>}
                           </div>
                           {b.revenue_cents > 0 && (
-                            <span className="text-text-secondary">${(b.revenue_cents / 100).toFixed(2)}</span>
+                            <span className="text-on-surface-variant">${(b.revenue_cents / 100).toFixed(2)}</span>
                           )}
                         </div>
                       ))}
@@ -168,7 +168,7 @@ export function ClientModal({ open, onClose, supabase, userId, editClient, onSav
 
             <div className="flex justify-between pt-2">
               {editClient ? (
-                <Button variant="ghost" onClick={handleDelete} disabled={saving} className="text-xs text-status-failed hover:text-status-failed">
+                <Button variant="ghost" onClick={handleDelete} disabled={saving} className="text-xs text-error hover:bg-error/10">
                   Delete client
                 </Button>
               ) : (
@@ -176,7 +176,7 @@ export function ClientModal({ open, onClose, supabase, userId, editClient, onSav
               )}
               <div className="flex gap-2">
                 <Button variant="ghost" onClick={onClose}>Cancel</Button>
-                <Button onClick={handleSave} disabled={!name.trim() || saving} className="bg-accent text-white hover:bg-accent-hover">
+                <Button onClick={handleSave} disabled={!name.trim() || saving} className="gradient-cta text-white">
                   {saving ? 'Saving...' : editClient ? 'Save changes' : 'Create client'}
                 </Button>
               </div>

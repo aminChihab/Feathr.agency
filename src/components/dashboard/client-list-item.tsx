@@ -1,7 +1,6 @@
 // src/components/dashboard/client-list-item.tsx
 'use client'
 
-import { Crown } from 'lucide-react'
 import type { Database } from '@/types/database'
 
 type Client = Database['public']['Tables']['clients']['Row']
@@ -28,38 +27,40 @@ export function ClientListItem({ client, onClick }: ClientListItemProps) {
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center justify-between rounded-lg border border-border bg-bg-surface px-5 py-4 text-left transition-colors hover:bg-bg-elevated"
+      className="w-full flex items-center justify-between bg-surface-container-low rounded-xl px-5 py-4 text-left transition-colors hover:bg-surface-container-high"
     >
       <div className="flex items-center gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <p className="text-sm font-medium">{client.name}</p>
-            {client.is_vip && <Crown className="h-3.5 w-3.5 text-status-draft" />}
+            <p className="text-on-surface font-medium">{client.name}</p>
+            {client.is_vip && (
+              <span className="bg-primary/15 text-primary text-xs rounded-full px-2 py-0.5">VIP</span>
+            )}
           </div>
           <div className="flex items-center gap-2 mt-1">
             {client.tags && client.tags.length > 0 && (
               <div className="flex gap-1">
                 {client.tags.slice(0, 3).map((tag) => (
-                  <span key={tag} className="rounded-full bg-bg-elevated px-2 py-0.5 text-[10px] text-text-muted">
+                  <span key={tag} className="bg-surface-container-highest text-on-surface-variant text-xs rounded-full px-2 py-0.5">
                     {tag}
                   </span>
                 ))}
                 {client.tags.length > 3 && (
-                  <span className="text-[10px] text-text-muted">+{client.tags.length - 3}</span>
+                  <span className="text-xs text-on-surface-variant/60">+{client.tags.length - 3}</span>
                 )}
               </div>
             )}
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-6 text-xs text-text-muted">
+      <div className="flex items-center gap-6 text-on-surface-variant text-sm">
         <div className="text-right">
-          <p className="text-text-primary">{client.total_bookings}</p>
+          <p className="text-on-surface">{client.total_bookings}</p>
           <p>bookings</p>
         </div>
         {client.last_booking_at && (
           <div className="text-right">
-            <p className="text-text-primary">{relativeDate(client.last_booking_at)}</p>
+            <p className="text-on-surface">{relativeDate(client.last_booking_at)}</p>
             <p>last booking</p>
           </div>
         )}
