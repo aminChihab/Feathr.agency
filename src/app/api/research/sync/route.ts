@@ -203,8 +203,8 @@ export async function POST() {
     'AlinaAbramsX',
   ]
 
-  const researchTerms: string[] = settings.research_terms ?? DEFAULT_TERMS
-  const competitorHandles: string[] = settings.competitor_handles ?? DEFAULT_HANDLES
+  const researchTerms: string[] = settings.twitter_terms ?? settings.research_terms ?? DEFAULT_TERMS
+  const competitorHandles: string[] = settings.twitter_handles ?? settings.competitor_handles ?? DEFAULT_HANDLES
 
   console.log(`[research] Terms: ${researchTerms.join(', ')}`)
   console.log(`[research] Competitors: ${competitorHandles.join(', ')}`)

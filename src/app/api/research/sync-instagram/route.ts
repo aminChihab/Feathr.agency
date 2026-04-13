@@ -44,7 +44,7 @@ export async function POST() {
     .single()
 
   const settings = (profile?.settings as any) ?? {}
-  const competitorHandles: string[] = settings.competitor_handles ?? []
+  const competitorHandles: string[] = settings.instagram_handles ?? []
 
   console.log('[ig-sync] Competitor handles:', competitorHandles.join(', ') || 'none')
 

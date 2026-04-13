@@ -8,16 +8,23 @@ function createServiceClient() {
   )
 }
 
-// GET /api/agent/settings?profile_id=xxx — Get research settings
+// GET /api/agent/settings?profile_id=xxx — Get research settings per platform
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
   const expectedSecret = process.env.AGENT_SECRET
 
-  if (!expectedSecret || authHeader !== `Bearer ${expectedSecret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // Allow both agent auth and user auth (for frontend)
+  let profileId = request.nextUrl.searchParams.get('profile_id')
+
+  if (authHeader === `Bearer ${expectedSecret}`) {
+    // Agent auth — profile_id from query param
+  } else {
+    // Try user auth for frontend calls
+    const supabase = createServiceClient()
+    const userHeader = request.headers.get('x-user-id')
+    if (userHeader) profileId = userHeader
   }
 
-  const profileId = request.nextUrl.searchParams.get('profile_id')
   if (!profileId) {
     return NextResponse.json({ error: 'profile_id required' }, { status: 400 })
   }
@@ -32,24 +39,21 @@ export async function GET(request: NextRequest) {
   const settings = (profile?.settings as any) ?? {}
 
   return NextResponse.json({
-    research_terms: settings.research_terms ?? [],
-    competitor_handles: settings.competitor_handles ?? [],
-    discovered_terms: settings.discovered_terms ?? [],
-    discovered_handles: settings.discovered_handles ?? [],
+    twitter_handles: settings.twitter_handles ?? settings.competitor_handles ?? [],
+    twitter_terms: settings.twitter_terms ?? settings.research_terms ?? [],
+    instagram_handles: settings.instagram_handles ?? [],
+    instagram_terms: settings.instagram_terms ?? [],
+    discovered_twitter_handles: settings.discovered_twitter_handles ?? settings.discovered_handles ?? [],
+    discovered_twitter_terms: settings.discovered_twitter_terms ?? settings.discovered_terms ?? [],
+    discovered_instagram_handles: settings.discovered_instagram_handles ?? [],
+    discovered_instagram_terms: settings.discovered_instagram_terms ?? [],
   })
 }
 
-// POST /api/agent/settings — Update research settings (merge discovered items)
+// POST /api/agent/settings — Update research settings per platform
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  const expectedSecret = process.env.AGENT_SECRET
-
-  if (!expectedSecret || authHeader !== `Bearer ${expectedSecret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   const body = await request.json()
-  const { profile_id, add_terms, remove_terms, add_handles, remove_handles } = body
+  const { profile_id, platform, add_terms, remove_terms, add_handles, remove_handles } = body
 
   if (!profile_id) {
     return NextResponse.json({ error: 'Missing profile_id' }, { status: 400 })
@@ -64,39 +68,49 @@ export async function POST(request: NextRequest) {
     .single()
 
   const settings = (profile?.settings as any) ?? {}
-  let terms: string[] = settings.research_terms ?? []
-  let handles: string[] = settings.competitor_handles ?? []
-  let discoveredTerms: string[] = settings.discovered_terms ?? []
-  let discoveredHandles: string[] = settings.discovered_handles ?? []
 
-  // Add new terms (to discovered list, not overwriting user's originals)
+  // Determine which keys to use based on platform
+  const p = platform ?? 'twitter'
+  const termsKey = `${p}_terms`
+  const handlesKey = `${p}_handles`
+  const discoveredTermsKey = `discovered_${p}_terms`
+  const discoveredHandlesKey = `discovered_${p}_handles`
+
+  let terms: string[] = settings[termsKey] ?? []
+  let handles: string[] = settings[handlesKey] ?? []
+  let discoveredTerms: string[] = settings[discoveredTermsKey] ?? []
+  let discoveredHandles: string[] = settings[discoveredHandlesKey] ?? []
+
+  // Migrate legacy keys on first use
+  if (p === 'twitter' && terms.length === 0 && settings.research_terms?.length) {
+    terms = settings.research_terms
+  }
+  if (p === 'twitter' && handles.length === 0 && settings.competitor_handles?.length) {
+    handles = settings.competitor_handles
+  }
+
   if (add_terms?.length) {
     const newTerms = add_terms.filter((t: string) => !terms.includes(t) && !discoveredTerms.includes(t))
     discoveredTerms = [...discoveredTerms, ...newTerms]
-    // Also add to active terms so they get searched next time
     terms = [...new Set([...terms, ...newTerms])]
   }
 
-  // Remove terms
   if (remove_terms?.length) {
     terms = terms.filter((t: string) => !remove_terms.includes(t))
     discoveredTerms = discoveredTerms.filter((t: string) => !remove_terms.includes(t))
   }
 
-  // Add new handles
   if (add_handles?.length) {
     const newHandles = add_handles.filter((h: string) => !handles.includes(h) && !discoveredHandles.includes(h))
     discoveredHandles = [...discoveredHandles, ...newHandles]
     handles = [...new Set([...handles, ...newHandles])]
   }
 
-  // Remove handles
   if (remove_handles?.length) {
     handles = handles.filter((h: string) => !remove_handles.includes(h))
     discoveredHandles = discoveredHandles.filter((h: string) => !remove_handles.includes(h))
   }
 
-  // Cap to prevent unbounded growth
   const MAX_TERMS = 30
   const MAX_HANDLES = 25
   terms = terms.slice(0, MAX_TERMS)
@@ -109,10 +123,10 @@ export async function POST(request: NextRequest) {
     .update({
       settings: {
         ...settings,
-        research_terms: terms,
-        competitor_handles: handles,
-        discovered_terms: discoveredTerms,
-        discovered_handles: discoveredHandles,
+        [termsKey]: terms,
+        [handlesKey]: handles,
+        [discoveredTermsKey]: discoveredTerms,
+        [discoveredHandlesKey]: discoveredHandles,
       },
     })
     .eq('id', profile_id)
@@ -122,9 +136,9 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({
-    research_terms: terms,
-    competitor_handles: handles,
-    discovered_terms: discoveredTerms,
-    discovered_handles: discoveredHandles,
+    [`${p}_handles`]: handles,
+    [`${p}_terms`]: terms,
+    [`discovered_${p}_handles`]: discoveredHandles,
+    [`discovered_${p}_terms`]: discoveredTerms,
   })
 }

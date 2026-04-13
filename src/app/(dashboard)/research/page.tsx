@@ -31,10 +31,8 @@ export default function ResearchPage() {
   const [triggering, setTriggering] = useState(false)
   const [filter, setFilter] = useState<'all' | 'x_strategy' | 'ig_strategy' | 'performance'>('all')
   const [notifications, setNotifications] = useState<any[]>([])
-  const [terms, setTerms] = useState<string[]>([])
-  const [handles, setHandles] = useState<string[]>([])
-  const [discoveredTerms, setDiscoveredTerms] = useState<string[]>([])
-  const [discoveredHandles, setDiscoveredHandles] = useState<string[]>([])
+  const [twitterTargets, setTwitterTargets] = useState({ handles: [] as string[], terms: [] as string[], discoveredHandles: [] as string[], discoveredTerms: [] as string[] })
+  const [instagramTargets, setInstagramTargets] = useState({ handles: [] as string[], terms: [] as string[], discoveredHandles: [] as string[], discoveredTerms: [] as string[] })
 
   async function loadAll() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -60,11 +58,19 @@ export default function ResearchPage() {
       .eq('id', user.id)
       .single()
 
-    const settings = (profile?.settings as any) ?? {}
-    setTerms(settings.research_terms ?? [])
-    setHandles(settings.competitor_handles ?? [])
-    setDiscoveredTerms(settings.discovered_terms ?? [])
-    setDiscoveredHandles(settings.discovered_handles ?? [])
+    const s = (profile?.settings as any) ?? {}
+    setTwitterTargets({
+      handles: s.twitter_handles ?? s.competitor_handles ?? [],
+      terms: s.twitter_terms ?? s.research_terms ?? [],
+      discoveredHandles: s.discovered_twitter_handles ?? s.discovered_handles ?? [],
+      discoveredTerms: s.discovered_twitter_terms ?? s.discovered_terms ?? [],
+    })
+    setInstagramTargets({
+      handles: s.instagram_handles ?? [],
+      terms: s.instagram_terms ?? [],
+      discoveredHandles: s.discovered_instagram_handles ?? [],
+      discoveredTerms: s.discovered_instagram_terms ?? [],
+    })
     setLoading(false)
   }
 
@@ -97,25 +103,23 @@ export default function ResearchPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const update: any = { profile_id: user.id }
+    // Determine platform from notification body
+    const notif = notifications.find((n) => n.id === notifId)
+    const platform = notif?.body?.platform ?? 'twitter'
+
+    const update: any = { profile_id: user.id, platform }
     if (action === 'add_account') update.add_handles = [value]
     if (action === 'add_hashtag') update.add_terms = [value]
     if (action === 'remove_account') update.remove_handles = [value]
     if (action === 'remove_hashtag') update.remove_terms = [value]
 
-    const res = await fetch('/api/agent/settings', {
+    await fetch('/api/agent/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(update),
     })
 
-    if (res.ok) {
-      const data = await res.json()
-      setTerms(data.research_terms ?? [])
-      setHandles(data.competitor_handles ?? [])
-      setDiscoveredTerms(data.discovered_terms ?? [])
-      setDiscoveredHandles(data.discovered_handles ?? [])
-    }
+    loadAll()
   }
 
   async function handleDismissNotification(notifId: string) {
@@ -127,38 +131,48 @@ export default function ResearchPage() {
     setNotifications((prev) => prev.filter((n) => n.id !== notifId))
   }
 
-  async function updateSettings(newTerms: string[], newHandles: string[]) {
+  async function handleAddTerm(platform: string, term: string) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     const { data: profile } = await supabase.from('profiles').select('settings').eq('id', user.id).single()
-    const currentSettings = (profile?.settings as any) ?? {}
-    await supabase.from('profiles').update({
-      settings: { ...currentSettings, research_terms: newTerms, competitor_handles: newHandles },
-    }).eq('id', user.id)
+    const s = (profile?.settings as any) ?? {}
+    const key = `${platform}_terms`
+    const current: string[] = s[key] ?? []
+    await supabase.from('profiles').update({ settings: { ...s, [key]: [...new Set([...current, term])] } }).eq('id', user.id)
+    loadAll()
   }
 
-  async function handleAddTerm(term: string) {
-    const newTerms = [...new Set([...terms, term])]
-    setTerms(newTerms)
-    await updateSettings(newTerms, handles)
+  async function handleRemoveTerm(platform: string, term: string) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data: profile } = await supabase.from('profiles').select('settings').eq('id', user.id).single()
+    const s = (profile?.settings as any) ?? {}
+    const key = `${platform}_terms`
+    const current: string[] = s[key] ?? []
+    await supabase.from('profiles').update({ settings: { ...s, [key]: current.filter((t) => t !== term) } }).eq('id', user.id)
+    loadAll()
   }
 
-  async function handleRemoveTerm(term: string) {
-    const newTerms = terms.filter((t) => t !== term)
-    setTerms(newTerms)
-    await updateSettings(newTerms, handles)
+  async function handleAddHandle(platform: string, handle: string) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data: profile } = await supabase.from('profiles').select('settings').eq('id', user.id).single()
+    const s = (profile?.settings as any) ?? {}
+    const key = `${platform}_handles`
+    const current: string[] = s[key] ?? []
+    await supabase.from('profiles').update({ settings: { ...s, [key]: [...new Set([...current, handle])] } }).eq('id', user.id)
+    loadAll()
   }
 
-  async function handleAddHandle(handle: string) {
-    const newHandles = [...new Set([...handles, handle])]
-    setHandles(newHandles)
-    await updateSettings(terms, newHandles)
-  }
-
-  async function handleRemoveHandle(handle: string) {
-    const newHandles = handles.filter((h) => h !== handle)
-    setHandles(newHandles)
-    await updateSettings(terms, newHandles)
+  async function handleRemoveHandle(platform: string, handle: string) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data: profile } = await supabase.from('profiles').select('settings').eq('id', user.id).single()
+    const s = (profile?.settings as any) ?? {}
+    const key = `${platform}_handles`
+    const current: string[] = s[key] ?? []
+    await supabase.from('profiles').update({ settings: { ...s, [key]: current.filter((h) => h !== handle) } }).eq('id', user.id)
+    loadAll()
   }
 
   const filteredReports = filter === 'all' ? reports : reports.filter((r) => getReportType(r.body as any) === filter)
@@ -200,10 +214,12 @@ export default function ResearchPage() {
       <ResearchSuggestions notifications={notifications} onAccept={handleAcceptSuggestion} onDismiss={handleDismissNotification} />
 
       <ResearchTargets
-        terms={terms} handles={handles}
-        discoveredTerms={discoveredTerms} discoveredHandles={discoveredHandles}
-        onAddTerm={handleAddTerm} onRemoveTerm={handleRemoveTerm}
-        onAddHandle={handleAddHandle} onRemoveHandle={handleRemoveHandle}
+        twitter={twitterTargets}
+        instagram={instagramTargets}
+        onAddTerm={handleAddTerm}
+        onRemoveTerm={handleRemoveTerm}
+        onAddHandle={handleAddHandle}
+        onRemoveHandle={handleRemoveHandle}
       />
 
       <div className="flex gap-2">
