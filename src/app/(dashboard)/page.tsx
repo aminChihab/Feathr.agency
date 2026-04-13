@@ -5,7 +5,7 @@ import { StatusBadge } from '@/components/dashboard/status-badge'
 import Link from 'next/link'
 import {
   MessageSquare, Clock, CalendarDays, Link2,
-  ChevronLeft, ChevronRight, CheckCircle2, XCircle, Flame,
+  ChevronLeft, ChevronRight, CheckCircle2, XCircle, Flame, Search,
 } from 'lucide-react'
 
 export default async function DashboardPage() {
@@ -100,6 +100,29 @@ export default async function DashboardPage() {
 
   return (
     <>
+      {/* Top App Bar */}
+      <header className="sticky top-0 z-40 -mx-10 -mt-10 mb-4 w-[calc(100%+80px)] bg-[#131313]/80 backdrop-blur-xl flex justify-between items-center h-20 px-10 shadow-2xl shadow-black/40">
+        <h2 className="font-display text-3xl font-light text-primary">Dashboard</h2>
+        <div className="flex items-center gap-8">
+          <div className="relative hidden lg:block">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant h-4 w-4" />
+            <input
+              className="bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:ring-1 focus:ring-primary/30 transition-all outline-none font-body text-on-surface placeholder:text-on-surface-variant/50"
+              placeholder="Search campaigns..."
+              type="text"
+            />
+          </div>
+          <div className="flex items-center gap-4">
+            <button className="text-on-surface/60 hover:text-on-surface transition-colors font-body text-sm font-medium">
+              Export
+            </button>
+            <button className="bg-gradient-to-br from-primary to-primary-container text-on-primary font-semibold px-5 py-2.5 rounded-lg text-sm shadow-lg shadow-primary/10 hover:opacity-90 transition-opacity font-body">
+              Create Campaign
+            </button>
+          </div>
+        </div>
+      </header>
+
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
@@ -152,7 +175,7 @@ export default async function DashboardPage() {
               <p className="text-on-surface-variant">No pending approvals. Your assistants will create drafts here.</p>
             </div>
           ) : (
-            <div className="space-y-4 overflow-y-auto flex-1 -mr-2 pr-2">
+            <div className="space-y-4 overflow-y-auto flex-1 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
               {pendingPosts.map((post: any) => {
                 const platform = (post as any).platform_accounts?.platforms
                 return (
