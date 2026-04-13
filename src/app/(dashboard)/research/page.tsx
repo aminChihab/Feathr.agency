@@ -194,10 +194,24 @@ export default function ResearchPage() {
             <p className="text-sm text-text-muted mt-1">{reports.length} report{reports.length !== 1 ? 's' : ''}</p>
           )}
         </div>
-        <Button onClick={handleNewResearch} disabled={triggering}>
-          {triggering ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-1.5" />}
-          {triggering ? 'Running...' : 'New Research'}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="text-xs" onClick={async () => {
+            const res = await fetch('/api/research/sync', { method: 'POST' })
+            const data = await res.json()
+            console.log('[research] Twitter sync:', data)
+            alert(`Twitter: ${data.trend_reports ?? 0} trends, ${data.competitor_reports ?? 0} competitors, ${(data.errors ?? []).length} errors`)
+          }}>Test Twitter</Button>
+          <Button variant="outline" className="text-xs" onClick={async () => {
+            const res = await fetch('/api/research/sync-instagram', { method: 'POST' })
+            const data = await res.json()
+            console.log('[research] IG sync:', data)
+            alert(`IG: ${data.runs_started ?? 0} runs started, ${(data.errors ?? []).length} errors`)
+          }}>Test IG</Button>
+          <Button onClick={handleNewResearch} disabled={triggering}>
+            {triggering ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-1.5" />}
+            {triggering ? 'Running...' : 'New Research'}
+          </Button>
+        </div>
       </div>
 
       <ResearchSuggestions notifications={notifications} onAccept={handleAcceptSuggestion} onDismiss={handleDismissNotification} />
