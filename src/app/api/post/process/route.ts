@@ -264,6 +264,10 @@ async function postToInstagram(
     const containerId = await createInstagramMediaContainer(igUserId, accessToken, url, caption ?? '')
     if (!containerId) return { success: false, error: 'Failed to create IG media container' }
 
+    // Wait for container to be ready
+    const ready = await waitForInstagramContainer(containerId, accessToken)
+    if (!ready) return { success: false, error: 'IG image processing timed out or failed' }
+
     const result = await publishInstagramMedia(igUserId, accessToken, containerId)
     if (result.success) {
       return { success: true, postUrl: `https://www.instagram.com/p/${result.mediaId}/` }
@@ -305,6 +309,10 @@ async function postToInstagram(
       }
     } else {
       containerId = await createInstagramMediaContainer(igUserId, accessToken, url, undefined, true)
+      if (containerId) {
+        const ready = await waitForInstagramContainer(containerId, accessToken)
+        if (!ready) { console.error('[post-process] IG carousel image processing failed'); continue }
+      }
     }
 
     if (containerId) childrenIds.push(containerId)
