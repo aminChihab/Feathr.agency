@@ -216,7 +216,7 @@ export function ConnectPlatforms({
                     </div>
                     <button
                       onClick={() => connectCredentials(platform)}
-                      disabled={state === 'saving'}
+                      disabled={connectionState[platform.id] === 'saving'}
                       className="gradient-cta text-on-primary font-semibold py-2 px-6 rounded-lg text-sm transition-transform active:scale-95 w-full"
                     >
                       Save credentials
