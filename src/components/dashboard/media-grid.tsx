@@ -689,12 +689,13 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
                   {tags.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {tags.map((tag) => (
-                        <span
+                        <button
                           key={tag}
-                          className="rounded-full px-2.5 py-1 text-xs font-medium bg-surface-container-highest text-on-surface-variant"
+                          onClick={() => { setActiveTag(activeTag === tag ? null : tag); setPreviewItem(null) }}
+                          className="rounded-full px-2.5 py-1 text-xs font-medium bg-surface-container-highest text-on-surface-variant hover:bg-primary/15 hover:text-primary transition-colors cursor-pointer"
                         >
                           {tag}
-                        </span>
+                        </button>
                       ))}
                     </div>
                   )}

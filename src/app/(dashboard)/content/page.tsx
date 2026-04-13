@@ -486,8 +486,8 @@ export default function ContentPage() {
 
   return (
     <Tabs defaultValue="content" className="space-y-0">
-      {/* ── Sticky TopAppBar (from mockup) ─────────────────────────────── */}
-      <header className="sticky top-0 z-40 w-full bg-background/80 backdrop-blur-xl flex justify-between items-center h-20 px-0 mb-0">
+      {/* ── Sticky TopAppBar ─────────────────────────────── */}
+      <header className="sticky top-0 z-40 w-full bg-[#131313]/80 backdrop-blur-xl flex justify-between items-center h-20 px-10 shadow-2xl shadow-black/40">
         <h2 className="font-display text-3xl font-light text-primary">Pending Approvals</h2>
         <div className="flex items-center gap-4">
           {/* Search */}
@@ -536,6 +536,7 @@ export default function ContentPage() {
         </div>
       </header>
 
+      <div className="p-10 space-y-6">
       {/* Tab switcher */}
       <TabsList className="bg-transparent p-0 gap-6 mb-8">
         <TabsTrigger value="content" className="px-0 pb-2 text-sm font-medium rounded-none border-b-2 data-[state=active]:border-primary data-[state=active]:text-on-surface data-[state=inactive]:border-transparent data-[state=inactive]:text-on-surface-variant data-[state=active]:bg-transparent data-[state=active]:shadow-none">
@@ -710,6 +711,7 @@ export default function ContentPage() {
         editPost={editPost}
         onSaved={() => { if (userId) loadPosts(userId) }}
       />
+    </div>
     </Tabs>
   )
 }
