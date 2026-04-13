@@ -156,7 +156,7 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
         return a.file_name.localeCompare(b.file_name)
       }
       // 'updated' — newest first
-      return new Date(b.updated_at ?? b.created_at).getTime() - new Date(a.updated_at ?? a.created_at).getTime()
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     })
 
     return result
