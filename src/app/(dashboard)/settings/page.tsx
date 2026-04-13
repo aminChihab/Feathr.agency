@@ -46,7 +46,6 @@ const TABS = [
   { id: 'voice', label: 'Voice', icon: Mic },
   { id: 'platforms', label: 'Platforms', icon: Link2 },
   { id: 'planning', label: 'Planning', icon: Calendar },
-  { id: 'research', label: 'Research', icon: Search },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'account', label: 'Account', icon: Shield },
   { id: 'billing', label: 'Billing', icon: CreditCard },
@@ -648,80 +647,6 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {/* Research */}
-        {activeTab === 'research' && (
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <Label>Search terms</Label>
-              <p className="text-xs text-text-muted">Keywords and hashtags to monitor for trending content.</p>
-              <div className="flex gap-2">
-                <Input
-                  value={newTerm}
-                  onChange={(e) => setNewTerm(e.target.value)}
-                  placeholder="e.g. escort amsterdam"
-                  className="bg-bg-surface"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && newTerm.trim()) {
-                      setResearchTerms(prev => [...prev, newTerm.trim()])
-                      setNewTerm('')
-                    }
-                  }}
-                />
-                <Button variant="outline" onClick={() => { if (newTerm.trim()) { setResearchTerms(prev => [...prev, newTerm.trim()]); setNewTerm('') } }}>Add</Button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {researchTerms.map((term, i) => (
-                  <span key={i} className="flex items-center gap-1.5 rounded-full bg-bg-elevated px-3 py-1 text-xs">
-                    {term}
-                    <button onClick={() => setResearchTerms(prev => prev.filter((_, j) => j !== i))} className="text-text-muted hover:text-status-failed">×</button>
-                  </span>
-                ))}
-              </div>
-              <Button
-                variant="ghost"
-                className="text-xs text-text-muted"
-                onClick={() => {
-                  setResearchTerms(DEFAULT_TERMS)
-                  setCompetitorHandles(DEFAULT_HANDLES)
-                }}
-              >
-                Load suggested defaults
-              </Button>
-            </div>
-
-            <div className="space-y-4">
-              <Label>Competitor handles</Label>
-              <p className="text-xs text-text-muted">Twitter/X profiles to monitor for content ideas.</p>
-              <div className="flex gap-2">
-                <Input
-                  value={newHandle}
-                  onChange={(e) => setNewHandle(e.target.value)}
-                  placeholder="@handle"
-                  className="bg-bg-surface"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && newHandle.trim()) {
-                      setCompetitorHandles(prev => [...prev, newHandle.trim().replace(/^@/, '')])
-                      setNewHandle('')
-                    }
-                  }}
-                />
-                <Button variant="outline" onClick={() => { if (newHandle.trim()) { setCompetitorHandles(prev => [...prev, newHandle.trim().replace(/^@/, '')]); setNewHandle('') } }}>Add</Button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {competitorHandles.map((handle, i) => (
-                  <span key={i} className="flex items-center gap-1.5 rounded-full bg-bg-elevated px-3 py-1 text-xs">
-                    @{handle}
-                    <button onClick={() => setCompetitorHandles(prev => prev.filter((_, j) => j !== i))} className="text-text-muted hover:text-status-failed">×</button>
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <Button onClick={saveResearch} disabled={saving} className="bg-accent text-white hover:bg-accent-hover">
-              {saving ? 'Saving...' : 'Save research settings'}
-            </Button>
-          </div>
-        )}
 
         {/* Notifications */}
         {activeTab === 'notifications' && (

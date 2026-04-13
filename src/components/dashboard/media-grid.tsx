@@ -153,7 +153,7 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
     // Sort
     result = [...result].sort((a, b) => {
       if (sortBy === 'name') {
-        return a.file_name.localeCompare(b.file_name)
+        return a.file_name.localeCompare(b.file_name, undefined, { numeric: true, sensitivity: 'base' })
       }
       // 'updated' — newest first
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -450,14 +450,24 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
         </div>
 
         {/* Sort */}
-        <button
-          onClick={() => setSortBy(sortBy === 'updated' ? 'name' : 'updated')}
-          className="flex items-center gap-1.5 rounded-lg border border-border bg-bg-elevated px-3 py-2 text-xs text-text-secondary hover:text-text-primary transition-colors shrink-0"
-          title={`Sort by ${sortBy === 'updated' ? 'name' : 'last updated'}`}
-        >
-          <ArrowUpDown className="h-3 w-3" />
-          {sortBy === 'updated' ? 'Updated' : 'Name'}
-        </button>
+        <div className="flex items-center bg-bg-elevated rounded-lg border border-border p-0.5 shrink-0">
+          <button
+            onClick={() => setSortBy('updated')}
+            className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+              sortBy === 'updated' ? 'bg-accent text-white' : 'text-text-muted hover:text-text-primary'
+            }`}
+          >
+            Recent
+          </button>
+          <button
+            onClick={() => setSortBy('name')}
+            className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+              sortBy === 'name' ? 'bg-accent text-white' : 'text-text-muted hover:text-text-primary'
+            }`}
+          >
+            Name
+          </button>
+        </div>
 
         {/* Count */}
         {!loading && (
