@@ -52,18 +52,18 @@ export default function ListingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-light">Listings</h1>
+      <h1 className="font-display text-3xl">Listings</h1>
 
       {listings.length === 0 ? (
-        <div className="rounded-lg border border-border bg-bg-surface p-12 text-center">
-          <p className="text-text-muted">No directory listings yet. Listings will appear here when your directories are connected.</p>
+        <div className="bg-surface-container-low rounded-xl p-6 text-center text-on-surface-variant">
+          <p>No directory listings yet. Listings will appear here when your directories are connected.</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4">

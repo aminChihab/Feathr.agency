@@ -13,11 +13,11 @@ interface ListingCardProps {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  active: 'bg-status-scheduled/15 text-status-scheduled',
+  active: 'bg-tertiary/15 text-tertiary',
   expiring: 'bg-status-draft/15 text-status-draft',
-  expired: 'bg-status-failed/15 text-status-failed',
-  renewing: 'bg-status-approved/15 text-status-approved',
-  paused: 'bg-bg-elevated text-text-muted',
+  expired: 'bg-error/15 text-error',
+  renewing: 'bg-tertiary/15 text-tertiary',
+  paused: 'bg-surface-container-highest text-on-surface-variant',
 }
 
 function relativeExpiry(dateStr: string): string {
@@ -33,15 +33,15 @@ export function ListingCard({
   platformName, platformColor, listingUrl, status, expiresAt, renewalStatus, performance,
 }: ListingCardProps) {
   return (
-    <div className="rounded-lg border border-border bg-bg-surface p-5">
+    <div className="bg-surface-container-low rounded-xl p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="h-3 w-3 rounded-full" style={{ backgroundColor: platformColor }} />
-          <h3 className="text-sm font-medium">{platformName}</h3>
+          <h3 className="text-sm font-medium text-on-surface">{platformName}</h3>
         </div>
         <span className={cn(
           'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize',
-          STATUS_STYLES[status] ?? 'bg-bg-elevated text-text-muted'
+          STATUS_STYLES[status] ?? 'bg-surface-container-highest text-on-surface-variant'
         )}>
           {status}
         </span>
@@ -53,7 +53,7 @@ export function ListingCard({
             href={listingUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-xs text-accent hover:text-accent-hover"
+            className="flex items-center gap-1.5 text-primary text-sm hover:opacity-80"
           >
             <ExternalLink className="h-3 w-3" />
             {listingUrl.replace(/^https?:\/\//, '').slice(0, 40)}
@@ -61,21 +61,21 @@ export function ListingCard({
         )}
 
         {expiresAt && (
-          <p className="text-xs text-text-muted">{relativeExpiry(expiresAt)}</p>
+          <p className="text-xs text-on-surface-variant/60">{relativeExpiry(expiresAt)}</p>
         )}
 
         {renewalStatus !== 'none' && (
-          <p className="text-xs text-text-muted">Renewal: {renewalStatus}</p>
+          <p className="text-xs text-on-surface-variant/60">Renewal: {renewalStatus}</p>
         )}
 
         <div className="flex gap-6 pt-1">
           <div>
-            <p className="text-lg font-light">{(performance.views ?? 0).toLocaleString()}</p>
-            <p className="text-[10px] text-text-muted">Views</p>
+            <p className="font-display text-2xl">{(performance.views ?? 0).toLocaleString()}</p>
+            <p className="text-xs text-on-surface-variant">Views</p>
           </div>
           <div>
-            <p className="text-lg font-light">{(performance.clicks ?? 0).toLocaleString()}</p>
-            <p className="text-[10px] text-text-muted">Clicks</p>
+            <p className="font-display text-2xl">{(performance.clicks ?? 0).toLocaleString()}</p>
+            <p className="text-xs text-on-surface-variant">Clicks</p>
           </div>
         </div>
       </div>
