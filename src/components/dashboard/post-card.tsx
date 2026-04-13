@@ -34,22 +34,22 @@ export function PostCard({ post, onApprove, onEdit, onDelete, onRetry }: PostCar
     : 'Not scheduled'
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-border bg-bg-surface px-4 py-3">
+    <div className="flex items-center justify-between rounded-xl bg-surface-container-low px-4 py-3">
       <div className="flex items-center gap-3 min-w-0 flex-1">
         <div
           className="h-2.5 w-2.5 rounded-full flex-shrink-0"
           style={{ backgroundColor: post.platform_color }}
         />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm">{post.caption || 'No caption'}</p>
-          <p className="text-xs text-text-muted">{post.platform_name} · {time}</p>
+          <p className="truncate text-sm text-on-surface">{post.caption || 'No caption'}</p>
+          <p className="text-xs text-on-surface-variant">{post.platform_name} · {time}</p>
         </div>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0 ml-4">
         <StatusBadge status={post.status} />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">···</Button>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-on-surface-variant hover:text-on-surface">···</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {post.status === 'draft' && (
@@ -70,7 +70,7 @@ export function PostCard({ post, onApprove, onEdit, onDelete, onRetry }: PostCar
               <DropdownMenuItem onClick={() => onApprove(post.id)}>Cancel</DropdownMenuItem>
             )}
             {['draft', 'failed'].includes(post.status) && (
-              <DropdownMenuItem onClick={() => onDelete(post.id)} className="text-status-failed">Delete</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onDelete(post.id)} className="text-error">Delete</DropdownMenuItem>
             )}
           </DropdownMenuContent>
         </DropdownMenu>

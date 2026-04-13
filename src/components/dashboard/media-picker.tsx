@@ -52,11 +52,11 @@ export function MediaPicker({ supabase, userId, selected, onSelectionChange }: M
   }
 
   if (loading) {
-    return <p className="text-sm text-text-muted py-4 text-center">Loading media...</p>
+    return <p className="text-sm text-on-surface-variant py-4 text-center">Loading media...</p>
   }
 
   if (items.length === 0) {
-    return <p className="text-sm text-text-muted py-4 text-center">No media uploaded yet. Upload media in the Library tab.</p>
+    return <p className="text-sm text-on-surface-variant py-4 text-center">No media uploaded yet. Upload media in the Library tab.</p>
   }
 
   return (
@@ -68,20 +68,20 @@ export function MediaPicker({ supabase, userId, selected, onSelectionChange }: M
             key={item.id}
             type="button"
             onClick={() => toggle(item.id)}
-            className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
-              isSelected ? 'border-accent' : 'border-transparent'
+            className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-colors ${
+              isSelected ? 'border-primary' : 'border-transparent'
             }`}
           >
             {item.signedUrl ? (
               <img src={item.signedUrl} alt={item.file_name} className="h-full w-full object-cover" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-bg-elevated text-lg">
+              <div className="flex h-full w-full items-center justify-center bg-surface-container-high text-lg text-on-surface-variant">
                 {item.file_type === 'video' ? '🎬' : '📷'}
               </div>
             )}
             {isSelected && (
-              <div className="absolute inset-0 bg-accent/20 flex items-center justify-center">
-                <span className="text-white text-lg">✓</span>
+              <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                <span className="text-on-surface text-lg">✓</span>
               </div>
             )}
           </button>

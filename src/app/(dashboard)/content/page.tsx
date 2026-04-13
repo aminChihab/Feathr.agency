@@ -111,18 +111,18 @@ function WeekView({ weekDays, posts, today, onEdit }: WeekViewProps) {
   const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
   return (
-    <div className="rounded-lg border border-border bg-bg-surface overflow-hidden">
+    <div className="rounded-xl bg-surface-container-low overflow-hidden">
       {/* Header row */}
-      <div className="grid grid-cols-7 border-b border-border">
+      <div className="grid grid-cols-7 border-b border-outline-variant/15">
         {weekDays.map((day, i) => {
           const isToday = isSameDay(day, today)
           return (
             <div
               key={i}
-              className={`px-3 py-2 text-center border-r border-border last:border-r-0 ${isToday ? 'bg-accent/10' : ''}`}
+              className={`px-3 py-2 text-center border-r border-outline-variant/15 last:border-r-0 ${isToday ? 'bg-primary/10' : ''}`}
             >
-              <p className="text-xs text-text-muted">{DAY_LABELS[i]}</p>
-              <p className={`text-sm font-medium mt-0.5 ${isToday ? 'text-accent' : 'text-text-primary'}`}>
+              <p className="text-xs text-on-surface-variant">{DAY_LABELS[i]}</p>
+              <p className={`text-sm font-medium mt-0.5 ${isToday ? 'text-primary' : 'text-on-surface'}`}>
                 {day.getDate()}
               </p>
             </div>
@@ -138,22 +138,22 @@ function WeekView({ weekDays, posts, today, onEdit }: WeekViewProps) {
           return (
             <div
               key={i}
-              className={`px-2 py-2 border-r border-border last:border-r-0 space-y-1 ${isToday ? 'bg-accent/5' : ''}`}
+              className={`px-2 py-2 border-r border-outline-variant/15 last:border-r-0 space-y-1 ${isToday ? 'bg-primary/5' : ''}`}
             >
               {dayPosts.map((post) => (
                 <button
                   key={post.id}
                   onClick={() => onEdit(post.id)}
-                  className="w-full text-left rounded px-2 py-1.5 text-xs bg-bg-elevated hover:bg-bg-overlay transition-colors group"
+                  className="w-full text-left rounded px-2 py-1.5 text-xs bg-surface-container-high hover:bg-surface-container-highest transition-colors group"
                 >
                   <div className="flex items-center gap-1.5 mb-0.5">
                     <span
                       className="h-1.5 w-1.5 rounded-full flex-shrink-0"
                       style={{ backgroundColor: post.platform_color }}
                     />
-                    <span className="truncate text-text-muted font-medium">{post.platform_name}</span>
+                    <span className="truncate text-on-surface-variant font-medium">{post.platform_name}</span>
                   </div>
-                  <p className="truncate text-text-primary leading-tight">{post.caption || 'No caption'}</p>
+                  <p className="truncate text-on-surface leading-tight">{post.caption || 'No caption'}</p>
                   <div className="mt-1">
                     <StatusBadge status={post.status} className="text-[10px] px-1.5 py-0" />
                   </div>
@@ -161,7 +161,7 @@ function WeekView({ weekDays, posts, today, onEdit }: WeekViewProps) {
               ))}
               {dayPosts.length === 0 && (
                 <div className="h-full flex items-center justify-center">
-                  <span className="text-[10px] text-text-muted opacity-40">—</span>
+                  <span className="text-[10px] text-on-surface-variant opacity-40">—</span>
                 </div>
               )}
             </div>
@@ -188,12 +188,12 @@ function MonthView({ year, month, posts, today, onDayClick, selectedDay }: Month
   const grid = getMonthGrid(year, month)
 
   return (
-    <div className="rounded-lg border border-border bg-bg-surface overflow-hidden">
+    <div className="rounded-xl bg-surface-container-low overflow-hidden">
       {/* Header */}
-      <div className="grid grid-cols-7 border-b border-border">
+      <div className="grid grid-cols-7 border-b border-outline-variant/15">
         {DAY_LABELS.map((label) => (
-          <div key={label} className="px-3 py-2 text-center border-r border-border last:border-r-0">
-            <p className="text-xs text-text-muted font-medium">{label}</p>
+          <div key={label} className="px-3 py-2 text-center border-r border-outline-variant/15 last:border-r-0">
+            <p className="text-xs text-on-surface-variant font-medium">{label}</p>
           </div>
         ))}
       </div>
@@ -211,25 +211,25 @@ function MonthView({ year, month, posts, today, onDayClick, selectedDay }: Month
               key={i}
               onClick={() => onDayClick(day)}
               className={`
-                min-h-[80px] p-2 border-r border-b border-border last:border-r-0 text-left transition-colors
-                ${isCurrentMonth ? 'hover:bg-bg-elevated' : 'opacity-40'}
-                ${isToday ? 'bg-accent/10' : ''}
-                ${isSelected && !isToday ? 'bg-bg-elevated ring-1 ring-accent/50 ring-inset' : ''}
+                min-h-[80px] p-2 border-r border-b border-outline-variant/15 last:border-r-0 text-left transition-colors
+                ${isCurrentMonth ? 'hover:bg-surface-container-high' : 'opacity-40'}
+                ${isToday ? 'bg-primary/10' : ''}
+                ${isSelected && !isToday ? 'bg-surface-container-high ring-1 ring-primary/50 ring-inset' : ''}
               `}
             >
-              <p className={`text-xs font-medium mb-1 ${isToday ? 'text-accent' : isCurrentMonth ? 'text-text-primary' : 'text-text-muted'}`}>
+              <p className={`text-xs font-medium mb-1 ${isToday ? 'text-primary' : isCurrentMonth ? 'text-on-surface' : 'text-on-surface-variant'}`}>
                 {day.getDate()}
               </p>
               <div className="flex flex-wrap gap-0.5">
                 {dayPosts.slice(0, 5).map((post) => (
                   <span
                     key={post.id}
-                    className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[post.status] ?? 'bg-text-muted'}`}
+                    className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[post.status] ?? 'bg-on-surface-variant'}`}
                     title={`${post.platform_name}: ${post.caption?.slice(0, 40) ?? 'No caption'}`}
                   />
                 ))}
                 {dayPosts.length > 5 && (
-                  <span className="text-[9px] text-text-muted">+{dayPosts.length - 5}</span>
+                  <span className="text-[9px] text-on-surface-variant">+{dayPosts.length - 5}</span>
                 )}
               </div>
             </button>
@@ -254,28 +254,28 @@ function DayDetail({ day, posts, mediaThumbs, onEdit }: DayDetailProps) {
   const label = day.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 
   return (
-    <div className="mt-4 rounded-lg border border-border bg-bg-surface p-4">
-      <h3 className="text-sm font-medium text-text-secondary mb-3">{label}</h3>
+    <div className="mt-4 rounded-xl bg-surface-container-low p-4">
+      <h3 className="text-sm font-medium text-on-surface-variant mb-3">{label}</h3>
       {dayPosts.length === 0 ? (
-        <p className="text-sm text-text-muted">No posts scheduled for this day.</p>
+        <p className="text-sm text-on-surface-variant">No posts scheduled for this day.</p>
       ) : (
         <div className="space-y-2">
           {dayPosts.map((post) => (
-            <div key={post.id} className="flex items-start justify-between rounded-lg border border-border bg-bg-elevated px-3 py-2 overflow-hidden">
+            <div key={post.id} className="flex items-start justify-between rounded-xl bg-surface-container-high px-3 py-2 overflow-hidden">
               <div className="flex items-start gap-2 min-w-0 flex-1">
                 <span className="h-2 w-2 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: post.platform_color }} />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm break-words whitespace-pre-wrap">{post.caption || 'No caption'}</p>
+                  <p className="text-sm text-on-surface break-words whitespace-pre-wrap">{post.caption || 'No caption'}</p>
                   {post.media_ids && (post.media_ids as string[]).length > 0 && (
                     <div className="flex gap-1.5 mt-2">
                       {(post.media_ids as string[]).map((mediaId) => {
                         const thumb = mediaThumbs[mediaId]
-                        if (!thumb) return <div key={mediaId} className="h-12 w-12 rounded bg-bg-base border border-border animate-pulse" />
-                        return <img key={mediaId} src={thumb.url} alt="" className="h-12 w-12 rounded object-cover border border-border" />
+                        if (!thumb) return <div key={mediaId} className="h-12 w-12 rounded bg-surface-container-lowest animate-pulse" />
+                        return <img key={mediaId} src={thumb.url} alt="" className="h-12 w-12 rounded object-cover" />
                       })}
                     </div>
                   )}
-                  <p className="text-xs text-text-muted mt-1">{post.platform_name} · {post.scheduled_at ? new Date(post.scheduled_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '—'}</p>
+                  <p className="text-xs text-on-surface-variant mt-1">{post.platform_name} · {post.scheduled_at ? new Date(post.scheduled_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '—'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0 ml-3">
@@ -304,17 +304,17 @@ interface ApprovalQueueProps {
 
 function ApprovalQueue({ drafts, mediaThumbs, onApprove, onEdit, onReject }: ApprovalQueueProps) {
   return (
-    <div className="rounded-lg border border-border bg-bg-surface">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+    <div className="rounded-xl bg-surface-container-low">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant/15">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-medium">Pending Approvals</h2>
+          <h2 className="text-base font-medium text-on-surface">Pending Approvals</h2>
           {drafts.length > 0 && (
-            <span className="inline-flex items-center justify-center h-5 min-w-[1.25rem] rounded-full bg-accent text-white text-xs font-medium px-1.5">
+            <span className="inline-flex items-center justify-center h-5 min-w-[1.25rem] rounded-full bg-primary text-on-primary text-xs font-medium px-1.5">
               {drafts.length}
             </span>
           )}
         </div>
-        <p className="text-xs text-text-muted">AI-generated drafts awaiting your review</p>
+        <p className="text-xs text-on-surface-variant">AI-generated drafts awaiting your review</p>
       </div>
 
       {drafts.length === 0 ? (
@@ -322,10 +322,10 @@ function ApprovalQueue({ drafts, mediaThumbs, onApprove, onEdit, onReject }: App
           <div className="h-8 w-8 rounded-full bg-status-scheduled/15 flex items-center justify-center mx-auto mb-2">
             <Check className="h-4 w-4 text-status-scheduled" />
           </div>
-          <p className="text-sm text-text-muted">No pending approvals — you're all caught up!</p>
+          <p className="text-sm text-on-surface-variant">No pending approvals — you're all caught up!</p>
         </div>
       ) : (
-        <div className="divide-y divide-border">
+        <div className="divide-y divide-outline-variant/15">
           {drafts.map((post) => {
             const time = post.scheduled_at
               ? new Date(post.scheduled_at).toLocaleString('en-US', {
@@ -343,14 +343,14 @@ function ApprovalQueue({ drafts, mediaThumbs, onApprove, onEdit, onReject }: App
                       className="h-2.5 w-2.5 rounded-full"
                       style={{ backgroundColor: post.platform_color }}
                     />
-                    <span className="text-sm font-medium">{post.platform_name}</span>
+                    <span className="text-sm font-medium text-on-surface">{post.platform_name}</span>
                     <StatusBadge status={post.status} />
                   </div>
-                  <span className="text-xs text-text-muted">{time}</span>
+                  <span className="text-xs text-on-surface-variant">{time}</span>
                 </div>
 
                 {/* Full caption */}
-                <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap break-words mb-4">
+                <p className="text-sm text-on-surface leading-relaxed whitespace-pre-wrap break-words mb-4">
                   {post.caption || 'No caption'}
                 </p>
 
@@ -360,14 +360,14 @@ function ApprovalQueue({ drafts, mediaThumbs, onApprove, onEdit, onReject }: App
                     {(post.media_ids as string[]).map((mediaId) => {
                       const thumb = mediaThumbs[mediaId]
                       if (!thumb) return (
-                        <div key={mediaId} className="h-20 w-20 rounded-lg bg-bg-base border border-border flex-shrink-0 animate-pulse" />
+                        <div key={mediaId} className="h-20 w-20 rounded-lg bg-surface-container-lowest flex-shrink-0 animate-pulse" />
                       )
                       return (
                         <img
                           key={mediaId}
                           src={thumb.url}
                           alt=""
-                          className="h-20 w-20 rounded-lg object-cover border border-border flex-shrink-0"
+                          className="h-20 w-20 rounded-lg object-cover flex-shrink-0"
                         />
                       )
                     })}
@@ -375,32 +375,26 @@ function ApprovalQueue({ drafts, mediaThumbs, onApprove, onEdit, onReject }: App
                 )}
 
                 {/* Action buttons */}
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    className="bg-status-scheduled/20 text-status-scheduled hover:bg-status-scheduled/30 border-0 font-medium"
+                <div className="flex items-center gap-3">
+                  <button
+                    className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 transition-colors rounded-full text-xs font-semibold"
                     onClick={() => onApprove(post.id)}
                   >
-                    <Check className="h-3.5 w-3.5 mr-1.5" />
+                    <Check className="h-3.5 w-3.5" />
                     Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-text-secondary hover:text-text-primary"
+                  </button>
+                  <button
+                    className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-all"
                     onClick={() => onEdit(post.id)}
                   >
-                    <Edit3 className="h-3.5 w-3.5 mr-1.5" />
-                    Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="bg-status-failed/15 text-status-failed hover:bg-status-failed/25 border-0"
+                    <Edit3 className="h-4 w-4" />
+                  </button>
+                  <button
+                    className="p-2 text-on-surface-variant hover:text-error hover:bg-error/10 rounded-full transition-all"
                     onClick={() => onReject(post.id)}
                   >
-                    <X className="h-3.5 w-3.5 mr-1.5" />
-                    Reject
-                  </Button>
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
             )
@@ -604,43 +598,75 @@ export default function ContentPage() {
 
   return (
     <Tabs defaultValue="content" className="space-y-6">
-      {/* Top-level tabs as page header */}
-      <div className="flex items-center justify-between">
-        <TabsList className="bg-transparent p-0 gap-6">
-          <TabsTrigger value="content" className="px-0 pb-2 text-3xl font-light rounded-none border-b-2 data-[state=active]:border-accent data-[state=active]:text-text-primary data-[state=inactive]:border-transparent data-[state=inactive]:text-text-muted data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-            Content
-          </TabsTrigger>
-          <TabsTrigger value="media" className="px-0 pb-2 text-3xl font-light rounded-none border-b-2 data-[state=active]:border-accent data-[state=active]:text-text-primary data-[state=inactive]:border-transparent data-[state=inactive]:text-text-muted data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-            Media
-          </TabsTrigger>
-        </TabsList>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handlePostNow} disabled={posting} className="text-xs">
-            <Send className="h-3.5 w-3.5 mr-1.5" />
+      {/* Page title + action buttons */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="font-display text-3xl text-on-surface">Content</h1>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handlePostNow}
+            disabled={posting}
+            className="flex items-center gap-2 px-5 py-2.5 gradient-cta text-on-primary font-semibold text-sm rounded-full transition-transform active:scale-95 shadow-lg shadow-primary/10"
+          >
+            <Send className="h-3.5 w-3.5" />
             {posting ? 'Posting...' : 'Post now'}
-          </Button>
-          <Button variant="outline" onClick={handleNewPost} className="text-xs">
-            <Plus className="h-3.5 w-3.5 mr-1.5" />
-            Manual post
-          </Button>
-          <Button onClick={handleSuggestPosts} disabled={suggesting} className="bg-accent text-white hover:bg-accent-hover">
-            {suggesting ? (
-              <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-            ) : (
-              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-            )}
-            {suggesting ? 'Starting...' : 'Suggest posts'}
-          </Button>
+          </button>
+          <div className="flex items-center bg-surface-container-low rounded-full p-1">
+            <button
+              onClick={handleNewPost}
+              className="px-4 py-1.5 text-xs font-medium text-on-surface hover:bg-surface-container-high rounded-full transition-all"
+            >
+              Manual post
+            </button>
+            <button
+              onClick={handleSuggestPosts}
+              disabled={suggesting}
+              className="px-4 py-1.5 text-xs font-medium text-on-surface hover:bg-surface-container-high rounded-full transition-all"
+            >
+              {suggesting ? (
+                <span className="flex items-center gap-1.5">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Starting...
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="h-3 w-3" />
+                  Suggest posts
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
+      {/* Tab switcher below title */}
+      <TabsList className="bg-transparent p-0 gap-6">
+        <TabsTrigger value="content" className="px-0 pb-2 text-sm font-medium rounded-none border-b-2 data-[state=active]:border-primary data-[state=active]:text-on-surface data-[state=inactive]:border-transparent data-[state=inactive]:text-on-surface-variant data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+          Content
+        </TabsTrigger>
+        <TabsTrigger value="media" className="px-0 pb-2 text-sm font-medium rounded-none border-b-2 data-[state=active]:border-primary data-[state=active]:text-on-surface data-[state=inactive]:border-transparent data-[state=inactive]:text-on-surface-variant data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+          Media
+        </TabsTrigger>
+      </TabsList>
+
       {/* ── Content Tab ────────────────────────────────────────────────── */}
-      <TabsContent value="content" className="mt-0 space-y-6">
+      <TabsContent value="content" className="mt-0 space-y-8">
+
+      {/* Hero text + Review Queue label */}
+      <div className="flex justify-between items-end mb-2">
+        <div>
+          <span className="text-[10px] uppercase tracking-widest text-on-surface-variant/60 font-body">Review Queue</span>
+          <h3 className="text-4xl font-display font-light mt-1 text-on-surface">
+            {aiDrafts.length} post{aiDrafts.length !== 1 ? 's' : ''} waiting <span className="serif-italic">for your touch.</span>
+          </h3>
+        </div>
+      </div>
 
       {/* Approval Queue */}
       {loading ? (
         <div className="flex items-center justify-center py-8">
-          <div className="h-7 w-7 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+          <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
       ) : (
         <ApprovalQueue
@@ -657,28 +683,28 @@ export default function ContentPage() {
           {/* Calendar controls */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={navigatePrev} className="h-8 w-8 p-0">
+              <Button variant="outline" size="sm" onClick={navigatePrev} className="h-8 w-8 p-0 border-outline-variant/15">
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="sm" onClick={navigateNext} className="h-8 w-8 p-0">
+              <Button variant="outline" size="sm" onClick={navigateNext} className="h-8 w-8 p-0 border-outline-variant/15">
                 <ChevronRight className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="sm" onClick={goToToday} className="text-xs px-3 h-8">
+              <Button variant="outline" size="sm" onClick={goToToday} className="text-xs px-3 h-8 border-outline-variant/15">
                 Today
               </Button>
-              <h2 className="text-sm font-medium text-text-secondary ml-2">
+              <h2 className="text-sm font-medium text-on-surface-variant ml-2">
                 {calendarMode === 'week' ? weekLabel : monthLabel}
               </h2>
             </div>
 
             {/* Week / Month toggle */}
-            <div className="flex items-center bg-bg-surface rounded-lg border border-border p-0.5">
+            <div className="flex items-center bg-surface-container-low rounded-lg p-0.5">
               <button
                 onClick={() => setCalendarMode('week')}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   calendarMode === 'week'
-                    ? 'bg-accent text-white'
-                    : 'text-text-muted hover:text-text-primary'
+                    ? 'bg-primary text-on-primary'
+                    : 'text-on-surface-variant hover:text-on-surface'
                 }`}
               >
                 Week
@@ -687,8 +713,8 @@ export default function ContentPage() {
                 onClick={() => setCalendarMode('month')}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   calendarMode === 'month'
-                    ? 'bg-accent text-white'
-                    : 'text-text-muted hover:text-text-primary'
+                    ? 'bg-primary text-on-primary'
+                    : 'text-on-surface-variant hover:text-on-surface'
                 }`}
               >
                 Month
@@ -699,7 +725,7 @@ export default function ContentPage() {
           {/* Calendar body */}
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <div className="h-7 w-7 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+              <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             </div>
           ) : calendarMode === 'week' ? (
             <WeekView
@@ -740,7 +766,7 @@ export default function ContentPage() {
             ].map(({ status, label }) => (
               <div key={status} className="flex items-center gap-1.5">
                 <span className={`h-2 w-2 rounded-full ${STATUS_DOT[status]}`} />
-                <span className="text-xs text-text-muted">{label}</span>
+                <span className="text-xs text-on-surface-variant">{label}</span>
               </div>
             ))}
           </div>

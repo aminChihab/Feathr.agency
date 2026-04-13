@@ -38,11 +38,11 @@ function formatDate(iso: string): string {
 }
 
 const TAG_COLORS = [
-  'bg-accent/15 text-accent border border-accent/30',
-  'bg-blue-500/15 text-blue-400 border border-blue-500/30',
-  'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
-  'bg-purple-500/15 text-purple-400 border border-purple-500/30',
-  'bg-amber-500/15 text-amber-400 border border-amber-500/30',
+  'bg-surface-container-highest text-on-surface-variant',
+  'bg-surface-container-highest text-on-surface-variant',
+  'bg-surface-container-highest text-on-surface-variant',
+  'bg-surface-container-highest text-on-surface-variant',
+  'bg-surface-container-highest text-on-surface-variant',
 ]
 
 function tagColor(tag: string): string {
@@ -331,30 +331,30 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
         maxFiles={50}
         maxSizeMB={50}
         onFilesAdded={handleFilesSelected}
-        className="group relative overflow-hidden rounded-xl border-2 border-dashed border-border bg-bg-surface transition-all duration-200 hover:border-accent/60 hover:bg-accent/5"
+        className="group relative overflow-hidden rounded-xl border-2 border-dashed border-outline-variant/30 bg-surface-container-low transition-all duration-200 hover:border-primary/40 hover:bg-primary/5"
       >
         {uploading ? (
           <div className="flex flex-col items-center gap-3 py-2">
-            <div className="flex items-center gap-2 text-sm text-text-secondary">
-              <Upload className="h-4 w-4 animate-bounce text-accent" />
+            <div className="flex items-center gap-2 text-sm text-on-surface-variant">
+              <Upload className="h-4 w-4 animate-bounce text-primary" />
               Uploading {uploadProgress.current} of {uploadProgress.total} files...
             </div>
-            <div className="w-64 h-1.5 rounded-full bg-bg-elevated overflow-hidden">
+            <div className="w-64 h-1.5 rounded-full bg-surface-container-high overflow-hidden">
               <div
-                className="h-full rounded-full bg-accent transition-all duration-300 ease-out"
+                className="h-full rounded-full bg-primary transition-all duration-300 ease-out"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
-            <span className="text-xs text-text-muted">{Math.round(progressPct)}% complete</span>
+            <span className="text-xs text-on-surface-variant">{Math.round(progressPct)}% complete</span>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2 py-2">
-            <div className="rounded-full bg-bg-elevated p-3 transition-transform duration-200 group-hover:scale-110">
-              <Upload className="h-5 w-5 text-accent" />
+            <div className="rounded-full bg-surface-container-high p-3 transition-transform duration-200 group-hover:scale-110">
+              <Upload className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-medium text-text-primary">Drop files here or click to browse</p>
-              <p className="text-xs text-text-muted mt-0.5">JPG, PNG, WEBP, MP4, MOV — max 50MB each, up to 50 files</p>
+              <p className="text-sm font-medium text-on-surface">Drop files here or click to browse</p>
+              <p className="text-xs text-on-surface-variant mt-0.5">JPG, PNG, WEBP, MP4, MOV — max 50MB each, up to 50 files</p>
             </div>
           </div>
         )}
@@ -369,28 +369,28 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
           <div className="space-y-2">
             {duplicates.map((d, i) => (
               <div key={i} className="flex items-center gap-3 text-xs">
-                <span className="text-text-primary">{d.file.name}</span>
-                <span className="text-text-muted">({formatFileSize(d.file.size)})</span>
-                <span className="text-text-muted">— matches existing file</span>
+                <span className="text-on-surface">{d.file.name}</span>
+                <span className="text-on-surface-variant">({formatFileSize(d.file.size)})</span>
+                <span className="text-on-surface-variant">— matches existing file</span>
               </div>
             ))}
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => handleDuplicateDecision(true)}
-              className="rounded-lg bg-accent px-3 py-1.5 text-xs text-white hover:bg-accent-hover"
+              className="rounded-lg bg-primary px-3 py-1.5 text-xs text-white hover:bg-primary-hover"
             >
               Upload anyway ({duplicates.length + pendingFiles.length} files)
             </button>
             <button
               onClick={() => handleDuplicateDecision(false)}
-              className="rounded-lg bg-bg-elevated px-3 py-1.5 text-xs text-text-secondary hover:text-text-primary"
+              className="rounded-lg bg-surface-container-high px-3 py-1.5 text-xs text-on-surface-variant hover:text-on-surface"
             >
               Skip duplicates ({pendingFiles.length} files)
             </button>
             <button
               onClick={() => { setDuplicates([]); setPendingFiles([]) }}
-              className="rounded-lg px-3 py-1.5 text-xs text-text-muted hover:text-text-primary"
+              className="rounded-lg px-3 py-1.5 text-xs text-on-surface-variant hover:text-on-surface"
             >
               Cancel
             </button>
@@ -401,13 +401,13 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
       {/* Toolbar: filters + search + count */}
       <div className="flex items-center gap-3 flex-wrap">
         {/* Type filters */}
-        <div className="flex items-center gap-1.5 rounded-lg bg-bg-elevated p-1">
+        <div className="flex items-center gap-1.5 rounded-lg bg-surface-container-high p-1">
           <button
             onClick={() => setFilter('all')}
             className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
               filter === 'all'
-                ? 'bg-accent text-white shadow-sm'
-                : 'text-text-secondary hover:text-text-primary'
+                ? 'bg-primary text-white shadow-sm'
+                : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
             <LayoutGrid className="h-3 w-3" />
@@ -417,8 +417,8 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
             onClick={() => setFilter('photo')}
             className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
               filter === 'photo'
-                ? 'bg-accent text-white shadow-sm'
-                : 'text-text-secondary hover:text-text-primary'
+                ? 'bg-primary text-white shadow-sm'
+                : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
             <Image className="h-3 w-3" />
@@ -428,8 +428,8 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
             onClick={() => setFilter('video')}
             className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
               filter === 'video'
-                ? 'bg-accent text-white shadow-sm'
-                : 'text-text-secondary hover:text-text-primary'
+                ? 'bg-primary text-white shadow-sm'
+                : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
             <Video className="h-3 w-3" />
@@ -439,22 +439,22 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
 
         {/* Search */}
         <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-muted" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-on-surface-variant" />
           <input
             type="text"
             placeholder="Search by name, description, tags..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg bg-bg-elevated border border-border pl-9 pr-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/60 transition-colors"
+            className="w-full rounded-lg bg-surface-container-high border border-outline-variant/15 pl-9 pr-3 py-2 text-xs text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary/60 transition-colors"
           />
         </div>
 
         {/* Sort */}
-        <div className="flex items-center bg-bg-elevated rounded-lg border border-border p-0.5 shrink-0">
+        <div className="flex items-center bg-surface-container-high rounded-lg border border-outline-variant/15 p-0.5 shrink-0">
           <button
             onClick={() => setSortBy('updated')}
             className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
-              sortBy === 'updated' ? 'bg-accent text-white' : 'text-text-muted hover:text-text-primary'
+              sortBy === 'updated' ? 'bg-primary text-white' : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
             Recent
@@ -462,7 +462,7 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
           <button
             onClick={() => setSortBy('name')}
             className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
-              sortBy === 'name' ? 'bg-accent text-white' : 'text-text-muted hover:text-text-primary'
+              sortBy === 'name' ? 'bg-primary text-white' : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
             Name
@@ -471,7 +471,7 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
 
         {/* Count */}
         {!loading && (
-          <p className="text-xs text-text-muted shrink-0">
+          <p className="text-xs text-on-surface-variant shrink-0">
             {search || activeTag ? (
               <>{filteredItems.length} of {counts.total} items</>
             ) : (
@@ -484,8 +484,8 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
       {/* Active tag filter */}
       {activeTag && (
         <div className="flex items-center gap-2 -mt-2">
-          <Tag className="h-3 w-3 text-text-muted" />
-          <span className="text-xs text-text-muted">Filtered by:</span>
+          <Tag className="h-3 w-3 text-on-surface-variant" />
+          <span className="text-xs text-on-surface-variant">Filtered by:</span>
           <button
             onClick={() => setActiveTag(null)}
             className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${tagColor(activeTag)}`}
@@ -499,18 +499,18 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
       {/* Grid */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-          <div className="rounded-full bg-bg-elevated p-4">
-            <Image className="h-6 w-6 text-text-muted" />
+          <div className="rounded-full bg-surface-container-high p-4">
+            <Image className="h-6 w-6 text-on-surface-variant" />
           </div>
           <div>
-            <p className="text-sm font-medium text-text-secondary">
+            <p className="text-sm font-medium text-on-surface-variant">
               {search ? 'No results found' : 'No media yet'}
             </p>
-            <p className="text-xs text-text-muted mt-1">
+            <p className="text-xs text-on-surface-variant mt-1">
               {search ? 'Try a different search term' : 'Upload some files to get started'}
             </p>
           </div>
@@ -525,11 +525,11 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
             return (
               <div
                 key={item.id}
-                className="group relative flex flex-col rounded-xl border border-border bg-bg-surface overflow-hidden transition-all duration-200 hover:border-border-hover hover:shadow-lg hover:shadow-black/20"
+                className="group relative flex flex-col rounded-xl border border-outline-variant/15 bg-surface-container-low overflow-hidden transition-all duration-200 hover:border-outline-variant/15-hover hover:shadow-lg hover:shadow-black/20"
               >
                 {/* Thumbnail */}
                 <div
-                  className="relative aspect-video cursor-pointer overflow-hidden bg-bg-elevated"
+                  className="relative aspect-video cursor-pointer overflow-hidden bg-surface-container-high"
                   onClick={() => setPreviewItem(item)}
                 >
                   {item.signedUrl ? (
@@ -541,9 +541,9 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
                       {item.file_type === 'video' ? (
-                        <Play className="h-10 w-10 text-text-muted" />
+                        <Play className="h-10 w-10 text-on-surface-variant" />
                       ) : (
-                        <Image className="h-10 w-10 text-text-muted" />
+                        <Image className="h-10 w-10 text-on-surface-variant" />
                       )}
                     </div>
                   )}
@@ -587,7 +587,7 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
                   <div className="absolute right-2 top-2">
                     <span
                       title={hasDescription ? 'AI analysis complete' : 'Pending analysis'}
-                      className={`block h-2.5 w-2.5 rounded-full border-2 border-bg-surface ${
+                      className={`block h-2.5 w-2.5 rounded-full border-2 border-surface-container-low ${
                         hasDescription ? 'bg-emerald-400' : 'bg-amber-400'
                       }`}
                     />
@@ -597,15 +597,15 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
                 {/* Card body */}
                 <div className="flex flex-col gap-2 p-3">
                   {/* File name */}
-                  <p className="truncate text-sm font-medium text-text-primary" title={item.file_name}>
+                  <p className="truncate text-sm font-medium text-on-surface" title={item.file_name}>
                     {item.file_name}
                   </p>
 
                   {/* AI description */}
                   <p className={`text-xs leading-relaxed ${
                     hasDescription
-                      ? 'text-text-secondary line-clamp-2'
-                      : 'italic text-text-muted'
+                      ? 'text-on-surface-variant line-clamp-2'
+                      : 'italic text-on-surface-variant'
                   }`}>
                     {description ?? 'Pending analysis...'}
                   </p>
@@ -623,7 +623,7 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
                         </button>
                       ))}
                       {tags.length > 5 && (
-                        <span className="rounded-full border border-border px-2 py-0.5 text-[10px] text-text-muted">
+                        <span className="rounded-full border border-outline-variant/15 px-2 py-0.5 text-[10px] text-on-surface-variant">
                           +{tags.length - 5}
                         </span>
                       )}
@@ -638,7 +638,7 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
 
       {/* Preview lightbox */}
       <Dialog open={!!previewItem} onOpenChange={(open) => !open && setPreviewItem(null)}>
-        <DialogContent className="bg-bg-surface border-border max-w-4xl p-0 overflow-hidden">
+        <DialogContent className="bg-surface-container-low border-outline-variant/15 max-w-4xl p-0 overflow-hidden">
           {previewItem && (() => {
             const description = (previewItem.metadata as { description?: string } | null)?.description
             const tags = previewItem.tags ?? []
@@ -693,9 +693,9 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
                   {/* Row 1: name + type badge + size + date */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-text-primary">{previewItem.file_name}</p>
-                      <div className="mt-1 flex items-center gap-3 text-xs text-text-muted">
-                        <span className="uppercase font-medium text-text-secondary">{previewItem.file_type}</span>
+                      <p className="truncate text-sm font-medium text-on-surface">{previewItem.file_name}</p>
+                      <div className="mt-1 flex items-center gap-3 text-xs text-on-surface-variant">
+                        <span className="uppercase font-medium text-on-surface-variant">{previewItem.file_type}</span>
                         <span>{formatFileSize(previewItem.file_size)}</span>
                         <span>{formatDate(previewItem.created_at)}</span>
                       </div>
@@ -704,17 +704,17 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
                       <span
                         className={`h-2 w-2 rounded-full ${hasDescription ? 'bg-emerald-400' : 'bg-amber-400'}`}
                       />
-                      <span className="text-xs text-text-muted">
+                      <span className="text-xs text-on-surface-variant">
                         {hasDescription ? 'Analyzed' : 'Pending'}
                       </span>
                     </div>
                   </div>
 
                   {/* Row 2: AI description */}
-                  <div className="rounded-lg bg-bg-elevated px-3 py-2.5">
-                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">AI Description</p>
+                  <div className="rounded-lg bg-surface-container-high px-3 py-2.5">
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">AI Description</p>
                     <p className={`text-sm leading-relaxed ${
-                      hasDescription ? 'text-text-secondary' : 'italic text-text-muted'
+                      hasDescription ? 'text-on-surface-variant' : 'italic text-on-surface-variant'
                     }`}>
                       {description ?? 'Pending analysis...'}
                     </p>

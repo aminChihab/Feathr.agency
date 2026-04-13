@@ -130,19 +130,19 @@ export function PostModal({ open, onClose, supabase, userId, editPost, onSaved }
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="bg-bg-surface border-border max-w-lg">
+      <DialogContent className="bg-surface-container-low border-outline-variant/15 max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-light">{editPost ? 'Edit post' : 'New post'}</DialogTitle>
+          <DialogTitle className="font-light text-on-surface">{editPost ? 'Edit post' : 'New post'}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Platforms</Label>
+            <Label className="text-on-surface-variant">Platforms</Label>
             <div className="space-y-2 max-h-40 overflow-y-auto">
               {accounts.map((acc) => (
                 <label
                   key={acc.id}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg border border-border px-3 py-2 transition-colors hover:bg-bg-elevated"
+                  className="flex cursor-pointer items-center gap-3 rounded-lg border border-outline-variant/15 px-3 py-2 transition-colors hover:bg-surface-container-high"
                 >
                   <Checkbox
                     checked={selectedAccountIds.includes(acc.id)}
@@ -156,7 +156,7 @@ export function PostModal({ open, onClose, supabase, userId, editPost, onSaved }
                   />
                   <div className="flex items-center gap-2">
                     <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: acc.platforms?.color ?? '#666' }} />
-                    <span className="text-sm">{acc.platforms?.name ?? 'Unknown'}</span>
+                    <span className="text-sm text-on-surface">{acc.platforms?.name ?? 'Unknown'}</span>
                   </div>
                 </label>
               ))}
@@ -164,18 +164,18 @@ export function PostModal({ open, onClose, supabase, userId, editPost, onSaved }
           </div>
 
           <div className="space-y-2">
-            <Label>Caption</Label>
+            <Label className="text-on-surface-variant">Caption</Label>
             <Textarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               rows={4}
-              className="bg-bg-base"
+              className="bg-surface-container-lowest text-on-surface"
               placeholder="Write your post..."
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Media</Label>
+            <Label className="text-on-surface-variant">Media</Label>
             <MediaPicker
               supabase={supabase}
               userId={userId}
@@ -185,7 +185,7 @@ export function PostModal({ open, onClose, supabase, userId, editPost, onSaved }
           </div>
 
           <div className="space-y-2">
-            <Label>Schedule</Label>
+            <Label className="text-on-surface-variant">Schedule</Label>
             <div className="flex flex-wrap gap-2">
               {getSchedulePresets().map((preset) => (
                 <button
@@ -194,8 +194,8 @@ export function PostModal({ open, onClose, supabase, userId, editPost, onSaved }
                   onClick={() => setScheduledAt(preset.value)}
                   className={`rounded-full px-3 py-1 text-xs transition-colors ${
                     scheduledAt === preset.value
-                      ? 'bg-accent text-white'
-                      : 'bg-bg-elevated text-text-secondary hover:text-text-primary'
+                      ? 'bg-primary text-on-primary'
+                      : 'bg-surface-container-high text-on-surface-variant hover:text-on-surface'
                   }`}
                 >
                   {preset.label}
@@ -206,23 +206,24 @@ export function PostModal({ open, onClose, supabase, userId, editPost, onSaved }
               type="datetime-local"
               value={scheduledAt.includes('T') ? scheduledAt.slice(0, 16) : scheduledAt}
               onChange={(e) => setScheduledAt(e.target.value)}
-              className="bg-bg-base"
+              className="bg-surface-container-lowest text-on-surface"
             />
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={onClose}>Cancel</Button>
+            <Button variant="ghost" onClick={onClose} className="text-on-surface-variant hover:text-on-surface">Cancel</Button>
             <Button
               variant="outline"
               onClick={() => handleSave('draft')}
               disabled={selectedAccountIds.length === 0 || saving}
+              className="border-outline-variant/15 text-on-surface-variant hover:text-on-surface"
             >
               Save as draft
             </Button>
             <Button
               onClick={() => handleSave('approved')}
               disabled={selectedAccountIds.length === 0 || saving}
-              className="bg-accent text-white hover:bg-accent-hover"
+              className="gradient-cta text-on-primary"
             >
               {saving ? 'Saving...' : 'Approve & schedule'}
             </Button>
