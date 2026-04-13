@@ -22,7 +22,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         profileName={profile?.professional_name ?? null}
         email={user.email ?? ''}
       />
-      <main className="ml-64 flex-1 px-10 py-8">{children}</main>
+      <main className="ml-64 flex-1 min-h-screen">{children}</main>
     </div>
   )
 }

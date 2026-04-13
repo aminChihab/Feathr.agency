@@ -5,21 +5,22 @@ interface MetricCardProps {
   value: number
   icon: ReactNode
   statusLabel?: string
+  statusColor?: string
 }
 
-export function MetricCard({ label, value, icon, statusLabel }: MetricCardProps) {
+export function MetricCard({ label, value, icon, statusLabel, statusColor = 'text-on-surface-variant' }: MetricCardProps) {
   return (
-    <div className="bg-surface-container-low rounded-xl p-6">
-      <div className="flex items-start justify-between mb-4">
+    <div className="bg-surface-container-low p-6 rounded-xl border border-outline-variant/5 group hover:bg-surface-container transition-all">
+      <div className="flex justify-between items-start mb-4">
+        <div className={statusColor}>{icon}</div>
         {statusLabel && (
-          <span className="text-[10px] uppercase tracking-widest text-on-surface-variant/60 font-body">
+          <span className={`text-[10px] font-body uppercase tracking-widest ${statusColor}`}>
             {statusLabel}
           </span>
         )}
-        <div className="text-on-surface-variant/30 ml-auto">{icon}</div>
       </div>
-      <p className="font-display text-4xl text-on-surface">{value}</p>
-      <p className="text-sm text-on-surface-variant font-body mt-1">{label}</p>
+      <div className="font-display text-4xl mb-1">{String(value).padStart(2, '0')}</div>
+      <div className="text-on-surface-variant text-sm font-body">{label}</div>
     </div>
   )
 }
