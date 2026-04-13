@@ -56,8 +56,7 @@ export async function POST() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           directUrls: allUrls,
-          resultsType: 'posts',
-          resultsLimit: 12,
+          resultsLimit: 20,
         }),
       }
     )
