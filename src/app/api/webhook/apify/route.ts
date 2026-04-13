@@ -43,16 +43,13 @@ export async function POST(request: NextRequest) {
 
   const report = pendingReports[0]
   const reportBody = report.body as any
-  const handle = reportBody.handle
-  const term = reportBody.term
+  const handles: string[] = reportBody.handles ?? []
+  const terms: string[] = reportBody.terms ?? []
 
-  console.log(`[apify-webhook] Processing results for ${handle ? `@${handle}` : term}`)
+  console.log(`[apify-webhook] Processing: ${handles.length} handles, ${terms.length} terms`)
 
-  // Get the run details to find the dataset ID
-  const runRes = await fetch(
-    `https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_TOKEN}`
-  )
-
+  // Get run details to find dataset ID
+  const runRes = await fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_TOKEN}`)
   if (!runRes.ok) {
     console.error('[apify-webhook] Failed to get run details:', runRes.status)
     return NextResponse.json({ ok: true })
@@ -60,38 +57,52 @@ export async function POST(request: NextRequest) {
 
   const runData = await runRes.json()
   const datasetId = runData.data?.defaultDatasetId
-
   if (!datasetId) {
-    console.error('[apify-webhook] No dataset ID in run details')
+    console.error('[apify-webhook] No dataset ID')
     return NextResponse.json({ ok: true })
   }
 
-  console.log(`[apify-webhook] Dataset ID: ${datasetId}`)
-
-  // Fetch results from dataset
-  const resultsRes = await fetch(
-    `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}`
-  )
-
+  // Fetch all results
+  const resultsRes = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}`)
   if (!resultsRes.ok) {
     console.error('[apify-webhook] Failed to fetch results:', resultsRes.status)
     return NextResponse.json({ ok: true })
   }
 
-  const results = await resultsRes.json()
-  console.log(`[apify-webhook] Got ${results.length} results`)
+  const allResults = await resultsRes.json()
+  console.log(`[apify-webhook] Got ${allResults.length} total results`)
 
-  if (results.length === 0) {
-    await supabase.from('research_reports').update({
-      title: handle ? `IG Competitor: @${handle} (no data)` : `IG Trending: ${term} (no data)`,
-      body: { ...reportBody, status: 'completed', scraped_at: new Date().toISOString(), error: 'No results returned' },
-    }).eq('id', report.id)
-    return NextResponse.json({ ok: true })
+  // Group results by source URL (owner for profiles, hashtag page for terms)
+  // Posts from a profile have ownerUsername, posts from hashtag pages have various owners
+  const byOwner = new Map<string, any[]>()
+  const hashtagPosts: any[] = []
+
+  for (const post of allResults) {
+    const owner = (post.ownerUsername ?? '').toLowerCase()
+    const isFromTrackedHandle = handles.some((h) => h.toLowerCase() === owner)
+
+    if (isFromTrackedHandle) {
+      if (!byOwner.has(owner)) byOwner.set(owner, [])
+      byOwner.get(owner)!.push(post)
+    } else {
+      // Posts from hashtag pages (various owners)
+      hashtagPosts.push(post)
+    }
   }
 
-  if (report.type === 'competitor' && handle) {
-    const first = results[0]
-    const recentPosts = results.map((post: any) => ({
+  let competitorReports = 0
+  let hashtagReports = 0
+
+  // Create competitor reports
+  for (const handle of handles) {
+    const posts = byOwner.get(handle.toLowerCase()) ?? []
+    if (posts.length === 0) {
+      console.log(`[apify-webhook] @${handle}: no posts found`)
+      continue
+    }
+
+    const first = posts[0]
+    const recentPosts = posts.map((post: any) => ({
       caption: post.caption ?? '',
       timestamp: post.timestamp,
       likes: post.likesCount ?? 0,
@@ -101,14 +112,14 @@ export async function POST(request: NextRequest) {
       hashtags: post.hashtags ?? [],
     }))
 
-    await supabase.from('research_reports').update({
+    await supabase.from('research_reports').insert({
+      profile_id: report.profile_id,
+      type: 'competitor',
       title: `IG Competitor: @${handle}`,
       body: {
         handle,
         platform: 'instagram',
         scraped_at: new Date().toISOString(),
-        status: 'completed',
-        apify_run_id: runId,
         profile: {
           display_name: first?.ownerFullName ?? handle,
           bio: first?.ownerBio ?? '',
@@ -118,39 +129,76 @@ export async function POST(request: NextRequest) {
         },
         recent_posts: recentPosts,
       },
-    }).eq('id', report.id)
+    })
 
-    console.log(`[apify-webhook] @${handle}: saved ${recentPosts.length} posts`)
-    await createNotification(report.profile_id, 'system', `IG research: @${handle} scraped (${recentPosts.length} posts)`)
-
-  } else if (report.type === 'trend' && term) {
-    const posts = results.map((post: any) => ({
-      caption: post.caption ?? '',
-      timestamp: post.timestamp,
-      likes: post.likesCount ?? 0,
-      comments: post.commentsCount ?? 0,
-      media_type: post.type ?? 'Image',
-      permalink: post.url,
-      owner: post.ownerUsername ?? '',
-      hashtags: post.hashtags ?? [],
-    }))
-
-    await supabase.from('research_reports').update({
-      title: `IG Trending: ${term}`,
-      body: {
-        term,
-        platform: 'instagram',
-        scraped_at: new Date().toISOString(),
-        status: 'completed',
-        apify_run_id: runId,
-        post_count: posts.length,
-        posts,
-      },
-    }).eq('id', report.id)
-
-    console.log(`[apify-webhook] ${term}: saved ${posts.length} posts`)
-    await createNotification(report.profile_id, 'system', `IG research: ${term} scraped (${posts.length} posts)`)
+    competitorReports++
+    console.log(`[apify-webhook] @${handle}: ${recentPosts.length} posts saved`)
   }
 
-  return NextResponse.json({ ok: true })
+  // Create hashtag reports — group by hashtag from the terms list
+  if (terms.length > 0 && hashtagPosts.length > 0) {
+    // If we only have one term, all hashtag posts belong to it
+    // If multiple terms, we can't perfectly distinguish — group them all per term based on hashtag presence
+    for (const term of terms) {
+      const matchingPosts = terms.length === 1
+        ? hashtagPosts
+        : hashtagPosts.filter((p) => {
+            const tags = (p.hashtags ?? []).map((t: string) => t.toLowerCase())
+            return tags.includes(term.toLowerCase())
+          })
+
+      if (matchingPosts.length === 0) continue
+
+      const posts = matchingPosts.map((post: any) => ({
+        caption: post.caption ?? '',
+        timestamp: post.timestamp,
+        likes: post.likesCount ?? 0,
+        comments: post.commentsCount ?? 0,
+        media_type: post.type ?? 'Image',
+        permalink: post.url,
+        owner: post.ownerUsername ?? '',
+        hashtags: post.hashtags ?? [],
+      }))
+
+      await supabase.from('research_reports').insert({
+        profile_id: report.profile_id,
+        type: 'trend',
+        title: `IG Trending: #${term}`,
+        body: {
+          term: `#${term}`,
+          platform: 'instagram',
+          scraped_at: new Date().toISOString(),
+          post_count: posts.length,
+          posts,
+        },
+      })
+
+      hashtagReports++
+      console.log(`[apify-webhook] #${term}: ${posts.length} posts saved`)
+    }
+  }
+
+  // Update the pending report to completed
+  await supabase.from('research_reports').update({
+    title: `IG Research: ${competitorReports} profiles, ${hashtagReports} hashtags`,
+    body: {
+      ...reportBody,
+      status: 'completed',
+      scraped_at: new Date().toISOString(),
+      total_results: allResults.length,
+      competitor_reports: competitorReports,
+      hashtag_reports: hashtagReports,
+    },
+  }).eq('id', report.id)
+
+  const total = competitorReports + hashtagReports
+  await createNotification(
+    report.profile_id,
+    'system',
+    `IG research complete: ${competitorReports} profiles, ${hashtagReports} hashtags (${allResults.length} posts total)`
+  )
+
+  console.log(`[apify-webhook] Done: ${competitorReports} competitors, ${hashtagReports} hashtags`)
+
+  return NextResponse.json({ ok: true, competitors: competitorReports, hashtags: hashtagReports })
 }
