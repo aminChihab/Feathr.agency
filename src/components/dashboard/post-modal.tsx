@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { MediaPicker } from './media-picker'
+import { X } from 'lucide-react'
 
 type PlatformAccount = {
   id: string
@@ -98,7 +99,6 @@ export function PostModal({ open, onClose, supabase, userId, editPost, onSaved }
     setSaving(true)
 
     if (editPost) {
-      // Edit mode: update the single existing post
       await supabase
         .from('content_calendar')
         .update({
@@ -111,7 +111,6 @@ export function PostModal({ open, onClose, supabase, userId, editPost, onSaved }
         })
         .eq('id', editPost.id)
     } else {
-      // New post: create one row per selected platform
       const rows = selectedAccountIds.map(accountId => ({
         profile_id: userId,
         platform_account_id: accountId,
@@ -130,19 +129,29 @@ export function PostModal({ open, onClose, supabase, userId, editPost, onSaved }
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="bg-surface-container-low border-outline-variant/15 max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="font-light text-on-surface">{editPost ? 'Edit post' : 'New post'}</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="bg-surface-container-low border-outline-variant/15 max-w-lg p-0 overflow-hidden">
+        {/* Header bar matching editorial style */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-outline-variant/10">
+          <h2 className="font-display text-2xl text-on-surface">
+            {editPost ? 'Edit post' : 'New post'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-all"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
-        <div className="space-y-4">
+        <div className="px-6 pb-6 pt-4 space-y-5">
+          {/* Platforms */}
           <div className="space-y-2">
-            <Label className="text-on-surface-variant">Platforms</Label>
+            <label className="text-xs font-semibold uppercase tracking-widest text-primary">Platforms</label>
             <div className="space-y-2 max-h-40 overflow-y-auto">
               {accounts.map((acc) => (
                 <label
                   key={acc.id}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg border border-outline-variant/15 px-3 py-2 transition-colors hover:bg-surface-container-high"
+                  className="flex cursor-pointer items-center gap-3 rounded-xl border border-outline-variant/10 px-3 py-2.5 transition-colors hover:bg-surface-container-high"
                 >
                   <Checkbox
                     checked={selectedAccountIds.includes(acc.id)}
@@ -155,7 +164,7 @@ export function PostModal({ open, onClose, supabase, userId, editPost, onSaved }
                     }}
                   />
                   <div className="flex items-center gap-2">
-                    <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: acc.platforms?.color ?? '#666' }} />
+                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: acc.platforms?.color ?? '#666' }} />
                     <span className="text-sm text-on-surface">{acc.platforms?.name ?? 'Unknown'}</span>
                   </div>
                 </label>
@@ -163,19 +172,21 @@ export function PostModal({ open, onClose, supabase, userId, editPost, onSaved }
             </div>
           </div>
 
+          {/* Caption */}
           <div className="space-y-2">
-            <Label className="text-on-surface-variant">Caption</Label>
+            <label className="text-xs font-semibold uppercase tracking-widest text-primary">Caption</label>
             <Textarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               rows={4}
-              className="bg-surface-container-lowest text-on-surface"
+              className="bg-surface-container-lowest text-on-surface rounded-xl border-outline-variant/10 focus:border-primary/40"
               placeholder="Write your post..."
             />
           </div>
 
+          {/* Media */}
           <div className="space-y-2">
-            <Label className="text-on-surface-variant">Media</Label>
+            <label className="text-xs font-semibold uppercase tracking-widest text-primary">Media</label>
             <MediaPicker
               supabase={supabase}
               userId={userId}
@@ -184,8 +195,9 @@ export function PostModal({ open, onClose, supabase, userId, editPost, onSaved }
             />
           </div>
 
+          {/* Schedule */}
           <div className="space-y-2">
-            <Label className="text-on-surface-variant">Schedule</Label>
+            <label className="text-xs font-semibold uppercase tracking-widest text-primary">Schedule</label>
             <div className="flex flex-wrap gap-2">
               {getSchedulePresets().map((preset) => (
                 <button
@@ -206,27 +218,32 @@ export function PostModal({ open, onClose, supabase, userId, editPost, onSaved }
               type="datetime-local"
               value={scheduledAt.includes('T') ? scheduledAt.slice(0, 16) : scheduledAt}
               onChange={(e) => setScheduledAt(e.target.value)}
-              className="bg-surface-container-lowest text-on-surface"
+              className="bg-surface-container-lowest text-on-surface rounded-xl border-outline-variant/10"
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={onClose} className="text-on-surface-variant hover:text-on-surface">Cancel</Button>
-            <Button
-              variant="outline"
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-3 border-t border-outline-variant/10">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-xs font-medium text-on-surface-variant hover:text-on-surface transition-colors"
+            >
+              Cancel
+            </button>
+            <button
               onClick={() => handleSave('draft')}
               disabled={selectedAccountIds.length === 0 || saving}
-              className="border-outline-variant/15 text-on-surface-variant hover:text-on-surface"
+              className="px-5 py-2 text-xs font-medium border border-outline-variant/20 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-40"
             >
               Save as draft
-            </Button>
-            <Button
+            </button>
+            <button
               onClick={() => handleSave('approved')}
               disabled={selectedAccountIds.length === 0 || saving}
-              className="gradient-cta text-on-primary"
+              className="px-5 py-2 bg-primary text-on-primary-container text-xs font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
             >
               {saving ? 'Saving...' : 'Approve & schedule'}
-            </Button>
+            </button>
           </div>
         </div>
       </DialogContent>
