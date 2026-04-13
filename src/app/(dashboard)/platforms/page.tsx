@@ -122,22 +122,22 @@ export default function PlatformsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-light">Platforms</h1>
-        <Button onClick={() => { setReconnectPlatform(null); setModalOpen(true) }} className="bg-accent text-white hover:bg-accent-hover">
+        <h1 className="font-display text-3xl text-primary">Platforms</h1>
+        <Button onClick={() => { setReconnectPlatform(null); setModalOpen(true) }} className="bg-gradient-to-br from-primary to-primary-container text-on-primary-container hover:opacity-90 active:scale-95 transition-all">
           Add platform
         </Button>
       </div>
 
       {expiredPlatforms.length > 0 && (
-        <div className="flex items-start gap-3 rounded-lg border border-status-draft/30 bg-status-draft/5 px-4 py-3">
-          <AlertTriangle className="h-4 w-4 text-status-draft mt-0.5 shrink-0" />
+        <div className="flex items-start gap-3 rounded-xl bg-error/5 px-4 py-3">
+          <AlertTriangle className="h-4 w-4 text-error mt-0.5 shrink-0" />
           <div className="space-y-1">
-            <p className="text-sm font-medium text-text-primary">
+            <p className="text-sm font-medium text-on-surface">
               {expiredPlatforms.length === 1
                 ? `${expiredPlatforms[0].name} needs to be reconnected`
                 : `${expiredPlatforms.length} platforms need to be reconnected`}
             </p>
-            <p className="text-xs text-text-muted">
+            <p className="text-xs text-on-surface-variant/60">
               {expiredPlatforms.map((p) => p.name).join(', ')} — authorization has expired. Click Reconnect to re-authorize.
             </p>
           </div>
@@ -146,11 +146,11 @@ export default function PlatformsPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
       ) : accounts.length === 0 ? (
-        <div className="rounded-lg border border-border bg-bg-surface p-12 text-center">
-          <p className="text-text-muted">No platforms connected yet. Add your first platform to get started.</p>
+        <div className="bg-surface-container-low rounded-xl p-12 text-center">
+          <p className="text-on-surface-variant/60">No platforms connected yet. Add your first platform to get started.</p>
         </div>
       ) : (
         <div className="space-y-3">

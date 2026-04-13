@@ -97,18 +97,18 @@ export function ConnectPlatformModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent className="bg-bg-surface border-border max-w-lg max-h-[80vh] overflow-y-auto">
+      <DialogContent className="bg-surface-container-low border-outline-variant/10 max-w-lg max-h-[80vh] overflow-y-auto rounded-xl">
         <DialogHeader>
-          <DialogTitle className="font-light">
+          <DialogTitle className="font-display text-on-surface">
             {selectedPlatform ? `Connect ${selectedPlatform.name}` : 'Add platform'}
           </DialogTitle>
         </DialogHeader>
 
         {!selectedPlatform ? (
           loading ? (
-            <p className="text-center text-text-muted py-8">Loading...</p>
+            <p className="text-center text-on-surface-variant/60 py-8">Loading...</p>
           ) : availablePlatforms.length === 0 ? (
-            <p className="text-center text-text-muted py-8">All platforms are already connected.</p>
+            <p className="text-center text-on-surface-variant/60 py-8">All platforms are already connected.</p>
           ) : (
             <div className="space-y-4">
               {CATEGORY_ORDER.map((cat) => {
@@ -116,15 +116,15 @@ export function ConnectPlatformModal({
                 if (catPlatforms.length === 0) return null
                 return (
                   <div key={cat} className="space-y-2">
-                    <p className="text-xs font-medium uppercase tracking-wider text-text-muted">{CATEGORY_LABELS[cat]}</p>
+                    <p className="text-xs font-medium uppercase tracking-wider text-on-surface-variant/60">{CATEGORY_LABELS[cat]}</p>
                     {catPlatforms.map((p) => (
                       <button
                         key={p.id}
                         onClick={() => setSelectedPlatform(p)}
-                        className="flex w-full items-center gap-3 rounded-lg border border-border px-4 py-3 text-left transition-colors hover:bg-bg-elevated"
+                        className="flex w-full items-center gap-3 rounded-xl bg-surface-container px-4 py-3 text-left transition-colors hover:bg-surface-container-high"
                       >
                         <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: p.color ?? '#666' }} />
-                        <span className="text-sm">{p.name}</span>
+                        <span className="text-sm text-on-surface">{p.name}</span>
                       </button>
                     ))}
                   </div>
@@ -135,21 +135,21 @@ export function ConnectPlatformModal({
         ) : (
           <div className="space-y-4">
             {selectedPlatform.auth_type === 'oauth' && (
-              <Button onClick={startOAuth} className="w-full bg-accent text-white hover:bg-accent-hover">
+              <Button onClick={startOAuth} className="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary-container hover:opacity-90 active:scale-95 transition-all">
                 Connect {selectedPlatform.name}
               </Button>
             )}
             {selectedPlatform.auth_type === 'credentials' && (
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <Label className="text-xs">Email or username</Label>
-                  <Input value={credentials.username} onChange={(e) => setCredentials((p) => ({ ...p, username: e.target.value }))} className="bg-bg-base" />
+                  <Label className="text-xs text-on-surface-variant">Email or username</Label>
+                  <Input value={credentials.username} onChange={(e) => setCredentials((p) => ({ ...p, username: e.target.value }))} className="bg-surface-container-high border-none" />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Password</Label>
-                  <Input type="password" value={credentials.password} onChange={(e) => setCredentials((p) => ({ ...p, password: e.target.value }))} className="bg-bg-base" />
+                  <Label className="text-xs text-on-surface-variant">Password</Label>
+                  <Input type="password" value={credentials.password} onChange={(e) => setCredentials((p) => ({ ...p, password: e.target.value }))} className="bg-surface-container-high border-none" />
                 </div>
-                <Button onClick={connectCredentials} disabled={saving} className="w-full bg-accent text-white hover:bg-accent-hover">
+                <Button onClick={connectCredentials} disabled={saving} className="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary-container hover:opacity-90 active:scale-95 transition-all">
                   {saving ? 'Saving...' : 'Save credentials'}
                 </Button>
               </div>
@@ -157,18 +157,18 @@ export function ConnectPlatformModal({
             {selectedPlatform.auth_type === 'api_key' && (
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <Label className="text-xs">API key or token</Label>
-                  <Input value={apiKey} onChange={(e) => setApiKey(e.target.value)} className="bg-bg-base" />
+                  <Label className="text-xs text-on-surface-variant">API key or token</Label>
+                  <Input value={apiKey} onChange={(e) => setApiKey(e.target.value)} className="bg-surface-container-high border-none" />
                 </div>
-                <Button onClick={connectApiKey} disabled={saving} className="w-full bg-accent text-white hover:bg-accent-hover">
+                <Button onClick={connectApiKey} disabled={saving} className="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary-container hover:opacity-90 active:scale-95 transition-all">
                   {saving ? 'Saving...' : 'Save token'}
                 </Button>
               </div>
             )}
             {selectedPlatform.auth_type === 'manual' && (
-              <p className="text-sm text-text-muted">This platform needs to be connected manually. Set this up in the platform&apos;s own settings.</p>
+              <p className="text-sm text-on-surface-variant/60">This platform needs to be connected manually. Set this up in the platform&apos;s own settings.</p>
             )}
-            <Button variant="ghost" onClick={() => setSelectedPlatform(null)} className="w-full">Back to platforms</Button>
+            <Button variant="ghost" onClick={() => setSelectedPlatform(null)} className="w-full text-on-surface-variant hover:text-on-surface">Back to platforms</Button>
           </div>
         )}
       </DialogContent>
