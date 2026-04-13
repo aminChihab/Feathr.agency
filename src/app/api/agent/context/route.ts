@@ -36,15 +36,23 @@ export async function GET(request: NextRequest) {
       .eq('id', profileId)
       .single()
 
-    // Get latest research reports (last 7 days)
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    // Get latest research reports with sections
     const { data: reports } = await supabase
       .from('research_reports')
-      .select('type, title, body, created_at')
+      .select('id, report_type, title, summary, created_at, research_report_sections(section_type, title, content, sort_order)')
       .eq('profile_id', profileId)
-      .gte('created_at', weekAgo)
       .order('created_at', { ascending: false })
-      .limit(20)
+      .limit(10)
+
+    // Get latest scraped data
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    const { data: scrapedData } = await supabase
+      .from('research_scraped')
+      .select('id, platform, data_type, handle, term, display_name, bio, followers, following, post_count, scraped_at, research_scraped_posts(caption, permalink, media_type, likes, comments, views, hashtags, posted_at)')
+      .eq('profile_id', profileId)
+      .gte('scraped_at', weekAgo)
+      .order('scraped_at', { ascending: false })
+      .limit(30)
 
     // Get analytics (last 14 days)
     const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
@@ -74,6 +82,7 @@ export async function GET(request: NextRequest) {
         competitor_handles: (profile?.settings as any)?.competitor_handles ?? [],
       },
       research_reports: reports ?? [],
+      scraped_data: scrapedData ?? [],
       analytics: analytics ?? [],
       recent_posts: recentPosts ?? [],
     })
@@ -90,14 +99,14 @@ export async function GET(request: NextRequest) {
     // Get latest research reports for content ideas
     const { data: reports } = await supabase
       .from('research_reports')
-      .select('type, title, body, created_at')
+      .select('id, report_type, title, summary, created_at, research_report_sections(section_type, title, content, sort_order)')
       .eq('profile_id', profileId)
       .order('created_at', { ascending: false })
       .limit(10)
 
     // Extract latest strategy reports by type
-    const latestXStrategy = reports?.find((r) => (r.body as any)?.type === 'x_strategy')
-    const latestIGStrategy = reports?.find((r) => (r.body as any)?.type === 'ig_strategy')
+    const latestXStrategy = reports?.find((r) => r.report_type === 'x_strategy')
+    const latestIGStrategy = reports?.find((r) => r.report_type === 'ig_strategy')
 
     // Get connected platforms
     const { data: platforms } = await supabase
@@ -149,8 +158,8 @@ export async function GET(request: NextRequest) {
         voice_sample: profile?.voice_sample,
       },
       performance_rules: profile?.performance_rules ?? null,
-      latest_x_strategy: latestXStrategy?.body ?? null,
-      latest_ig_strategy: latestIGStrategy?.body ?? null,
+      latest_x_strategy: latestXStrategy ?? null,
+      latest_ig_strategy: latestIGStrategy ?? null,
       research_reports: reports ?? [],
       platforms: platforms ?? [],
       recent_posts: recentPosts ?? [],

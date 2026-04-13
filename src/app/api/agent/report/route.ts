@@ -9,7 +9,8 @@ function createServiceClient() {
   )
 }
 
-// POST /api/agent/report — Agent writes a research report
+// POST /api/agent/report — Agent saves a research report with sections
+// Body: { profile_id, report_type, title, summary, sections: [{ section_type, title, content }] }
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
   const expectedSecret = process.env.AGENT_SECRET
@@ -19,35 +20,50 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json()
-  const { profile_id, type, title, report } = body
+  const { profile_id, report_type, title, summary, sections } = body
 
-  if (!profile_id || !type || !title || !report) {
-    return NextResponse.json({ error: 'Missing fields: profile_id, type, title, report' }, { status: 400 })
+  if (!profile_id || !report_type || !title) {
+    return NextResponse.json({ error: 'Missing fields: profile_id, report_type, title' }, { status: 400 })
   }
 
   const supabase = createServiceClient()
 
-  const { data, error } = await supabase
+  // Create report
+  const { data: report, error: reportError } = await supabase
     .from('research_reports')
-    .insert({
-      profile_id,
-      type,
-      title,
-      body: report,
-    })
+    .insert({ profile_id, report_type, title, summary: summary ?? null })
     .select('id')
     .single()
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  if (reportError) {
+    return NextResponse.json({ error: reportError.message }, { status: 500 })
   }
 
-  const reportType = (report as any)?.type
-  const notifTitle = reportType === 'x_strategy' ? 'New X/Twitter strategy report'
-    : reportType === 'ig_strategy' ? 'New Instagram strategy report'
-    : reportType === 'performance' ? 'New performance analysis'
-    : `New research report: ${title}`
-  await createNotification(profile_id, 'system', notifTitle, { report_id: data.id, report_type: reportType })
+  // Create sections
+  if (sections && Array.isArray(sections) && sections.length > 0) {
+    const sectionRows = sections.map((s: any, i: number) => ({
+      report_id: report.id,
+      section_type: s.section_type ?? 'general',
+      title: s.title ?? `Section ${i + 1}`,
+      content: s.content ?? '',
+      sort_order: i,
+    }))
 
-  return NextResponse.json({ id: data.id, message: 'Report saved' })
+    const { error: sectionsError } = await supabase
+      .from('research_report_sections')
+      .insert(sectionRows)
+
+    if (sectionsError) {
+      console.error('[report] Failed to insert sections:', sectionsError.message)
+    }
+  }
+
+  // Notification
+  const notifTitle = report_type === 'x_strategy' ? 'New X/Twitter strategy report'
+    : report_type === 'ig_strategy' ? 'New Instagram strategy report'
+    : report_type === 'performance' ? 'New performance analysis'
+    : `New report: ${title}`
+  await createNotification(profile_id, 'system', notifTitle, { report_id: report.id })
+
+  return NextResponse.json({ id: report.id, message: 'Report saved' })
 }
