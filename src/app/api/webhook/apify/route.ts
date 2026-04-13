@@ -40,8 +40,11 @@ export async function POST(request: NextRequest) {
 
   const report = pendingReports[0]
   const reportBody = report.body as any
+  const actorType = reportBody.apify_actor ?? 'unknown'
   const handles: string[] = reportBody.handles ?? []
   const terms: string[] = reportBody.terms ?? []
+
+  console.log(`[apify-webhook] Actor: ${actorType}, handles: ${handles.join(',')}, terms: ${terms.join(',')}`)
 
   // Get dataset
   const runRes = await fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_TOKEN}`)
@@ -64,101 +67,108 @@ export async function POST(request: NextRequest) {
   }
 
   const allResults = await resultsRes.json()
-  console.log(`[apify-webhook] Got ${allResults.length} results`)
+  console.log(`[apify-webhook] Got ${allResults.length} results, first item keys: ${allResults[0] ? Object.keys(allResults[0]).join(', ') : 'empty'}`)
 
   let competitorReports = 0
   let hashtagReports = 0
 
-  for (const item of allResults) {
-    // Detect item type by checking fields
-    const inputUrl = (item.inputUrl ?? item.url ?? '').toLowerCase()
+  if (actorType === 'profile') {
+    // crawlerbros/instagram-profile-scraper output
+    // Results can be profile data + posts mixed, or just posts
+    const handle = handles[0] ?? 'unknown'
 
-    if (item.username && (item.fullName !== undefined || item.biography !== undefined)) {
-      // This is a PROFILE result
-      const handle = item.username
-      console.log(`[apify-webhook] Profile: @${handle}, followers: ${item.followersCount ?? item.followedBy ?? 0}, posts: ${(item.latestPosts ?? []).length}`)
+    // Check if we got profile-level data or individual posts
+    const profileItem = allResults.find((item: any) => item.profileData || item.biography || item.fullName)
+    const posts = allResults.filter((item: any) => item.caption !== undefined || item.shortCode || item.mediaUrl)
 
-      const recentPosts = (item.latestPosts ?? []).map((post: any) => ({
-        caption: post.caption ?? '',
-        timestamp: post.timestamp,
-        likes: post.likesCount ?? 0,
-        comments: post.commentsCount ?? 0,
-        media_type: post.type ?? 'Image',
-        permalink: post.url ?? post.shortCode ? `https://www.instagram.com/p/${post.shortCode}/` : '',
-        hashtags: post.hashtags ?? [],
-      }))
+    // Build profile info from whatever we have
+    const profileData = profileItem ?? allResults[0] ?? {}
 
-      await supabase.from('research_reports').insert({
-        profile_id: report.profile_id,
-        type: 'competitor',
-        title: `IG Competitor: @${handle}`,
-        body: {
-          handle,
-          platform: 'instagram',
-          scraped_at: new Date().toISOString(),
-          profile: {
-            display_name: item.fullName ?? handle,
-            bio: item.biography ?? '',
-            followers: item.followersCount ?? item.followedBy ?? 0,
-            following: item.followsCount ?? item.follows ?? 0,
+    const recentPosts = posts.map((post: any) => ({
+      caption: post.caption ?? post.text ?? '',
+      timestamp: post.timestamp ?? post.takenAt ?? post.date ?? null,
+      likes: post.likesCount ?? post.likes ?? 0,
+      comments: post.commentsCount ?? post.comments ?? 0,
+      media_type: post.type ?? post.mediaType ?? 'Image',
+      permalink: post.url ?? (post.shortCode ? `https://www.instagram.com/p/${post.shortCode}/` : ''),
+      media_url: post.displayUrl ?? post.mediaUrl ?? post.imageUrl ?? null,
+      hashtags: post.hashtags ?? [],
+    }))
+
+    console.log(`[apify-webhook] @${handle}: profile found=${!!profileItem}, posts=${recentPosts.length}`)
+    console.log(`[apify-webhook] @${handle}: profile keys: ${Object.keys(profileData).slice(0, 15).join(', ')}`)
+    if (posts[0]) console.log(`[apify-webhook] @${handle}: post keys: ${Object.keys(posts[0]).slice(0, 15).join(', ')}`)
+
+    await supabase.from('research_reports').insert({
+      profile_id: report.profile_id,
+      type: 'competitor',
+      title: `IG Competitor: @${handle}`,
+      body: {
+        handle,
+        platform: 'instagram',
+        scraped_at: new Date().toISOString(),
+        profile: {
+          display_name: profileData.fullName ?? profileData.full_name ?? handle,
+          bio: profileData.biography ?? profileData.bio ?? '',
+          followers: profileData.followersCount ?? profileData.follower_count ?? profileData.followedBy ?? 0,
+          following: profileData.followsCount ?? profileData.following_count ?? profileData.follows ?? 0,
+          post_count: profileData.postsCount ?? profileData.media_count ?? 0,
+          profile_pic: profileData.profilePicUrl ?? profileData.profile_pic_url ?? null,
+          external_url: profileData.externalUrl ?? profileData.external_url ?? null,
+        },
+        recent_posts: recentPosts,
+      },
+    })
+
+    competitorReports++
+    await createNotification(report.profile_id, 'system', `IG: @${handle} scraped (${recentPosts.length} posts)`)
+
+  } else if (actorType === 'hashtag') {
+    // apify/instagram-scraper hashtag output
+    for (const item of allResults) {
+      if (item.name && item.postsCount !== undefined) {
+        // Hashtag metadata
+        const tag = item.name ?? item.id
+        const related = [
+          ...(item.related ?? []),
+          ...(item.relatedFrequent ?? []),
+          ...(item.relatedAverage ?? []),
+          ...(item.relatedRare ?? []),
+        ].map((r: any) => ({ tag: r.hash ?? '', count: r.info ?? '' }))
+
+        await supabase.from('research_reports').insert({
+          profile_id: report.profile_id,
+          type: 'trend',
+          title: `IG Trending: #${tag}`,
+          body: {
+            term: `#${tag}`,
+            platform: 'instagram',
+            scraped_at: new Date().toISOString(),
             post_count: item.postsCount ?? 0,
-            is_restricted: item.isRestrictedProfile ?? false,
-            external_url: item.externalUrl ?? null,
+            related_hashtags: related,
           },
-          recent_posts: recentPosts,
-        },
-      })
+        })
 
-      competitorReports++
+        hashtagReports++
+        console.log(`[apify-webhook] #${tag}: ${item.postsCount} total posts, ${related.length} related tags`)
+      } else if (item.error) {
+        console.log(`[apify-webhook] Error item: ${item.error} — ${item.inputUrl ?? ''}`)
+      }
+    }
 
-    } else if (item.id && item.postsCount !== undefined && item.name) {
-      // This is a HASHTAG result
-      const tag = item.name ?? item.id
-      console.log(`[apify-webhook] Hashtag: #${tag}, posts: ${item.postsCount}`)
+    if (hashtagReports > 0) {
+      await createNotification(report.profile_id, 'system', `IG: ${hashtagReports} hashtag${hashtagReports !== 1 ? 's' : ''} analyzed`)
+    }
 
-      // Extract related hashtags for research value
-      const related = [
-        ...(item.related ?? []),
-        ...(item.relatedFrequent ?? []),
-        ...(item.relatedAverage ?? []),
-        ...(item.relatedRare ?? []),
-      ].map((r: any) => ({
-        tag: r.hash ?? r.name ?? '',
-        count: r.info ?? '',
-      }))
-
-      await supabase.from('research_reports').insert({
-        profile_id: report.profile_id,
-        type: 'trend',
-        title: `IG Trending: #${tag}`,
-        body: {
-          term: `#${tag}`,
-          platform: 'instagram',
-          scraped_at: new Date().toISOString(),
-          post_count: item.postsCount ?? 0,
-          posts_per_day: item.postsPerDay ?? null,
-          search_source: item.searchSource ?? null,
-          related_hashtags: related,
-        },
-      })
-
-      hashtagReports++
-
-    } else if (item.caption !== undefined && item.ownerUsername) {
-      // This is a POST result (from posts scraping mode)
-      // Group with owner if tracked, otherwise it's a hashtag post
-      console.log(`[apify-webhook] Post by @${item.ownerUsername}: ${(item.caption ?? '').slice(0, 50)}`)
-      // Posts are handled differently — they come when resultsType is 'posts'
-      // For now, we don't get individual posts with 'details' mode
-
-    } else {
-      console.log(`[apify-webhook] Unknown item type:`, Object.keys(item).join(', '))
-      if (item.error) console.log(`[apify-webhook] Error:`, item.error, item.errorDescription ?? '')
-      if (item.inputUrl) console.log(`[apify-webhook] Input URL:`, item.inputUrl)
+  } else {
+    // Unknown actor type — log everything for debugging
+    console.log(`[apify-webhook] Unknown actor type: ${actorType}`)
+    for (const item of allResults.slice(0, 2)) {
+      console.log(`[apify-webhook] Item keys: ${Object.keys(item).join(', ')}`)
     }
   }
 
-  // Update the pending report
+  // Update pending report
   await supabase.from('research_reports').update({
     title: `IG Research: ${competitorReports} profiles, ${hashtagReports} hashtags`,
     body: {
@@ -170,12 +180,6 @@ export async function POST(request: NextRequest) {
       hashtag_reports: hashtagReports,
     },
   }).eq('id', report.id)
-
-  await createNotification(
-    report.profile_id,
-    'system',
-    `IG research complete: ${competitorReports} profiles, ${hashtagReports} hashtags`
-  )
 
   console.log(`[apify-webhook] Done: ${competitorReports} competitors, ${hashtagReports} hashtags`)
 
