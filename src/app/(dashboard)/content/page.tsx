@@ -7,6 +7,7 @@ import type { Database } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { PostModal } from '@/components/dashboard/post-modal'
 import { StatusBadge } from '@/components/dashboard/status-badge'
+import { MediaLibrary } from '@/components/studio/media-library'
 import {
   Check,
   ChevronLeft,
@@ -789,10 +790,13 @@ export default function ContentPage() {
         </section>
         )}
 
-        {contentTab === 'media' && (
-          <div className="text-center py-16">
-            <p className="text-on-surface-variant">Media Library — wired in next task</p>
-          </div>
+        {contentTab === 'media' && userId && (
+          <MediaLibrary
+            supabase={supabase}
+            userId={userId}
+            creditBalance={creditBalance}
+            onCreditsChanged={() => fetch('/api/credits').then(r => r.json()).then(d => setCreditBalance(d.balance)).catch(() => {})}
+          />
         )}
 
         {contentTab === 'studio' && (
