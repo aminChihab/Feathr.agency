@@ -7,6 +7,7 @@ import type { Database } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { PostModal } from '@/components/dashboard/post-modal'
 import { StatusBadge } from '@/components/dashboard/status-badge'
+import { MediaLibrary } from '@/components/studio/media-library'
 import {
   Check,
   ChevronLeft,
@@ -307,6 +308,8 @@ export default function ContentPage() {
   const [mediaThumbs, setMediaThumbs] = useState<Record<string, MediaThumb>>({})
   const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [contentTab, setContentTab] = useState<'drafts' | 'media' | 'studio'>('drafts')
+  const [creditBalance, setCreditBalance] = useState<number | null>(null)
 
   // Calendar state
   const today = new Date()
@@ -323,6 +326,7 @@ export default function ContentPage() {
       }
     }
     init()
+    fetch('/api/credits').then(r => r.json()).then(d => setCreditBalance(d.balance)).catch(() => {})
   }, [])
 
   async function loadPosts(uid: string) {
@@ -534,6 +538,11 @@ export default function ContentPage() {
               )}
             </button>
           </div>
+          {creditBalance !== null && (
+            <span className="bg-surface-container-highest text-on-surface-variant text-xs px-3 py-1.5 rounded-full font-body">
+              {creditBalance} credits
+            </span>
+          )}
           {/* View toggle */}
           <div className="flex items-center bg-surface-container-low rounded-full p-1">
             <button
@@ -552,7 +561,24 @@ export default function ContentPage() {
         </div>
       </header>
 
+      <div className="px-10 pt-6 pb-2 flex items-center gap-2">
+        {(['drafts', 'media', 'studio'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setContentTab(tab)}
+            className={`px-4 py-2 rounded-full text-sm font-body transition-colors ${
+              contentTab === tab
+                ? 'bg-surface-container-high text-on-surface font-medium'
+                : 'text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            {tab === 'drafts' ? 'Drafts' : tab === 'media' ? 'Media Library' : 'Studio'}
+          </button>
+        ))}
+      </div>
+
       <div className="p-10 space-y-6">
+        {contentTab === 'drafts' && (
         <section className="max-w-7xl mx-auto space-y-6">
           {/* Posts List (Compact Rows) */}
           {loading ? (
@@ -762,6 +788,24 @@ export default function ContentPage() {
             </div>
           </div>
         </section>
+        )}
+
+        {contentTab === 'media' && userId && (
+          <MediaLibrary
+            supabase={supabase}
+            userId={userId}
+            creditBalance={creditBalance}
+            onCreditsChanged={() => fetch('/api/credits').then(r => r.json()).then(d => setCreditBalance(d.balance)).catch(() => {})}
+          />
+        )}
+
+        {contentTab === 'studio' && (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Sparkles className="h-12 w-12 text-primary/40 mb-4" />
+            <h3 className="font-display text-2xl text-on-surface mb-2">Studio</h3>
+            <p className="text-sm text-on-surface-variant max-w-sm">Video and reel creation tools coming soon.</p>
+          </div>
+        )}
 
       <PostModal
         open={modalOpen}

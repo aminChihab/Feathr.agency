@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
   User, Mic, Link2, ListChecks, Calendar, Bell, Shield, CreditCard,
-  Upload, FileText, Trash2, Sparkles, Loader2,
+  Upload, FileText, Trash2, Sparkles, Loader2, Camera, Check,
 } from 'lucide-react'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
@@ -43,6 +43,7 @@ const FREQUENCY_OPTIONS = [
 const TABS = [
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'voice', label: 'Voice', icon: Mic },
+  { id: 'reference_photos', label: 'Reference Photos', icon: Camera },
   { id: 'platforms', label: 'Platforms', icon: Link2 },
   { id: 'listings', label: 'Listings', icon: ListChecks },
   { id: 'planning', label: 'Planning', icon: Calendar },
@@ -64,6 +65,8 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [referencePhotoIds, setReferencePhotoIds] = useState<string[]>([])
+  const [allMedia, setAllMedia] = useState<Array<{ id: string; signedUrl: string | null; file_name: string }>>([])
 
   // Profile form state
   const [name, setName] = useState('')
@@ -135,6 +138,28 @@ export default function SettingsPage() {
         setNotifDraftReady(settings.notif_draft_ready ?? true)
         setNotifLeadQualified(settings.notif_lead_qualified ?? true)
         setNotifListingExpiring(settings.notif_listing_expiring ?? true)
+
+        if (profileData.reference_photo_ids) {
+          setReferencePhotoIds(profileData.reference_photo_ids)
+        }
+      }
+
+      const { data: mediaData } = await supabase
+        .from('content_library')
+        .select('id, file_name, storage_path, thumbnail_path')
+        .eq('profile_id', user.id)
+        .eq('source', 'upload')
+        .order('created_at', { ascending: false })
+
+      if (mediaData) {
+        const withUrls = await Promise.all(
+          mediaData.map(async (item) => {
+            const path = item.thumbnail_path ?? item.storage_path
+            const { data: signed } = await supabase.storage.from('media').createSignedUrl(path, 3600)
+            return { id: item.id, signedUrl: signed?.signedUrl ?? null, file_name: item.file_name }
+          })
+        )
+        setAllMedia(withUrls)
       }
 
       const { data: accountsData } = await supabase
@@ -305,6 +330,12 @@ export default function SettingsPage() {
       },
     }).eq('id', userId)
     setSaving(false)
+    flashSaved()
+  }
+
+  async function saveReferencePhotos() {
+    if (!userId) return
+    await supabase.from('profiles').update({ reference_photo_ids: referencePhotoIds }).eq('id', userId)
     flashSaved()
   }
 
@@ -606,6 +637,57 @@ export default function SettingsPage() {
                 </Button>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Reference Photos */}
+        {activeTab === 'reference_photos' && (
+          <div className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/10 space-y-6">
+            <div>
+              <label className="text-[10px] uppercase tracking-widest text-on-surface-variant font-body block mb-2">Reference Photos</label>
+              <p className="text-sm text-on-surface-variant">Select 15-20 diverse photos showing different angles, lighting, and outfits. Face not required.</p>
+              <p className="text-xs text-on-surface-variant/60 mt-1">{referencePhotoIds.length} photos selected</p>
+            </div>
+
+            {allMedia.length === 0 ? (
+              <p className="text-sm text-on-surface-variant/60">Upload media first in Content &gt; Media Library.</p>
+            ) : (
+              <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
+                {allMedia.map((item) => {
+                  const selected = referencePhotoIds.includes(item.id)
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setReferencePhotoIds(prev =>
+                          selected ? prev.filter(id => id !== item.id) : [...prev, item.id]
+                        )
+                      }}
+                      className={`aspect-square rounded-xl overflow-hidden relative border-2 transition-colors ${
+                        selected ? 'border-primary' : 'border-transparent hover:border-outline-variant/30'
+                      }`}
+                    >
+                      {item.signedUrl ? (
+                        <img src={item.signedUrl} alt={item.file_name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-surface-container flex items-center justify-center text-on-surface-variant/20 text-xs">?</div>
+                      )}
+                      {selected && (
+                        <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                          <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                            <Check className="h-4 w-4 text-on-primary" />
+                          </div>
+                        </div>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+
+            <button onClick={saveReferencePhotos} className="gradient-cta text-on-primary font-semibold px-6 py-2.5 rounded-full text-sm">
+              Save Reference Photos
+            </button>
           </div>
         )}
 

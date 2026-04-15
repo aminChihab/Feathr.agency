@@ -314,6 +314,8 @@ export type Database = {
           storage_path: string
           tags: string[] | null
           thumbnail_path: string | null
+          source: string
+          generation_prompt: string | null
         }
         Insert: {
           created_at?: string
@@ -327,6 +329,8 @@ export type Database = {
           storage_path: string
           tags?: string[] | null
           thumbnail_path?: string | null
+          source?: string
+          generation_prompt?: string | null
         }
         Update: {
           created_at?: string
@@ -340,6 +344,8 @@ export type Database = {
           storage_path?: string
           tags?: string[] | null
           thumbnail_path?: string | null
+          source?: string
+          generation_prompt?: string | null
         }
         Relationships: [
           {
@@ -739,6 +745,7 @@ export type Database = {
           voice_description: string | null
           voice_sample: string | null
           performance_rules: Json | null
+          reference_photo_ids: string[] | null
         }
         Insert: {
           city?: string | null
@@ -753,6 +760,7 @@ export type Database = {
           voice_description?: string | null
           voice_sample?: string | null
           performance_rules?: Json | null
+          reference_photo_ids?: string[] | null
         }
         Update: {
           city?: string | null
@@ -767,8 +775,79 @@ export type Database = {
           voice_description?: string | null
           voice_sample?: string | null
           performance_rules?: Json | null
+          reference_photo_ids?: string[] | null
         }
         Relationships: []
+      }
+      credits: {
+        Row: {
+          id: string
+          profile_id: string
+          balance: number
+          total_granted: number
+          total_used: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          balance?: number
+          total_granted?: number
+          total_used?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          balance?: number
+          total_granted?: number
+          total_used?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credits_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_transactions: {
+        Row: {
+          id: string
+          profile_id: string
+          amount: number
+          reason: string
+          metadata: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          amount: number
+          reason: string
+          metadata?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          amount?: number
+          reason?: string
+          metadata?: Json | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_transactions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
