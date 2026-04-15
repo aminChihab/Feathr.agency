@@ -11,9 +11,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import Link from 'next/link'
 import {
-  User, Mic, Link2, Calendar, Bell, Shield, CreditCard,
+  User, Mic, Link2, ListChecks, Calendar, Bell, Shield, CreditCard,
   Upload, FileText, Trash2, Sparkles, Loader2,
 } from 'lucide-react'
 
@@ -45,6 +44,7 @@ const TABS = [
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'voice', label: 'Voice', icon: Mic },
   { id: 'platforms', label: 'Platforms', icon: Link2 },
+  { id: 'listings', label: 'Listings', icon: ListChecks },
   { id: 'planning', label: 'Planning', icon: Calendar },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'account', label: 'Account', icon: Shield },
@@ -58,6 +58,7 @@ export default function SettingsPage() {
   const [userEmail, setUserEmail] = useState<string>('')
   const [profile, setProfile] = useState<Profile | null>(null)
   const [accounts, setAccounts] = useState<PlatformAccount[]>([])
+  const [listings, setListings] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState('profile')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -150,6 +151,13 @@ export default function SettingsPage() {
           schedule_json: a.schedule_json,
         }))
       )
+
+      const { data: listingsData } = await supabase
+        .from('listings')
+        .select('id, status, renewal_status, expires_at, listing_url, performance, platform_accounts(platforms(name, color))')
+        .eq('profile_id', user.id)
+
+      if (listingsData) setListings(listingsData)
 
       // Load chat history files
       const { data: chatData } = await supabase.storage
@@ -604,12 +612,72 @@ export default function SettingsPage() {
         {/* Platforms */}
         {activeTab === 'platforms' && (
           <div className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/10 space-y-4">
-            <p className="text-on-surface-variant text-sm">
-              Manage your connected platforms, add new ones, and adjust settings.
-            </p>
-            <Link href="/platforms">
-              <Button variant="outline">Go to Platforms</Button>
-            </Link>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[10px] uppercase tracking-widest text-on-surface-variant font-body">Connected Platforms</label>
+              <a href="/platforms" className="gradient-cta text-on-primary font-semibold px-4 py-2 rounded-full text-xs">Add Platform</a>
+            </div>
+            {accounts.length === 0 ? (
+              <p className="text-sm text-on-surface-variant/60">No platforms connected yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {accounts.map((account) => (
+                  <div key={account.id} className="flex items-center justify-between rounded-xl bg-surface-container p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: account.platform_color }} />
+                      <span className="text-sm font-medium text-on-surface">{account.platform_name}</span>
+                    </div>
+                    <Select
+                      value={account.schedule_json?.frequency ?? ''}
+                      onValueChange={(val) => updateSchedule(account.id, val)}
+                    >
+                      <SelectTrigger className="w-36 bg-surface-container-high border-none text-xs">
+                        <SelectValue placeholder="Frequency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1x_daily">1x per day</SelectItem>
+                        <SelectItem value="2x_daily">2x per day</SelectItem>
+                        <SelectItem value="3x_daily">3x per day</SelectItem>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="manual">Manual</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Listings */}
+        {activeTab === 'listings' && (
+          <div className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/10 space-y-4">
+            <label className="text-[10px] uppercase tracking-widest text-on-surface-variant font-body">Directory Listings</label>
+            {listings.length === 0 ? (
+              <p className="text-sm text-on-surface-variant/60">No listings yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {listings.map((listing: any) => {
+                  const platform = listing.platform_accounts?.platforms
+                  const perf = listing.performance ?? {}
+                  return (
+                    <div key={listing.id} className="flex items-center justify-between rounded-xl bg-surface-container p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: platform?.color ?? '#666' }} />
+                        <div>
+                          <span className="text-sm font-medium text-on-surface">{platform?.name ?? 'Unknown'}</span>
+                          <p className="text-xs text-on-surface-variant capitalize">{listing.status} · {perf.views ?? 0} views · {perf.clicks ?? 0} clicks</p>
+                        </div>
+                      </div>
+                      {listing.listing_url && (
+                        <a href={listing.listing_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                          View
+                        </a>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
 
