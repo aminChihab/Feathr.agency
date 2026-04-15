@@ -186,16 +186,14 @@ export function MediaLibrary({ supabase, userId, creditBalance, onCreditsChanged
           </button>
         ))}
 
-        {/* Generate Images button (My Media tab only) */}
-        {innerTab === 'my-media' && (
-          <button
-            onClick={() => setGenerateOpen(true)}
-            className="ml-auto flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-colors"
-          >
-            <Sparkles className="h-4 w-4" />
-            Generate Images
-          </button>
-        )}
+        {/* Generate Images button */}
+        <button
+          onClick={() => setGenerateOpen(true)}
+          className="ml-auto flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-colors"
+        >
+          <Sparkles className="h-4 w-4" />
+          Generate Images
+        </button>
       </div>
 
       {/* My Media tab */}
