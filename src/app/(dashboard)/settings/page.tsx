@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/types/database'
 import { Button } from '@/components/ui/button'
@@ -55,12 +55,13 @@ const TABS = [
 export default function SettingsPage() {
   const supabase = createClient()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [userId, setUserId] = useState<string | null>(null)
   const [userEmail, setUserEmail] = useState<string>('')
   const [profile, setProfile] = useState<Profile | null>(null)
   const [accounts, setAccounts] = useState<PlatformAccount[]>([])
   const [listings, setListings] = useState<any[]>([])
-  const [activeTab, setActiveTab] = useState('profile')
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') ?? 'profile')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)

@@ -55,12 +55,20 @@ export function MediaLibrary({ supabase, userId, creditBalance, onCreditsChanged
   // Load media items filtered by source
   const loadItems = useCallback(async () => {
     setLoading(true)
-    const { data } = await supabase
+    let query = supabase
       .from('content_library')
       .select('*')
       .eq('profile_id', userId)
-      .eq('source', sourceFilter)
       .order('created_at', { ascending: false })
+
+    if (sourceFilter === 'ai_generated') {
+      query = query.eq('source', 'ai_generated')
+    } else {
+      // "My Media" shows everything that isn't AI generated (including old rows with null source)
+      query = query.or('source.eq.upload,source.is.null')
+    }
+
+    const { data } = await query
 
     if (data) {
       const withUrls = await Promise.all(
@@ -287,7 +295,7 @@ export function MediaLibrary({ supabase, userId, creditBalance, onCreditsChanged
           {/* Setup prompt if no reference photos */}
           {hasReferencePhotos === false && (
             <a
-              href="/settings"
+              href="/settings?tab=reference_photos"
               className="flex items-center gap-4 p-6 rounded-xl border border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors"
             >
               <div className="rounded-full bg-primary/15 p-3">

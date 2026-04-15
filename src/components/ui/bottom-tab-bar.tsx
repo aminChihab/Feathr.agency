@@ -2,14 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, MessageCircle, Sparkles, CalendarDays, Settings } from 'lucide-react'
+import { Home, MessageCircle, Sparkles, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const tabs = [
   { href: '/', label: 'Home', icon: Home, match: (p: string) => p === '/' },
   { href: '/inbox', label: 'Inbox', icon: MessageCircle, match: (p: string) => p.startsWith('/inbox') },
-  { href: '/studio', label: 'Studio', icon: Sparkles, match: (p: string) => p.startsWith('/studio') },
-  { href: '/content', label: 'Content', icon: CalendarDays, match: (p: string) => p.startsWith('/content') },
+  { href: '/content', label: 'Content', icon: Sparkles, match: (p: string) => p.startsWith('/content') },
   { href: '/settings', label: 'Settings', icon: Settings, match: (p: string) => p.startsWith('/settings') },
 ]
 
