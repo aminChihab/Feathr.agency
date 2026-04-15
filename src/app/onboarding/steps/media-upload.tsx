@@ -30,6 +30,8 @@ export function MediaUpload({ userId, supabase, onNext, onBack }: MediaUploadPro
   const [files, setFiles] = useState<UploadedMedia[]>([])
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [selectedRefs, setSelectedRefs] = useState<Set<string>>(new Set())
+  const [showRefSelection, setShowRefSelection] = useState(false)
 
   async function handleFilesAdded(newFiles: File[]) {
     setUploading(true)
@@ -95,6 +97,16 @@ export function MediaUpload({ userId, supabase, onNext, onBack }: MediaUploadPro
   async function removeFile(id: string) {
     await supabase.from('content_library').delete().eq('id', id)
     setFiles((prev) => prev.filter((f) => f.id !== id))
+  }
+
+  async function handleNext() {
+    if (selectedRefs.size > 0) {
+      await supabase
+        .from('profiles')
+        .update({ reference_photo_ids: Array.from(selectedRefs) })
+        .eq('id', userId)
+    }
+    onNext()
   }
 
   return (
@@ -199,6 +211,49 @@ export function MediaUpload({ userId, supabase, onNext, onBack }: MediaUploadPro
           </div>
         </div>
 
+        {files.length >= 5 && !showRefSelection && (
+          <div className="bg-surface-container-low rounded-2xl p-6 text-center border border-outline-variant/10 mt-6">
+            <h3 className="font-display text-lg text-on-surface mb-2">Select Reference Photos</h3>
+            <p className="text-sm text-on-surface-variant mb-4">Choose photos that show your body type, skin tone, and style for AI image generation.</p>
+            <button onClick={() => setShowRefSelection(true)} className="gradient-cta text-on-primary font-semibold px-6 py-2 rounded-full text-sm">
+              Select Reference Photos
+            </button>
+          </div>
+        )}
+
+        {showRefSelection && (
+          <div className="space-y-4 mt-6">
+            <p className="text-sm text-on-surface-variant">Tap photos to select as reference ({selectedRefs.size} selected)</p>
+            <div className="grid grid-cols-4 gap-3">
+              {files.map((f) => {
+                const sel = selectedRefs.has(f.id)
+                return (
+                  <button
+                    key={f.id}
+                    onClick={() => setSelectedRefs(prev => {
+                      const next = new Set(prev)
+                      sel ? next.delete(f.id) : next.add(f.id)
+                      return next
+                    })}
+                    className={`aspect-square rounded-xl overflow-hidden relative border-2 transition-colors ${sel ? 'border-primary' : 'border-transparent'}`}
+                  >
+                    {f.thumbnailUrl ? (
+                      <img src={f.thumbnailUrl} alt={f.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-surface-container" />
+                    )}
+                    {sel && (
+                      <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                        <div className="w-6 h-6 rounded-full bg-primary" />
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Footer Actions */}
         <footer className="mt-16 flex items-center justify-between pt-8 border-t border-outline-variant/10">
           <button onClick={onBack} className="flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors">
@@ -206,9 +261,9 @@ export function MediaUpload({ userId, supabase, onNext, onBack }: MediaUploadPro
             <span className="font-semibold">Previous Step</span>
           </button>
           <div className="flex items-center gap-6">
-            <button onClick={onNext} className="text-on-surface-variant hover:text-on-surface transition-colors font-medium">Skip for now</button>
+            <button onClick={handleNext} className="text-on-surface-variant hover:text-on-surface transition-colors font-medium">Skip for now</button>
             <button
-              onClick={onNext}
+              onClick={handleNext}
               disabled={uploading}
               className="gradient-cta text-on-primary font-semibold py-4 px-10 rounded-md flex items-center gap-3 hover:opacity-90 transition-all active:scale-95 shadow-xl shadow-primary/10 disabled:opacity-50"
             >
