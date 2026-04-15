@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { SidebarNav } from '@/components/dashboard/sidebar-nav'
+import { BottomTabBar } from '@/components/ui/bottom-tab-bar'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -10,21 +10,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect('/login')
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('professional_name, status')
-    .eq('id', user.id)
-    .single()
-
   return (
-    <div className="flex min-h-screen bg-surface">
-      <SidebarNav
-        profileName={profile?.professional_name ?? null}
-        email={user.email ?? ''}
-      />
-      <main className="ml-64 flex-1 h-screen overflow-y-auto">
+    <div className="min-h-screen bg-surface">
+      <main className="pb-20">
         {children}
       </main>
+      <BottomTabBar />
     </div>
   )
 }
