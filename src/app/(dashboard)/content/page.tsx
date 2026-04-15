@@ -4,22 +4,20 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/types/database'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { PostModal } from '@/components/dashboard/post-modal'
-import { PostCard } from '@/components/dashboard/post-card'
-import { MediaGrid } from '@/components/dashboard/media-grid'
 import { StatusBadge } from '@/components/dashboard/status-badge'
 import {
+  Check,
   ChevronLeft,
   ChevronRight,
   Edit3,
+  Pencil,
   Send,
   Sparkles,
   Loader2,
   Search,
-  Filter,
-  ArrowUpDown,
+  X,
 } from 'lucide-react'
 
 type CalendarItem = Database['public']['Tables']['content_calendar']['Row']
@@ -485,10 +483,10 @@ export default function ContentPage() {
   if (!userId) return null
 
   return (
-    <Tabs defaultValue="content" className="space-y-0">
+    <div className="space-y-0">
       {/* ── Sticky TopAppBar ─────────────────────────────── */}
       <header className="sticky top-0 z-40 w-full bg-[#131313]/80 backdrop-blur-xl flex justify-between items-center h-20 px-10 shadow-2xl shadow-black/40">
-        <h2 className="font-display text-3xl font-light text-primary">Pending Approvals</h2>
+        <h2 className="font-display text-3xl font-light text-primary">Content</h2>
         <div className="flex items-center gap-4">
           {/* Search */}
           <div className="relative hidden lg:block">
@@ -537,56 +535,38 @@ export default function ContentPage() {
       </header>
 
       <div className="p-10 space-y-6">
-      {/* Tab switcher */}
-      <TabsList className="bg-transparent p-0 gap-6 mb-8">
-        <TabsTrigger value="content" className="px-0 pb-2 text-sm font-medium rounded-none border-b-2 data-[state=active]:border-primary data-[state=active]:text-on-surface data-[state=inactive]:border-transparent data-[state=inactive]:text-on-surface-variant data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-          Content
-        </TabsTrigger>
-        <TabsTrigger value="media" className="px-0 pb-2 text-sm font-medium rounded-none border-b-2 data-[state=active]:border-primary data-[state=active]:text-on-surface data-[state=inactive]:border-transparent data-[state=inactive]:text-on-surface-variant data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-          Media
-        </TabsTrigger>
-      </TabsList>
-
-      {/* ── Content Tab ────────────────────────────────────────────────── */}
-      <TabsContent value="content" className="mt-0">
         <section className="max-w-7xl mx-auto space-y-6">
-          {/* Hero: Review Queue label + count + filter/sort buttons */}
-          <div className="flex justify-between items-end mb-6">
-            <div>
-              <span className="text-primary font-medium tracking-widest text-[10px] uppercase">Review Queue</span>
-              <h3 className="text-4xl font-display font-light mt-1 text-on-surface">
-                {aiDrafts.length} post{aiDrafts.length !== 1 ? 's' : ''} waiting{' '}
-                <span className="serif-italic">for your touch.</span>
-              </h3>
-            </div>
-            <div className="flex gap-2">
-              <button className="p-2 border border-outline-variant/15 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors">
-                <Filter className="h-5 w-5" />
-              </button>
-              <button className="p-2 border border-outline-variant/15 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors">
-                <ArrowUpDown className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Posts List (Editorial Cards) */}
+          {/* Posts List (Compact Rows) */}
           {loading ? (
             <div className="flex items-center justify-center py-16">
               <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             </div>
           ) : (
-            <div className="space-y-6">
-              {aiDrafts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  mediaThumbs={mediaThumbs}
-                  onApprove={handleApprove}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onRetry={handleRetry}
-                />
-              ))}
+            <div className="space-y-2">
+              {aiDrafts.map((post) => {
+                const platform = { name: post.platform_name, color: post.platform_color }
+                return (
+                  <div key={post.id} className="flex items-center gap-4 p-4 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors">
+                    {/* Platform dot */}
+                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: platform?.color ?? '#666' }} />
+                    {/* Caption + time */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-on-surface truncate">{post.caption || 'No caption'}</p>
+                      <p className="text-xs text-on-surface-variant mt-0.5">
+                        {platform?.name} · {post.scheduled_at ? new Date(post.scheduled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Not scheduled'}
+                      </p>
+                    </div>
+                    {/* Status */}
+                    <StatusBadge status={post.status} />
+                    {/* Actions */}
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => handleApprove(post.id)} className="p-1.5 rounded-full hover:bg-primary/20 text-primary transition-colors"><Check className="h-4 w-4" /></button>
+                      <button onClick={() => { setEditPost(post); setModalOpen(true) }} className="p-1.5 rounded-full hover:bg-surface-container-high text-on-surface-variant transition-colors"><Pencil className="h-4 w-4" /></button>
+                      <button onClick={() => handleDelete(post.id)} className="p-1.5 rounded-full hover:bg-error/20 text-error transition-colors"><X className="h-4 w-4" /></button>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
 
@@ -696,12 +676,6 @@ export default function ContentPage() {
             </div>
           </div>
         </section>
-      </TabsContent>
-
-      {/* ── Media Tab ────────────────────────────────────────────────── */}
-      <TabsContent value="media" className="mt-0">
-        <MediaGrid supabase={supabase} userId={userId} />
-      </TabsContent>
 
       <PostModal
         open={modalOpen}
@@ -712,6 +686,6 @@ export default function ContentPage() {
         onSaved={() => { if (userId) loadPosts(userId) }}
       />
     </div>
-    </Tabs>
+    </div>
   )
 }
