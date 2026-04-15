@@ -12,6 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Edit3,
+  Grid3X3,
+  List,
   Pencil,
   Send,
   Sparkles,
@@ -304,6 +306,7 @@ export default function ContentPage() {
   const [suggesting, setSuggesting] = useState(false)
   const [mediaThumbs, setMediaThumbs] = useState<Record<string, MediaThumb>>({})
   const [searchQuery, setSearchQuery] = useState('')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   // Calendar state
   const today = new Date()
@@ -531,6 +534,21 @@ export default function ContentPage() {
               )}
             </button>
           </div>
+          {/* View toggle */}
+          <div className="flex items-center bg-surface-container-low rounded-full p-1">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-full transition-colors ${viewMode === 'grid' ? 'bg-surface-container-high text-on-surface' : 'text-on-surface-variant/50'}`}
+            >
+              <Grid3X3 className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded-full transition-colors ${viewMode === 'list' ? 'bg-surface-container-high text-on-surface' : 'text-on-surface-variant/50'}`}
+            >
+              <List className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -542,60 +560,84 @@ export default function ContentPage() {
               <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-3'}>
               {aiDrafts.map((post) => {
+                const ids = post.media_ids as string[] | null
+                const firstThumb = ids?.[0] ? mediaThumbs[ids[0]] : null
+
+                if (viewMode === 'list') {
+                  return (
+                    <div key={post.id} className="flex items-center gap-4 p-4 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors group">
+                      {/* Small thumbnail */}
+                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-surface-container shrink-0">
+                        {firstThumb ? (
+                          <img src={firstThumb.url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-on-surface-variant/20 text-[9px] uppercase">No img</div>
+                        )}
+                      </div>
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-on-surface truncate">{post.caption || 'No caption'}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: post.platform_color ?? '#666' }} />
+                          <span className="text-xs text-on-surface-variant">{post.platform_name}</span>
+                        </div>
+                      </div>
+                      {/* Date */}
+                      <div className="text-right shrink-0">
+                        <p className="font-display text-sm text-on-surface">
+                          {post.scheduled_at ? new Date(post.scheduled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Unscheduled'}
+                        </p>
+                        <p className="text-[10px] text-on-surface-variant">
+                          {post.scheduled_at ? new Date(post.scheduled_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''}
+                        </p>
+                      </div>
+                      {/* Status + Actions */}
+                      <StatusBadge status={post.status} />
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => handleApprove(post.id)} className="p-1.5 rounded-full hover:bg-primary/20 text-primary transition-colors"><Check className="h-4 w-4" /></button>
+                        <button onClick={() => { setEditPost(post); setModalOpen(true) }} className="p-1.5 rounded-full hover:bg-surface-container-high text-on-surface-variant transition-colors"><Pencil className="h-4 w-4" /></button>
+                        <button onClick={() => handleDelete(post.id)} className="p-1.5 rounded-full hover:bg-error/20 text-error transition-colors"><X className="h-4 w-4" /></button>
+                      </div>
+                    </div>
+                  )
+                }
+
+                // Grid view
                 return (
                   <div key={post.id} className="bg-surface-container-low rounded-2xl overflow-hidden hover:bg-surface-container transition-colors group">
                     {/* Media thumbnail */}
-                    {(() => {
-                      const ids = post.media_ids as string[] | null
-                      const firstThumb = ids?.[0] ? mediaThumbs[ids[0]] : null
-                      if (firstThumb) {
-                        return (
-                          <div className="aspect-[4/3] relative overflow-hidden bg-surface-container">
-                            <img src={firstThumb.url} alt="" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
-                            {ids && ids.length > 1 && (
-                              <span className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">
-                                +{ids.length - 1}
-                              </span>
-                            )}
-                          </div>
-                        )
-                      }
-                      return (
-                        <div className="aspect-[4/3] bg-surface-container flex items-center justify-center">
+                    <div className="aspect-[4/3] relative overflow-hidden bg-surface-container">
+                      {firstThumb ? (
+                        <>
+                          <img src={firstThumb.url} alt="" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                          {ids && ids.length > 1 && (
+                            <span className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">+{ids.length - 1}</span>
+                          )}
+                        </>
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
                           <span className="text-on-surface-variant/20 text-xs uppercase tracking-wider">No media</span>
                         </div>
-                      )
-                    })()}
-
+                      )}
+                    </div>
                     {/* Card body */}
                     <div className="p-4 space-y-3">
-                      {/* Date — prominent */}
                       <div className="flex items-center justify-between">
                         <span className="font-display text-lg text-on-surface">
-                          {post.scheduled_at
-                            ? new Date(post.scheduled_at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-                            : 'Unscheduled'}
+                          {post.scheduled_at ? new Date(post.scheduled_at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Unscheduled'}
                         </span>
                         <span className="text-xs text-on-surface-variant">
-                          {post.scheduled_at
-                            ? new Date(post.scheduled_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-                            : ''}
+                          {post.scheduled_at ? new Date(post.scheduled_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''}
                         </span>
                       </div>
-
-                      {/* Platform + status */}
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: post.platform_color ?? '#666' }} />
                         <span className="text-xs text-on-surface-variant">{post.platform_name}</span>
                         <StatusBadge status={post.status} />
                       </div>
-
-                      {/* Caption */}
                       <p className="text-sm text-on-surface line-clamp-3">{post.caption || 'No caption'}</p>
-
-                      {/* Actions */}
                       <div className="flex items-center gap-2 pt-2 border-t border-outline-variant/10">
                         <button onClick={() => handleApprove(post.id)} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg hover:bg-primary/20 text-primary transition-colors text-xs font-medium">
                           <Check className="h-3.5 w-3.5" /> Approve

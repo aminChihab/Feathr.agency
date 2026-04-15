@@ -250,8 +250,8 @@ export default function InboxPage() {
   const activeConv = conversations.find((c) => c.id === activeConvId)
 
   return (
-    <>
-    <header className="sticky top-0 z-40 bg-[#131313]/80 backdrop-blur-xl flex justify-between items-center h-20 px-10 shadow-2xl shadow-black/40">
+    <div className="h-screen flex flex-col overflow-hidden">
+    <header className="shrink-0 bg-[#131313]/80 backdrop-blur-xl flex justify-between items-center h-20 px-10 shadow-2xl shadow-black/40">
       <h2 className="font-display text-3xl font-light text-primary">Inbox</h2>
       <div className="flex items-center gap-8">
         <div className="relative hidden lg:block">
@@ -269,7 +269,7 @@ export default function InboxPage() {
         </div>
       </div>
     </header>
-    <div className="flex flex-1 overflow-hidden" style={{ height: 'calc(100vh - 5rem - 4rem)' }}>
+    <div className="flex flex-1 min-h-0 overflow-hidden pb-16">
       {/* Left Column: Conversation List */}
       <ConversationList
         conversations={conversations}
@@ -348,6 +348,6 @@ export default function InboxPage() {
         />
       )}
     </div>
-    </>
+    </div>
   )
 }
