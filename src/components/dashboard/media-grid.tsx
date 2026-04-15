@@ -15,6 +15,7 @@ type MediaItem = Database['public']['Tables']['content_library']['Row'] & {
 interface MediaGridProps {
   supabase: SupabaseClient<Database>
   userId: string
+  sourceFilter?: 'upload' | 'ai_generated' | 'all'
 }
 
 function getFileType(mime: string): 'photo' | 'video' | 'audio' {
@@ -46,7 +47,7 @@ function getExtBadge(item: MediaItem): string {
   return ext || 'FILE'
 }
 
-export function MediaGrid({ supabase, userId }: MediaGridProps) {
+export function MediaGrid({ supabase, userId, sourceFilter = 'all' }: MediaGridProps) {
   const [items, setItems] = useState<MediaItem[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
@@ -90,6 +91,12 @@ export function MediaGrid({ supabase, userId }: MediaGridProps) {
 
     if (filter !== 'all') {
       query = query.eq('file_type', filter)
+    }
+
+    if (sourceFilter === 'ai_generated') {
+      query = query.eq('source', 'ai_generated')
+    } else if (sourceFilter === 'upload') {
+      query = query.or('source.eq.upload,source.is.null')
     }
 
     const { data } = await query
