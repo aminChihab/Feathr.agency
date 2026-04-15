@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { PostModal } from '@/components/dashboard/post-modal'
 import { StatusBadge } from '@/components/dashboard/status-badge'
 import { MediaLibrary } from '@/components/studio/media-library'
+import { StudioWorkspace } from '@/components/studio/studio-workspace'
 import {
   Check,
   ChevronLeft,
@@ -799,12 +800,8 @@ export default function ContentPage() {
           />
         )}
 
-        {contentTab === 'studio' && (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Sparkles className="h-12 w-12 text-primary/40 mb-4" />
-            <h3 className="font-display text-2xl text-on-surface mb-2">Studio</h3>
-            <p className="text-sm text-on-surface-variant max-w-sm">Video and reel creation tools coming soon.</p>
-          </div>
+        {contentTab === 'studio' && userId && (
+          <StudioWorkspace userId={userId} />
         )}
 
       <PostModal
