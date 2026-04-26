@@ -259,7 +259,7 @@ export default function InboxPage() {
               </button>
             </div>
           </PageHeader>
-          <div className="px-4 md:px-6">
+          <div className="px-4 md:px-10">
             <ConversationList
               conversations={conversations}
               activeId={activeConvId}

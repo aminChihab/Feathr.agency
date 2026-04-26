@@ -54,51 +54,51 @@ export function ConversationItem({ conversation, isActive, isClient, onClick }: 
     <button
       onClick={onClick}
       className={cn(
-        'w-full text-left px-4 py-3 cursor-pointer transition-all border-l-2',
+        'w-full text-left px-4 py-4 md:px-6 cursor-pointer transition-all border-l-2 rounded-r-xl',
         isActive
           ? 'bg-surface-container-high/40 border-l-primary'
-          : 'border-l-transparent hover:bg-surface-container-low hover:border-l-outline-variant/20'
+          : 'border-l-transparent hover:bg-surface-container-low'
       )}
     >
-      {/* Row 1: Name + time */}
-      <div className="flex justify-between items-start mb-1">
-        <span className={cn(
-          'text-xs font-bold tracking-tight',
-          isActive ? 'text-on-surface' : 'text-on-surface/80'
-        )}>
-          {conversation.contact_handle
-            ? `@${conversation.contact_handle.replace(/^@/, '')}`
-            : conversation.contact_name ?? 'Unknown'}
-        </span>
-        <span className="text-[10px] text-on-surface-variant/40">
-          {conversation.last_message_at ? relativeTime(conversation.last_message_at) : ''}
-        </span>
-      </div>
+      <div className="flex items-center gap-4">
+        {/* Platform icon */}
+        <div className="shrink-0">
+          <PlatformIcon slug={platformSlug} size={14} />
+        </div>
 
-      {/* Row 2: Preview text */}
-      <div className="flex items-center gap-2 mb-2">
-        {isNew && <span className="w-2 h-2 rounded-full bg-primary animate-pulse flex-shrink-0" />}
-        <p className={cn(
-          'text-sm line-clamp-1',
-          isActive ? 'text-on-surface font-medium italic' : 'text-on-surface-variant/60'
-        )}>
-          {conversation.ai_summary
-            ? (isActive ? `"${conversation.ai_summary}"` : conversation.ai_summary)
-            : 'No messages yet'}
-        </p>
-      </div>
+        {/* Name + preview */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            {isNew && <span className="w-2 h-2 rounded-full bg-primary animate-pulse flex-shrink-0" />}
+            <span className={cn(
+              'text-sm font-medium',
+              isActive ? 'text-on-surface' : 'text-on-surface/80'
+            )}>
+              {conversation.contact_handle
+                ? `@${conversation.contact_handle.replace(/^@/, '')}`
+                : conversation.contact_name ?? 'Unknown'}
+            </span>
+            <span className={cn(
+              'text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter shrink-0',
+              badge.bg, badge.text
+            )}>
+              {badge.label}
+            </span>
+          </div>
+          <p className={cn(
+            'text-sm line-clamp-1 mt-0.5',
+            isActive ? 'text-on-surface-variant' : 'text-on-surface-variant/50'
+          )}>
+            {conversation.ai_summary ?? 'No messages yet'}
+          </p>
+        </div>
 
-      {/* Row 3: Priority badge + platform */}
-      <div className="flex items-center gap-2">
-        <span className={cn(
-          'text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter',
-          badge.bg, badge.text
-        )}>
-          {badge.label}
-        </span>
-        <div className="flex items-center gap-1.5 opacity-60">
-          <PlatformIcon slug={platformSlug} size={10} />
-          <span className="text-[10px]">{conversation.platform_name}</span>
+        {/* Platform + time */}
+        <div className="shrink-0 text-right">
+          <span className="text-xs text-on-surface-variant/40">
+            {conversation.last_message_at ? relativeTime(conversation.last_message_at) : ''}
+          </span>
+          <p className="text-[10px] text-on-surface-variant/30 mt-0.5">{conversation.platform_name}</p>
         </div>
       </div>
     </button>

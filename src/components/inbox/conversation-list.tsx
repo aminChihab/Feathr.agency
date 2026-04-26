@@ -59,7 +59,7 @@ export function ConversationList({
   })
 
   return (
-    <section className="w-80 flex flex-col bg-surface-container-lowest border-r border-outline-variant/10 overflow-hidden">
+    <section className="flex flex-col overflow-hidden">
       {/* Tab filters + sync */}
       <div className="p-4 space-y-4">
         <div className="flex items-center justify-between">
