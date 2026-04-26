@@ -1,8 +1,12 @@
-import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { BottomTabBar } from '@/components/ui/bottom-tab-bar'
+import { createClient } from '@/lib/supabase/server'
+import { DashboardShell } from './dashboard-shell'
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -10,12 +14,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect('/login')
   }
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('professional_name, avatar_url')
+    .eq('id', user.id)
+    .single()
+
   return (
-    <div className="min-h-screen bg-surface">
-      <main className="pb-20">
-        {children}
-      </main>
-      <BottomTabBar />
-    </div>
+    <DashboardShell
+      email={user.email}
+      profileName={profile?.professional_name}
+      avatarUrl={profile?.avatar_url}
+    >
+      {children}
+    </DashboardShell>
   )
 }
