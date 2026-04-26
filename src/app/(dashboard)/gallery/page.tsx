@@ -20,7 +20,7 @@ export default function GalleryPage() {
         .from('profiles')
         .select('credit_balance')
         .eq('id', user.id)
-        .single()
+        .single() as { data: { credit_balance: number | null } | null; error: unknown }
       setCreditBalance(profile?.credit_balance ?? null)
     }
     init()
@@ -50,7 +50,7 @@ export default function GalleryPage() {
               .from('profiles')
               .select('credit_balance')
               .eq('id', userId)
-              .single()
+              .single() as { data: { credit_balance: number | null } | null; error: unknown }
             setCreditBalance(data?.credit_balance ?? null)
           }}
         />

@@ -18,7 +18,7 @@ export default async function DashboardLayout({
     .from('profiles')
     .select('professional_name, avatar_url')
     .eq('id', user.id)
-    .single()
+    .single() as { data: { professional_name: string | null; avatar_url: string | null } | null; error: unknown }
 
   const { count: unreadCount } = await supabase
     .from('conversations')
