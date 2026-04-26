@@ -6,10 +6,11 @@ import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/types/database'
 import { ConversationList } from '@/components/inbox/conversation-list'
 import { MessageThread } from '@/components/inbox/message-thread'
-import { ClientSidebar } from '@/components/inbox/client-sidebar'
 import { LinkClientModal } from '@/components/inbox/link-client-modal'
 import { BookingModal } from '@/components/dashboard/booking-modal'
 import { computeConversationFields } from '@/lib/conversations'
+import { PageHeader } from '@/components/ui/page-header'
+import { ArrowLeft, Search } from 'lucide-react'
 
 type Message = Database['public']['Tables']['messages']['Row']
 type Client = Database['public']['Tables']['clients']['Row']
@@ -214,18 +215,6 @@ export default function InboxPage() {
     setFilters((prev) => ({ ...prev, [key]: value }))
   }
 
-  async function handleUnlinkClient() {
-    if (!activeConvId) return
-    await supabase
-      .from('conversations')
-      .update({ client_id: null })
-      .eq('id', activeConvId)
-    setConversations((prev) =>
-      prev.map((c) => c.id === activeConvId ? { ...c, client_id: null } : c)
-    )
-    setClient(null)
-  }
-
   async function handleBookingSaved() {
     // Reload client data after booking
     const conv = conversations.find((c) => c.id === activeConvId)
@@ -250,73 +239,77 @@ export default function InboxPage() {
   const activeConv = conversations.find((c) => c.id === activeConvId)
 
   return (
-    <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 4rem)' }}>
-    <header className="shrink-0 bg-[#131313]/80 backdrop-blur-xl flex justify-between items-center h-20 px-10 shadow-2xl shadow-black/40">
-      <h2 className="font-display text-3xl font-light text-primary">Inbox</h2>
-      <div className="flex items-center gap-8">
-        <div className="relative hidden lg:block">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
-          <input
-            className="bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:ring-1 focus:ring-primary/30 transition-all outline-none font-body text-on-surface placeholder:text-on-surface-variant/50"
-            placeholder="Search conversations..."
-            type="text"
-          />
-        </div>
-        <div className="flex items-center gap-4">
-          <button className="bg-gradient-to-br from-primary to-primary-container text-on-primary font-semibold px-5 py-2.5 rounded-lg text-sm shadow-lg shadow-primary/10 hover:opacity-90 transition-opacity font-body">
-            Create Campaign
-          </button>
-        </div>
-      </div>
-    </header>
-    <div className="flex flex-1 min-h-0 overflow-hidden">
-      {/* Left Column: Conversation List */}
-      <ConversationList
-        conversations={conversations}
-        activeId={activeConvId}
-        onSelect={setActiveConvId}
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        platforms={platforms}
-        onSync={handleSync}
-        syncing={syncing}
-      />
-
-      {/* Center Column: Chat View */}
-      {activeConv ? (
-        <MessageThread
-          conversation={activeConv}
-          messages={messages}
-          supabase={supabase}
-          userId={userId}
-          onMessageSent={async () => {
-            const slug = activeConv?.platform_slug
-            if (slug === 'instagram') {
-              await fetch('/api/instagram/send', { method: 'POST' })
-            } else if (slug === 'whatsapp') {
-              await fetch('/api/whatsapp/send', { method: 'POST' })
-            } else {
-              await fetch('/api/inbox/send', { method: 'POST' })
-            }
-          }}
-          onApproveMessage={handleApproveMessage}
-          onRejectMessage={handleRejectMessage}
-        />
+    <div>
+      {!activeConvId ? (
+        <>
+          <PageHeader title="Inbox" subtitle="Conversations and leads">
+            <div className="flex items-center gap-4">
+              <div className="relative hidden lg:block">
+                <input
+                  className="bg-surface-container-low border-none rounded-full py-2 pl-4 pr-10 text-sm w-64 focus:ring-1 focus:ring-primary/30 transition-all outline-none font-body text-on-surface placeholder:text-on-surface-variant/50"
+                  placeholder="Search conversations..."
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  type="text"
+                />
+                <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-on-surface-variant/40" />
+              </div>
+              <button className="bg-gradient-to-br from-primary to-primary-container text-on-primary font-semibold px-5 py-2.5 rounded-full text-sm shadow-lg shadow-primary/10 hover:opacity-90 transition-opacity font-body">
+                Create Campaign
+              </button>
+            </div>
+          </PageHeader>
+          <div className="px-4 md:px-6">
+            <ConversationList
+              conversations={conversations}
+              activeId={activeConvId}
+              onSelect={setActiveConvId}
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              platforms={platforms}
+              onSync={handleSync}
+              syncing={syncing}
+            />
+          </div>
+        </>
       ) : (
-        <section className="flex-1 flex flex-col items-center justify-center bg-surface">
-          <span className="material-symbols-outlined text-[48px] text-on-surface-variant/30 mb-3">inbox</span>
-          <p className="text-sm text-on-surface-variant/40">Select a conversation to view messages</p>
-        </section>
+        <div className="flex flex-col" style={{ height: 'calc(100vh - 5rem)' }}>
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-outline-variant/15">
+            <button
+              onClick={() => setActiveConvId(null)}
+              className="flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors"
+            >
+              <ArrowLeft size={20} />
+              <span className="text-sm">Back to Inbox</span>
+            </button>
+            {activeConv && (
+              <span className="text-sm text-on-surface font-medium ml-auto">
+                {activeConv.contact_name || activeConv.contact_handle || 'Unknown'}
+              </span>
+            )}
+          </div>
+          <div className="flex-1 min-h-0">
+            <MessageThread
+              conversation={activeConv!}
+              messages={messages}
+              supabase={supabase}
+              userId={userId}
+              onMessageSent={async () => {
+                const slug = activeConv?.platform_slug
+                if (slug === 'instagram') {
+                  await fetch('/api/instagram/send', { method: 'POST' })
+                } else if (slug === 'whatsapp') {
+                  await fetch('/api/whatsapp/send', { method: 'POST' })
+                } else {
+                  await fetch('/api/inbox/send', { method: 'POST' })
+                }
+              }}
+              onApproveMessage={handleApproveMessage}
+              onRejectMessage={handleRejectMessage}
+            />
+          </div>
+        </div>
       )}
-
-      {/* Right Column: Client Info Panel */}
-      <ClientSidebar
-        client={client}
-        conversation={activeConv ?? null}
-        onLinkClient={() => setLinkModalOpen(true)}
-        onUnlinkClient={handleUnlinkClient}
-        onAddBooking={client ? () => setBookingModalOpen(true) : undefined}
-      />
 
       {activeConvId && userId && (
         <LinkClientModal
@@ -347,7 +340,6 @@ export default function InboxPage() {
           onSaved={handleBookingSaved}
         />
       )}
-    </div>
     </div>
   )
 }

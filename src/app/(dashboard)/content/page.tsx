@@ -7,8 +7,7 @@ import type { Database } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { PostModal } from '@/components/dashboard/post-modal'
 import { StatusBadge } from '@/components/dashboard/status-badge'
-import { MediaLibrary } from '@/components/studio/media-library'
-import { StudioWorkspace } from '@/components/studio/studio-workspace'
+import { PageHeader } from '@/components/ui/page-header'
 import {
   Check,
   ChevronLeft,
@@ -309,7 +308,7 @@ export default function ContentPage() {
   const [mediaThumbs, setMediaThumbs] = useState<Record<string, MediaThumb>>({})
   const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [contentTab, setContentTab] = useState<'drafts' | 'media' | 'studio'>('drafts')
+  const [contentTab, setContentTab] = useState<'drafts' | 'calendar' | 'posted'>('drafts')
   const [creditBalance, setCreditBalance] = useState<number | null>(null)
 
   // Calendar state
@@ -492,11 +491,8 @@ export default function ContentPage() {
 
   return (
     <div className="space-y-0">
-      {/* ── Sticky TopAppBar ─────────────────────────────── */}
-      <header className="sticky top-0 z-40 w-full bg-[#131313]/80 backdrop-blur-xl flex justify-between items-center h-20 px-10 shadow-2xl shadow-black/40">
-        <h2 className="font-display text-3xl font-light text-primary">Content</h2>
+      <PageHeader title="Content" subtitle="Review, approve, and schedule posts">
         <div className="flex items-center gap-4">
-          {/* Search */}
           <div className="relative hidden lg:block">
             <input
               type="text"
@@ -507,7 +503,6 @@ export default function ContentPage() {
             />
             <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-on-surface-variant/40" />
           </div>
-          {/* Post now CTA */}
           <button
             onClick={handlePostNow}
             disabled={posting}
@@ -516,54 +511,24 @@ export default function ContentPage() {
             <Send className="h-3.5 w-3.5" />
             {posting ? 'Posting...' : 'Post now'}
           </button>
-          {/* Manual post / Suggest posts pill */}
           <div className="flex items-center bg-surface-container-low rounded-full p-1">
-            <button
-              onClick={handleNewPost}
-              className="px-4 py-1.5 text-xs font-medium text-on-surface hover:bg-surface-container-high rounded-full transition-all"
-            >
-              Manual post
-            </button>
-            <button
-              onClick={handleSuggestPosts}
-              disabled={suggesting}
-              className="px-4 py-1.5 text-xs font-medium text-on-surface hover:bg-surface-container-high rounded-full transition-all"
-            >
-              {suggesting ? (
-                <span className="flex items-center gap-1.5">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  Starting...
-                </span>
-              ) : (
-                'Suggest posts'
-              )}
+            <button onClick={handleNewPost} className="px-4 py-1.5 text-xs font-medium text-on-surface hover:bg-surface-container-high rounded-full transition-all">Manual post</button>
+            <button onClick={handleSuggestPosts} disabled={suggesting} className="px-4 py-1.5 text-xs font-medium text-on-surface hover:bg-surface-container-high rounded-full transition-all">
+              {suggesting ? <span className="flex items-center gap-1.5"><Loader2 className="h-3 w-3 animate-spin" />Starting...</span> : 'Suggest posts'}
             </button>
           </div>
           {creditBalance !== null && (
-            <span className="bg-surface-container-highest text-on-surface-variant text-xs px-3 py-1.5 rounded-full font-body">
-              {creditBalance} credits
-            </span>
+            <span className="bg-surface-container-highest text-on-surface-variant text-xs px-3 py-1.5 rounded-full font-body">{creditBalance} credits</span>
           )}
-          {/* View toggle */}
           <div className="flex items-center bg-surface-container-low rounded-full p-1">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-full transition-colors ${viewMode === 'grid' ? 'bg-surface-container-high text-on-surface' : 'text-on-surface-variant/50'}`}
-            >
-              <Grid3X3 className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-2 rounded-full transition-colors ${viewMode === 'list' ? 'bg-surface-container-high text-on-surface' : 'text-on-surface-variant/50'}`}
-            >
-              <List className="h-4 w-4" />
-            </button>
+            <button onClick={() => setViewMode('grid')} className={`p-2 rounded-full transition-colors ${viewMode === 'grid' ? 'bg-surface-container-high text-on-surface' : 'text-on-surface-variant/50'}`}><Grid3X3 className="h-4 w-4" /></button>
+            <button onClick={() => setViewMode('list')} className={`p-2 rounded-full transition-colors ${viewMode === 'list' ? 'bg-surface-container-high text-on-surface' : 'text-on-surface-variant/50'}`}><List className="h-4 w-4" /></button>
           </div>
         </div>
-      </header>
+      </PageHeader>
 
       <div className="px-10 pt-6 pb-2 flex items-center gap-2">
-        {(['drafts', 'media', 'studio'] as const).map((tab) => (
+        {(['drafts', 'calendar', 'posted'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setContentTab(tab)}
@@ -573,7 +538,7 @@ export default function ContentPage() {
                 : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
-            {tab === 'drafts' ? 'Drafts' : tab === 'media' ? 'Media Library' : 'Studio'}
+            {tab === 'drafts' ? 'Drafts' : tab === 'calendar' ? 'Calendar' : 'Posted'}
           </button>
         ))}
       </div>
@@ -698,8 +663,11 @@ export default function ContentPage() {
             </div>
           )}
 
-          {/* Calendar controls */}
-          <div className="space-y-4 pt-8">
+        </section>
+        )}
+
+        {contentTab === 'calendar' && (
+          <section className="max-w-7xl mx-auto space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={navigatePrev} className="h-8 w-8 p-0 border-outline-variant/15">
@@ -787,21 +755,55 @@ export default function ContentPage() {
                 </div>
               ))}
             </div>
-          </div>
-        </section>
+          </section>
         )}
 
-        {contentTab === 'media' && userId && (
-          <MediaLibrary
-            supabase={supabase}
-            userId={userId}
-            creditBalance={creditBalance}
-            onCreditsChanged={() => fetch('/api/credits').then(r => r.json()).then(d => setCreditBalance(d.balance)).catch(() => {})}
-          />
-        )}
-
-        {contentTab === 'studio' && userId && (
-          <StudioWorkspace userId={userId} />
+        {contentTab === 'posted' && (
+          <section className="max-w-7xl mx-auto space-y-6">
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              </div>
+            ) : (
+              <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-3'}>
+                {posts.filter(p => p.status === 'posted').map((post) => {
+                  const ids = post.media_ids as string[] | null
+                  const firstThumb = ids?.[0] ? mediaThumbs[ids[0]] : null
+                  return (
+                    <div key={post.id} className="bg-surface-container-low rounded-2xl overflow-hidden">
+                      <div className="aspect-[4/3] relative overflow-hidden bg-surface-container">
+                        {firstThumb ? (
+                          <img src={firstThumb.url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <span className="text-on-surface-variant/20 text-xs uppercase tracking-wider">No media</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-display text-lg text-on-surface">
+                            {post.scheduled_at ? new Date(post.scheduled_at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Unscheduled'}
+                          </span>
+                          <StatusBadge status={post.status} />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: post.platform_color ?? '#666' }} />
+                          <span className="text-xs text-on-surface-variant">{post.platform_name}</span>
+                        </div>
+                        <p className="text-sm text-on-surface line-clamp-3">{post.caption || 'No caption'}</p>
+                      </div>
+                    </div>
+                  )
+                })}
+                {posts.filter(p => p.status === 'posted').length === 0 && (
+                  <div className="col-span-full py-16 text-center">
+                    <p className="text-sm text-on-surface-variant/40">No posted content yet.</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
         )}
 
       <PostModal
