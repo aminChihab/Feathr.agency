@@ -16,9 +16,9 @@ export default async function DashboardLayout({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('professional_name, avatar_url')
+    .select('professional_name, avatar_url, credit_balance')
     .eq('id', user.id)
-    .single() as { data: { professional_name: string | null; avatar_url: string | null } | null; error: unknown }
+    .single() as { data: { professional_name: string | null; avatar_url: string | null; credit_balance: number | null } | null; error: unknown }
 
   const { count: unreadCount } = await supabase
     .from('conversations')
@@ -37,6 +37,7 @@ export default async function DashboardLayout({
       email={user.email}
       profileName={profile?.professional_name}
       avatarUrl={profile?.avatar_url}
+      creditBalance={profile?.credit_balance ?? null}
       badges={{
         '/inbox': unreadCount || 0,
         '/content': draftCount || 0,

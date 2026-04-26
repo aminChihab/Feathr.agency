@@ -4,51 +4,51 @@
   --font-display: 'Instrument Serif', serif;
   --font-body: 'Instrument Sans', sans-serif;
 
-  --color-surface: #131313;
-  --color-surface-dim: #0A0A0A;
-  --color-surface-container-lowest: #0E0E0E;
-  --color-surface-container-low: #1C1B1B;
-  --color-surface-container: #201F1F;
-  --color-surface-container-high: #2A2A2A;
-  --color-surface-container-highest: #353534;
-  --color-surface-bright: #3A3939;
-  --color-surface-variant: #353534;
-  --color-surface-tint: #F7B5C5;
+  --color-surface: #1A1A1A;
+  --color-surface-dim: #111111;
+  --color-surface-container-lowest: #141414;
+  --color-surface-container-low: #222222;
+  --color-surface-container: #262626;
+  --color-surface-container-high: #2E2E2E;
+  --color-surface-container-highest: #3A3A3A;
+  --color-surface-bright: #424242;
+  --color-surface-variant: #3A3A3A;
+  --color-surface-tint: #B685FF;
 
-  --color-on-surface: #E5E2E1;
-  --color-on-surface-variant: #D5C2C5;
-  --color-on-background: #E5E2E1;
+  --color-on-surface: #FFFFFF;
+  --color-on-surface-variant: #A0A0A0;
+  --color-on-background: #FFFFFF;
 
-  --color-primary: #FEBBCB;
-  --color-primary-container: #E0A0B0;
-  --color-primary-fixed: #FFD9E1;
-  --color-primary-fixed-dim: #F7B5C5;
-  --color-on-primary: #4E2230;
-  --color-on-primary-container: #653543;
-  --color-inverse-primary: #834F5D;
+  --color-primary: #B685FF;
+  --color-primary-container: #9B6AE8;
+  --color-primary-fixed: #D4B8FF;
+  --color-primary-fixed-dim: #C49EFF;
+  --color-on-primary: #1E0A3A;
+  --color-on-primary-container: #2D1654;
+  --color-inverse-primary: #6B3FA0;
 
-  --color-secondary: #E0BEC5;
-  --color-secondary-container: #594046;
-  --color-on-secondary: #402A30;
-  --color-on-secondary-container: #CEADB4;
+  --color-secondary: #C5B8D9;
+  --color-secondary-container: #4A3D5C;
+  --color-on-secondary: #2E2340;
+  --color-on-secondary-container: #B0A3C4;
 
   --color-tertiary: #AED7AE;
   --color-tertiary-container: #93BB94;
   --color-on-tertiary: #14371B;
   --color-on-tertiary-container: #284B2D;
 
-  --color-error: #FFB4AB;
+  --color-error: #FF6B6B;
   --color-error-container: #93000A;
   --color-on-error: #690005;
   --color-on-error-container: #FFDAD6;
 
-  --color-outline: #9D8D90;
-  --color-outline-variant: #514346;
+  --color-outline: #6B6B6B;
+  --color-outline-variant: #404040;
 
-  --color-inverse-surface: #E5E2E1;
-  --color-inverse-on-surface: #313030;
+  --color-inverse-surface: #FFFFFF;
+  --color-inverse-on-surface: #1A1A1A;
 
-  --color-background: #131313;
+  --color-background: #1A1A1A;
 
   --color-status-draft: oklch(0.75 0.15 85);
   --color-status-approved: oklch(0.65 0.15 250);
@@ -87,11 +87,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .gradient-cta {
-  background: linear-gradient(135deg, #FEBBCB, #E0A0B0);
+  background: linear-gradient(135deg, #B685FF, #9B6AE8);
 }
 
 .ghost-border {
-  border: 1px solid rgba(81, 67, 70, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* Hide all scrollbars globally but keep scroll functionality */

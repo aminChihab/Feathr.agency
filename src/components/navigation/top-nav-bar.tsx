@@ -16,21 +16,22 @@ interface TopNavBarProps {
   avatarUrl?: string | null
   onAvatarClick: () => void
   badges?: Record<string, number>
+  creditBalance?: number | null
 }
 
-export function TopNavBar({ avatarUrl, onAvatarClick, badges = {} }: TopNavBarProps) {
+export function TopNavBar({ avatarUrl, onAvatarClick, badges = {}, creditBalance }: TopNavBarProps) {
   const pathname = usePathname()
 
   return (
     <div className="hidden md:block fixed top-0 left-0 right-0 z-40 px-5 pt-4">
-      <nav className="mx-auto flex h-16 max-w-full items-center justify-between rounded-2xl bg-surface-container-high/80 backdrop-blur-xl px-8">
+      <nav className="mx-auto flex h-[72px] max-w-full items-center justify-between rounded-2xl bg-surface-container-high px-8">
         {/* Logo */}
         <Link href="/explore" className="flex items-center">
           <img src="/logo.png" alt="Feathr" className="h-12" />
         </Link>
 
         {/* Nav Items */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           {navItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
             const Icon = item.icon
@@ -41,8 +42,8 @@ export function TopNavBar({ avatarUrl, onAvatarClick, badges = {} }: TopNavBarPr
                 href={item.href}
                 className={`relative flex items-center gap-2.5 rounded-xl px-5 py-2.5 text-sm font-medium transition-colors ${
                   isActive
-                    ? 'text-on-surface'
-                    : 'text-on-surface-variant/40 hover:text-on-surface-variant'
+                    ? 'text-white'
+                    : 'text-on-surface-variant/50 hover:text-on-surface-variant'
                 }`}
               >
                 <span className="relative">
@@ -55,17 +56,25 @@ export function TopNavBar({ avatarUrl, onAvatarClick, badges = {} }: TopNavBarPr
           })}
         </div>
 
-        {/* Avatar */}
-        <button
-          onClick={onAvatarClick}
-          className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-outline-variant/20 transition-colors hover:border-primary/40"
-        >
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="Profile" className="h-full w-full object-cover" />
-          ) : (
-            <span className="text-sm font-medium text-on-surface-variant">U</span>
+        {/* Right side: credits + avatar */}
+        <div className="flex items-center gap-3">
+          {creditBalance != null && (
+            <span className="flex items-center gap-1.5 bg-surface-container-highest text-on-surface-variant text-sm px-4 py-2 rounded-full font-medium">
+              {creditBalance}
+              <span className="text-primary">●</span>
+            </span>
           )}
-        </button>
+          <button
+            onClick={onAvatarClick}
+            className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-outline-variant/30 transition-colors hover:border-primary/50"
+          >
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Profile" className="h-full w-full object-cover" />
+            ) : (
+              <span className="text-sm font-medium text-on-surface-variant">U</span>
+            )}
+          </button>
+        </div>
       </nav>
     </div>
   )
