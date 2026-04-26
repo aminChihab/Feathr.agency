@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { PageHeader } from '@/components/ui/page-header'
 import {
   User, Mic, Link2, ListChecks, Calendar, Bell, Shield, CreditCard,
   Upload, FileText, Trash2, Sparkles, Loader2, Camera, Check,
@@ -373,10 +374,7 @@ export default function SettingsPage() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-[#131313]/80 backdrop-blur-xl flex justify-between items-center h-20 px-10 shadow-2xl shadow-black/40">
-        <h2 className="font-display text-3xl font-light text-primary">Settings</h2>
-        {saved && <span className="text-sm text-tertiary">Saved</span>}
-      </header>
+      <PageHeader title="Settings" subtitle="Manage your account and preferences" />
 
       <div className="p-10 space-y-6">
       {/* Sub-navigation pills */}
