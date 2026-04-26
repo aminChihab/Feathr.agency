@@ -26,7 +26,7 @@ export function TopNavBar({ avatarUrl, onAvatarClick, badges = {} }: TopNavBarPr
       <nav className="mx-auto flex h-16 max-w-full items-center justify-between rounded-2xl bg-surface-container-high/80 backdrop-blur-xl px-8">
         {/* Logo */}
         <Link href="/explore" className="flex items-center">
-          <img src="/logo.png" alt="Feathr" className="h-10" />
+          <img src="/logo.png" alt="Feathr" className="h-12" />
         </Link>
 
         {/* Nav Items */}
