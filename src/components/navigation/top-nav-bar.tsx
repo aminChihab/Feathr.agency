@@ -22,15 +22,15 @@ export function TopNavBar({ avatarUrl, onAvatarClick, badges = {} }: TopNavBarPr
   const pathname = usePathname()
 
   return (
-    <div className="hidden md:block fixed top-0 left-0 right-0 z-40 px-4 pt-3">
-      <nav className="mx-auto flex h-14 max-w-full items-center justify-between rounded-2xl bg-surface-container-high px-6">
+    <div className="hidden md:block fixed top-0 left-0 right-0 z-40 px-5 pt-4">
+      <nav className="mx-auto flex h-16 max-w-full items-center justify-between rounded-2xl bg-surface-container-high/80 backdrop-blur-xl px-8">
         {/* Logo */}
         <Link href="/explore" className="flex items-center">
-          <span className="font-display text-xl text-primary">feathr</span>
+          <span className="font-display text-2xl text-primary italic">feathr</span>
         </Link>
 
         {/* Nav Items */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           {navItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
             const Icon = item.icon
@@ -39,14 +39,14 @@ export function TopNavBar({ avatarUrl, onAvatarClick, badges = {} }: TopNavBarPr
               <Link
                 key={item.href}
                 href={item.href}
-                className={`relative flex items-center gap-2 rounded-xl px-4 py-2 text-xs uppercase tracking-wider transition-colors ${
+                className={`relative flex items-center gap-2.5 rounded-xl px-5 py-2.5 text-sm font-medium transition-colors ${
                   isActive
-                    ? 'text-primary'
-                    : 'text-on-surface-variant/50 hover:text-on-surface-variant'
+                    ? 'text-on-surface'
+                    : 'text-on-surface-variant/40 hover:text-on-surface-variant'
                 }`}
               >
                 <span className="relative">
-                  <Icon size={18} />
+                  <Icon size={20} />
                   <NavBadge count={badgeCount} />
                 </span>
                 <span>{item.label}</span>
@@ -58,12 +58,12 @@ export function TopNavBar({ avatarUrl, onAvatarClick, badges = {} }: TopNavBarPr
         {/* Avatar */}
         <button
           onClick={onAvatarClick}
-          className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-outline-variant/15"
+          className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-outline-variant/20 transition-colors hover:border-primary/40"
         >
           {avatarUrl ? (
             <img src={avatarUrl} alt="Profile" className="h-full w-full object-cover" />
           ) : (
-            <span className="text-sm text-on-surface-variant">U</span>
+            <span className="text-sm font-medium text-on-surface-variant">U</span>
           )}
         </button>
       </nav>

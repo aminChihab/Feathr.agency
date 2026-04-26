@@ -24,7 +24,7 @@ export function DashboardShell({ children, email, profileName, avatarUrl, badges
         onAvatarClick={() => setDrawerOpen(true)}
         badges={badges}
       />
-      <main className="pb-20 md:pt-20 md:pb-0">
+      <main className="pb-20 md:pt-24 md:pb-0">
         {children}
       </main>
       <BottomTabBar onProfileClick={() => setDrawerOpen(true)} badges={badges} />

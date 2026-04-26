@@ -6,19 +6,19 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, subtitle, children }: PageHeaderProps) {
   return (
-    <div className="px-4 pt-6 pb-4 md:px-6 md:pt-8 md:pb-6">
-      <div className="flex items-start justify-between">
+    <div className="px-6 pt-10 pb-6 md:px-10 md:pt-14 md:pb-8">
+      <div className="flex items-end justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-display font-bold text-on-surface">
+          <h1 className="text-5xl md:text-7xl font-display font-bold text-on-surface tracking-tight">
             {title}
           </h1>
           {subtitle && (
-            <p className="mt-1 text-base text-on-surface-variant">
+            <p className="mt-2 text-base md:text-lg text-on-surface-variant">
               {subtitle}
             </p>
           )}
         </div>
-        {children && <div className="flex items-center gap-2">{children}</div>}
+        {children && <div className="flex items-center gap-3 shrink-0">{children}</div>}
       </div>
     </div>
   )
