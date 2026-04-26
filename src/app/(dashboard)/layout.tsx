@@ -20,11 +20,27 @@ export default async function DashboardLayout({
     .eq('id', user.id)
     .single()
 
+  const { count: unreadCount } = await supabase
+    .from('conversations')
+    .select('*', { count: 'exact', head: true })
+    .eq('profile_id', user.id)
+    .gt('unread_count', 0)
+
+  const { count: draftCount } = await supabase
+    .from('content_calendar')
+    .select('*', { count: 'exact', head: true })
+    .eq('profile_id', user.id)
+    .eq('status', 'draft')
+
   return (
     <DashboardShell
       email={user.email}
       profileName={profile?.professional_name}
       avatarUrl={profile?.avatar_url}
+      badges={{
+        '/inbox': unreadCount || 0,
+        '/content': draftCount || 0,
+      }}
     >
       {children}
     </DashboardShell>

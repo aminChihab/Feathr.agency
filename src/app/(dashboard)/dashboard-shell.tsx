@@ -11,9 +11,10 @@ interface DashboardShellProps {
   email?: string | null
   profileName?: string | null
   avatarUrl?: string | null
+  badges?: Record<string, number>
 }
 
-export function DashboardShell({ children, email, profileName, avatarUrl }: DashboardShellProps) {
+export function DashboardShell({ children, email, profileName, avatarUrl, badges }: DashboardShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   return (
@@ -21,11 +22,12 @@ export function DashboardShell({ children, email, profileName, avatarUrl }: Dash
       <TopNavBar
         avatarUrl={avatarUrl}
         onAvatarClick={() => setDrawerOpen(true)}
+        badges={badges}
       />
       <main className="pb-20 md:pt-20 md:pb-0">
         {children}
       </main>
-      <BottomTabBar onProfileClick={() => setDrawerOpen(true)} />
+      <BottomTabBar onProfileClick={() => setDrawerOpen(true)} badges={badges} />
       <ProfileDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
