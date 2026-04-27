@@ -167,5 +167,81 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  return NextResponse.json({ error: 'Unknown context type. Use: research, content-writer' }, { status: 400 })
+  if (type === 'prompt-writer') {
+    // Get pending queue items with their draft captions
+    const { data: queueItems } = await supabase
+      .from('foxy_prompt_queue')
+      .select('id, draft_id, prompt, aspect_ratio, created_at')
+      .eq('profile_id', profileId)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true })
+
+    // Get draft captions for context
+    const draftIds = (queueItems ?? []).map(q => q.draft_id).filter(Boolean)
+    let drafts: Record<string, string> = {}
+    if (draftIds.length > 0) {
+      const { data: draftRows } = await supabase
+        .from('content_calendar')
+        .select('id, caption')
+        .in('id', draftIds)
+      drafts = Object.fromEntries((draftRows ?? []).map(d => [d.id, d.caption ?? '']))
+    }
+
+    const enrichedQueue = (queueItems ?? []).map(item => ({
+      ...item,
+      draft_caption: drafts[item.draft_id] ?? null,
+    }))
+
+    // Get prompt templates for reference
+    const { data: templates } = await supabase
+      .from('foxy_prompt_templates')
+      .select('name, category, prompt, notes, quality_rating')
+      .gte('quality_rating', 4)
+      .order('quality_rating', { ascending: false })
+      .limit(15)
+
+    // Get profile info for context (name, niche, style)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('professional_name, city, goals, voice_description')
+      .eq('id', profileId)
+      .single()
+
+    return NextResponse.json({
+      profile: {
+        name: profile?.professional_name,
+        city: profile?.city,
+        goals: profile?.goals,
+        voice: profile?.voice_description,
+      },
+      queue_items: enrichedQueue,
+      prompt_templates: templates ?? [],
+      prompt_formula: {
+        structure: '[Photography style], [technical treatment], [shot type + angle]. [Setting with every object named]. Wearing [material + color + fit + construction of garments + accessories]. [Exact body pose: which hand, which foot, weight, gaze direction]. [Light source + color temperature].',
+        rules: [
+          'Open with a real photography genre — not "photo of" but "Lo-fi flash photography", "Fine art editorial photography"',
+          'Specify technical camera details — film grain, ISO, contrast, color grade',
+          'State camera angle and shot type explicitly',
+          'Describe environment like a set designer — name every object',
+          'Describe outfit like a fashion spec sheet — material, fit, color, brand, construction',
+          'Describe pose as body mechanics — which hand does what, weight distribution, gaze',
+          'Never use AI language — zero "beautiful", "stunning", "gorgeous". Stay clinical',
+          'Describe light by source, not mood — "warm tungsten corridor light" not "moody lighting"',
+        ],
+        anti_ai_tricks: [
+          'Film imperfections: grain, motion blur, slight overexposure',
+          'Silhouettes: hide AI rendering artifacts',
+          'B&W processing: eliminates AI color artifacts',
+          'Mirror selfies with phone brand + case color',
+          'Wet surfaces: reflections add realism',
+          'Environmental clutter: scattered objects, weathering',
+          '"UGC type content, photorealistic, matte skin, micro details"',
+          'Brand names anchor the image in reality',
+          'Human gestures: peace sign, tucking hair, holding bag',
+        ],
+      },
+    })
+  }
+
+  return NextResponse.json({ error: 'Unknown context type. Use: research, content-writer, prompt-writer' }, { status: 400 })
 }

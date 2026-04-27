@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
     'performance-analyst': process.env.PAPERCLIP_PERFORMANCE_ANALYST_ID ?? '',
     'content-writer': process.env.PAPERCLIP_CONTENT_WRITER_ID ?? '',
     'chat-analyzer': process.env.PAPERCLIP_CHAT_ANALYZER_ID ?? '',
+    'prompt-writer': process.env.PAPERCLIP_PROMPT_WRITER_ID ?? '',
   }
 
   const agentId = agentMap[agent]
