@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
   const errors = []
 
   for (const item of prompts) {
-    const { draft_id, content_description, aspect_ratio } = item
+    const { draft_id, content_description, aspect_ratio, slide_type, slide_order } = item
 
     if (!draft_id) {
       errors.push('Missing draft_id in prompt request')
@@ -47,6 +47,8 @@ export async function POST(request: NextRequest) {
         draft_id,
         prompt: content_description ?? '',
         aspect_ratio: aspect_ratio ?? '4/5',
+        slide_type: slide_type ?? 'single',
+        slide_order: slide_order ?? 0,
         status: 'pending',
       })
       .select('id')
