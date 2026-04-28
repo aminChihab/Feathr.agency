@@ -310,6 +310,14 @@ export function MediaGrid({
   const [duplicates, setDuplicates] = useState<{ file: File; existing: SignedMediaItem }[]>([])
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
 
+  // Fetch on mount when no initial data (e.g. AI generated tab)
+  useEffect(() => {
+    if (initialItems.length === 0 && sourceFilter !== 'all') {
+      resetAndFetch()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // When filter changes, reset and fetch from API
   useEffect(() => {
     if (filter === 'all' && cursor === initialCursor) return

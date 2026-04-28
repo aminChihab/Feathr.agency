@@ -12,6 +12,7 @@ async function fetchInitialMedia(supabase: Awaited<ReturnType<typeof createClien
     .from('content_library')
     .select('id, file_name, file_type, storage_path, thumbnail_path, tags, metadata, source, created_at')
     .eq('profile_id', userId)
+    .or('source.eq.upload,source.is.null')
     .order('created_at', { ascending: false })
     .limit(pageSize + 1)
 
@@ -25,6 +26,7 @@ async function fetchTotalCount(supabase: Awaited<ReturnType<typeof createClient>
     .from('content_library')
     .select('*', { count: 'exact', head: true })
     .eq('profile_id', userId)
+    .or('source.eq.upload,source.is.null')
   return count ?? 0
 }
 
