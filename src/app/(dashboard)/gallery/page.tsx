@@ -1,58 +1,64 @@
-'use client'
-
-import { useState, useEffect } from 'react'
+import { redirect } from 'next/navigation'
 import { PageHeader } from '@/components/ui/page-header'
-import { MediaLibrary } from '@/components/studio/media-library'
-import { createClient } from '@/lib/supabase/client'
+import { GalleryClient } from './gallery-client'
+import { createClient } from '@/lib/supabase/server'
+import { signThumbnailUrls } from '@/lib/storage'
+import { applyCursorPagination, PAGE_SIZES } from '@/lib/pagination'
 
-export default function GalleryPage() {
-  const [userId, setUserId] = useState<string | null>(null)
-  const [creditBalance, setCreditBalance] = useState<number | null>(null)
-  const supabase = createClient()
+async function fetchInitialMedia(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
+  const pageSize = PAGE_SIZES.media
 
-  useEffect(() => {
-    async function init() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      setUserId(user.id)
+  const { data: rows } = await supabase
+    .from('content_library')
+    .select('id, file_name, file_type, storage_path, thumbnail_path, tags, metadata, source, created_at')
+    .eq('profile_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(pageSize + 1)
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('credit_balance')
-        .eq('id', user.id)
-        .single() as { data: { credit_balance: number | null } | null; error: unknown }
-      setCreditBalance(profile?.credit_balance ?? null)
-    }
-    init()
-  }, [supabase])
+  const { items: rawItems, nextCursor } = applyCursorPagination(rows ?? [], pageSize)
+  const items = await signThumbnailUrls(supabase, rawItems)
+  return { items, nextCursor }
+}
 
-  if (!userId) {
-    return (
-      <div>
-        <PageHeader title="Gallery" subtitle="Your media collection" />
-        <div className="px-4 md:px-6 py-16 flex items-center justify-center">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        </div>
-      </div>
-    )
-  }
+async function fetchTotalCount(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
+  const { count } = await supabase
+    .from('content_library')
+    .select('*', { count: 'exact', head: true })
+    .eq('profile_id', userId)
+  return count ?? 0
+}
+
+async function fetchCreditBalance(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
+  const { data } = await supabase
+    .from('profiles')
+    .select('credit_balance')
+    .eq('id', userId)
+    .single() as { data: { credit_balance: number | null } | null; error: unknown }
+  return data?.credit_balance ?? null
+}
+
+export default async function GalleryPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) redirect('/login')
+
+  const [{ items, nextCursor }, totalCount, creditBalance] = await Promise.all([
+    fetchInitialMedia(supabase, user.id),
+    fetchTotalCount(supabase, user.id),
+    fetchCreditBalance(supabase, user.id),
+  ])
 
   return (
     <div>
       <PageHeader title="Gallery" subtitle="Your media collection" />
       <div className="px-4 md:px-6">
-        <MediaLibrary
-          supabase={supabase}
-          userId={userId}
+        <GalleryClient
+          userId={user.id}
+          initialItems={items}
+          initialCursor={nextCursor}
+          totalCount={totalCount}
           creditBalance={creditBalance}
-          onCreditsChanged={async () => {
-            const { data } = await supabase
-              .from('profiles')
-              .select('credit_balance')
-              .eq('id', userId)
-              .single() as { data: { credit_balance: number | null } | null; error: unknown }
-            setCreditBalance(data?.credit_balance ?? null)
-          }}
         />
       </div>
     </div>
