@@ -78,7 +78,7 @@ function MediaThumbnail({
 
   return (
     <div
-      className="group bg-surface-container-low rounded-xl overflow-hidden hover:translate-y-[-4px] transition-all duration-300"
+      className="group bg-surface-container-low rounded-xl overflow-hidden glow-card shimmer-border"
     >
       <div
         className="relative aspect-[4/5] overflow-hidden cursor-pointer"
@@ -90,7 +90,7 @@ function MediaThumbnail({
             src={item.thumbnailUrl}
             fill
             sizes="(max-width: 768px) 50vw, 25vw"
-            className="object-cover grayscale-[0.3] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500"
+            className="object-cover grayscale-[0.3] brightness-90 group-hover:grayscale-0 group-hover:scale-105 group-hover:brightness-100 transition-all duration-500"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-surface-container-high">
@@ -125,7 +125,7 @@ function MediaThumbnail({
         </button>
       </div>
 
-      <div className="p-4 space-y-3">
+      <div className="p-4 space-y-3 border-t border-white/5">
         <h4 className="text-sm font-medium truncate">{item.fileName}</h4>
         <MediaTagList tags={item.tags ?? []} />
       </div>
@@ -149,7 +149,7 @@ function MediaTagList({
         <button
           key={tag}
           onClick={() => onTagClick?.(tag)}
-          className="text-[9px] px-2 py-0.5 bg-surface-container-highest text-on-surface-variant/80 rounded-full hover:opacity-80 transition-opacity"
+          className="text-[9px] px-2 py-0.5 bg-surface-container-highest text-on-surface-variant/80 rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
         >
           #{tag}
         </button>
@@ -724,7 +724,7 @@ export function MediaGrid({
           </div>
         </div>
       ) : (
-        <section className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <section className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 stagger-children">
           {filteredItems.map((item) => (
             <MediaThumbnail
               key={item.id}
