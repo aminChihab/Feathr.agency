@@ -500,9 +500,9 @@ export function ContentClient({
           <button
             key={tab}
             onClick={() => setContentTab(tab)}
-            className={`px-4 py-2 rounded-full text-sm font-body transition-colors whitespace-nowrap shrink-0 ${
+            className={`px-4 py-2 rounded-full text-sm font-body transition-all duration-200 whitespace-nowrap shrink-0 ${
               contentTab === tab
-                ? 'bg-surface-container-high text-on-surface font-medium'
+                ? 'bg-surface-container-high text-on-surface font-medium shadow-[0_0_12px_rgba(182,133,255,0.15)]'
                 : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
@@ -514,7 +514,7 @@ export function ContentClient({
       <div className="px-4 md:px-10 py-6 space-y-6">
         {contentTab === 'drafts' && (
           <section className="max-w-7xl mx-auto space-y-6">
-            <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-3'}>
+            <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children' : 'space-y-3'}>
               {aiDrafts.map((post) => (
                 <PostCardView
                   key={post.id}

@@ -23,7 +23,7 @@ export function CategoryCarousel({ activeCategory, onSelect }: CategoryCarouselP
       <p className="text-sm font-medium text-on-surface-variant mb-3">
         {CATEGORIES.length}+ categories to explore
       </p>
-      <div className="flex gap-3 overflow-x-auto pb-2">
+      <div className="flex gap-3 overflow-x-auto pb-2 stagger-children">
         {CATEGORIES.map((cat) => {
           const isActive = activeCategory === cat
           const gradient = CATEGORY_GRADIENTS[cat] ?? 'from-gray-800/80 to-gray-900/80'
@@ -31,8 +31,8 @@ export function CategoryCarousel({ activeCategory, onSelect }: CategoryCarouselP
             <button
               key={cat}
               onClick={() => onSelect(isActive ? null : cat)}
-              className={`shrink-0 relative w-36 h-48 rounded-xl overflow-hidden transition-all ${
-                isActive ? 'ring-2 ring-primary scale-[1.02]' : 'hover:scale-[1.01]'
+              className={`shrink-0 relative w-36 h-48 rounded-xl overflow-hidden transition-all glow-card shimmer-border ${
+                isActive ? 'ring-2 ring-primary scale-[1.02] shadow-[0_0_20px_rgba(182,133,255,0.2)]' : 'hover:scale-[1.01]'
               }`}
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${gradient}`} />

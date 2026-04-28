@@ -16,13 +16,13 @@ export function IdeaCard({ idea, onClick }: IdeaCardProps) {
   return (
     <button
       onClick={() => onClick(idea)}
-      className="w-full text-left rounded-xl overflow-hidden break-inside-avoid mb-2 group"
+      className="w-full text-left rounded-xl overflow-hidden break-inside-avoid mb-2 group glow-card"
     >
       <div className="relative">
         <img
           src={idea.imageUrl}
           alt=""
-          className="w-full object-cover rounded-xl group-hover:opacity-90 transition-opacity"
+          className="w-full object-cover rounded-xl brightness-95 group-hover:brightness-105 group-hover:opacity-90 transition-all duration-500"
           loading="lazy"
         />
         <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/70 to-transparent rounded-b-xl" />
@@ -31,7 +31,7 @@ export function IdeaCard({ idea, onClick }: IdeaCardProps) {
             className="h-2.5 w-2.5 rounded-full shrink-0"
             style={{ backgroundColor: PLATFORM_COLORS[idea.platform] ?? '#666' }}
           />
-          <span className="text-[11px] text-white/70 bg-white/10 backdrop-blur-sm px-2 py-0.5 rounded-full">
+          <span className="text-[11px] text-white/70 bg-white/10 backdrop-blur-md px-2 py-0.5 rounded-full">
             {idea.category}
           </span>
         </div>

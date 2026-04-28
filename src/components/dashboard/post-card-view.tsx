@@ -72,7 +72,7 @@ export function PostCardView({ post, variant, mediaThumbs, actions }: PostCardVi
 
   // Grid view
   return (
-    <div className={`bg-surface-container-low rounded-2xl overflow-hidden${actions ? ' hover:bg-surface-container transition-colors group' : ''}`}>
+    <div className={`bg-surface-container-low rounded-2xl overflow-hidden glow-card shimmer-border${actions ? ' hover:bg-surface-container transition-colors group' : ''}`}>
       {/* Media thumbnail */}
       <div className="aspect-[4/3] relative overflow-hidden bg-surface-container">
         {firstThumb ? (
@@ -82,7 +82,7 @@ export function PostCardView({ post, variant, mediaThumbs, actions }: PostCardVi
               alt=""
               fill
               sizes="(max-width: 768px) 100vw, 33vw"
-              className={`object-cover${actions ? ' opacity-80 group-hover:opacity-100 transition-opacity' : ''}`}
+              className={`object-cover${actions ? ' opacity-80 group-hover:opacity-100 brightness-90 group-hover:brightness-100 transition-all duration-500' : ''}`}
             />
             {ids && ids.length > 1 && actions && (
               <span className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">+{ids.length - 1}</span>
@@ -115,8 +115,8 @@ export function PostCardView({ post, variant, mediaThumbs, actions }: PostCardVi
         </div>
         <p className="text-sm text-on-surface line-clamp-3">{post.caption || 'No caption'}</p>
         {actions && (
-          <div className="flex items-center gap-2 pt-2 border-t border-outline-variant/10">
-            <button onClick={() => actions.onApprove(post.id)} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg hover:bg-primary/20 text-primary transition-colors text-xs font-medium">
+          <div className="flex items-center gap-2 pt-2 border-t border-white/5">
+            <button onClick={() => actions.onApprove(post.id)} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg hover:bg-primary/15 text-primary transition-colors text-xs font-medium">
               <Check className="h-3.5 w-3.5" /> Approve
             </button>
             <button onClick={() => actions.onEdit(post.id)} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg hover:bg-surface-container-high text-on-surface-variant transition-colors text-xs font-medium">
