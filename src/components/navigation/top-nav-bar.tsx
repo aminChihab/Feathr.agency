@@ -24,10 +24,10 @@ export function TopNavBar({ avatarUrl, onAvatarClick, badges = {}, creditBalance
 
   return (
     <div className="hidden md:block fixed top-0 left-0 right-0 z-40 px-5 pt-4">
-      <nav className="mx-auto flex h-[72px] max-w-full items-center justify-between rounded-2xl bg-surface-container-high px-8">
+      <nav className="mx-auto flex h-[72px] max-w-full items-center justify-between rounded-2xl bg-surface-container-high px-8 nav-glow shimmer-border">
         {/* Logo */}
         <Link href="/explore" className="flex items-center">
-          <img src="/logo.png" alt="Feathr" className="h-12" />
+          <img src="/logo.png" alt="Feathr" className="h-12 transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(182,133,255,0.4)]" />
         </Link>
 
         {/* Nav Items */}
@@ -42,7 +42,7 @@ export function TopNavBar({ avatarUrl, onAvatarClick, badges = {}, creditBalance
                 href={item.href}
                 className={`relative flex items-center gap-2.5 rounded-xl px-5 py-2.5 text-sm font-medium transition-colors ${
                   isActive
-                    ? 'text-white'
+                    ? 'text-white bg-white/5 rounded-lg'
                     : 'text-on-surface-variant/50 hover:text-on-surface-variant'
                 }`}
               >
@@ -66,7 +66,7 @@ export function TopNavBar({ avatarUrl, onAvatarClick, badges = {}, creditBalance
           )}
           <button
             onClick={onAvatarClick}
-            className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-outline-variant/30 transition-colors hover:border-primary/50"
+            className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-outline-variant/30 transition-all duration-300 hover:border-primary/50 hover:ring-2 hover:ring-primary/30"
           >
             {avatarUrl ? (
               <img src={avatarUrl} alt="Profile" className="h-full w-full object-cover" />
