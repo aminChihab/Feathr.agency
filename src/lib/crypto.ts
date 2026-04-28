@@ -41,6 +41,10 @@ export function decryptCredentials(encrypted: string): any {
     return parsed
   } catch {
     // Try as legacy plaintext
-    return JSON.parse(encrypted)
+    try {
+      return JSON.parse(encrypted)
+    } catch {
+      return {}
+    }
   }
 }

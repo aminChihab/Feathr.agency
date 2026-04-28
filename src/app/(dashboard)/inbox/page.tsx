@@ -292,7 +292,6 @@ export default function InboxPage() {
             <MessageThread
               conversation={activeConv!}
               messages={messages}
-              supabase={supabase}
               userId={userId}
               onMessageSent={async () => {
                 const slug = activeConv?.platform_slug
@@ -315,7 +314,6 @@ export default function InboxPage() {
         <LinkClientModal
           open={linkModalOpen}
           onClose={() => setLinkModalOpen(false)}
-          supabase={supabase}
           userId={userId}
           conversationId={activeConvId}
           contactName={activeConv?.contact_name ?? null}
@@ -333,7 +331,6 @@ export default function InboxPage() {
         <BookingModal
           open={bookingModalOpen}
           onClose={() => setBookingModalOpen(false)}
-          supabase={supabase}
           userId={userId}
           clientId={client.id}
           clientName={client.name}

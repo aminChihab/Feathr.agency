@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createServerClient } from '@supabase/supabase-js'
+import { createServiceClient } from '@/lib/supabase/service'
 import { createNotification } from '@/lib/notify'
-
-function createServiceClient() {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
 
 const APIFY_TOKEN = process.env.APIFY_API_TOKEN
 

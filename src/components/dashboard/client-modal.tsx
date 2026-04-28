@@ -2,8 +2,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -19,13 +19,13 @@ type Booking = Database['public']['Tables']['bookings']['Row']
 interface ClientModalProps {
   open: boolean
   onClose: () => void
-  supabase: SupabaseClient<Database>
   userId: string
   editClient?: Client | null
   onSaved: () => void
 }
 
-export function ClientModal({ open, onClose, supabase, userId, editClient, onSaved }: ClientModalProps) {
+export function ClientModal({ open, onClose, userId, editClient, onSaved }: ClientModalProps) {
+  const supabase = createClient()
   const [name, setName] = useState('')
   const [preferences, setPreferences] = useState('')
   const [tagsInput, setTagsInput] = useState('')
@@ -189,7 +189,6 @@ export function ClientModal({ open, onClose, supabase, userId, editClient, onSav
         <BookingModal
           open={bookingModalOpen}
           onClose={() => setBookingModalOpen(false)}
-          supabase={supabase}
           userId={userId}
           clientId={editClient.id}
           clientName={editClient.name}

@@ -1,28 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createServerClient } from '@supabase/supabase-js'
-
-function createServiceClient() {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
+import { createServiceClient } from '@/lib/supabase/service'
+import { isAgentAuthorized } from '@/lib/agent-auth'
 
 // GET /api/agent/settings?profile_id=xxx — Get research settings per platform
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  const expectedSecret = process.env.AGENT_SECRET
-
   // Allow both agent auth and user auth (for frontend)
-  let profileId = request.nextUrl.searchParams.get('profile_id')
+  let profileId: string | null
 
-  if (authHeader === `Bearer ${expectedSecret}`) {
+  if (isAgentAuthorized(request)) {
     // Agent auth — profile_id from query param
+    profileId = request.nextUrl.searchParams.get('profile_id')
   } else {
-    // Try user auth for frontend calls
-    const supabase = createServiceClient()
-    const userHeader = request.headers.get('x-user-id')
-    if (userHeader) profileId = userHeader
+    // User auth for frontend calls — profile_id from x-user-id header
+    profileId = request.headers.get('x-user-id')
   }
 
   if (!profileId) {

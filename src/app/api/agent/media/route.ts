@@ -1,28 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createServerClient } from '@supabase/supabase-js'
+import { createServiceClient } from '@/lib/supabase/service'
+import { authorizeAgent, isAgentAuthorized } from '@/lib/agent-auth'
 import { createNotification } from '@/lib/notify'
-
-function createServiceClient() {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
 
 // GET /api/agent/media?profile_id=xxx — Get unanalyzed media with signed URLs
 // Returns media items that don't have a description yet
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  const expectedSecret = process.env.AGENT_SECRET
-
-  if (!expectedSecret || authHeader !== `Bearer ${expectedSecret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const profileId = request.nextUrl.searchParams.get('profile_id')
-  if (!profileId) {
-    return NextResponse.json({ error: 'profile_id required' }, { status: 400 })
-  }
+  const authResult = authorizeAgent(request, request.nextUrl.searchParams)
+  if (authResult instanceof NextResponse) return authResult
+  const { profileId } = authResult
 
   const supabase = createServiceClient()
 
@@ -110,10 +96,7 @@ export async function GET(request: NextRequest) {
 // POST /api/agent/media — Save media descriptions
 // Body: { items: [{ id: "media_id", description: "...", tags: ["tag1", "tag2"] }] }
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  const expectedSecret = process.env.AGENT_SECRET
-
-  if (!expectedSecret || authHeader !== `Bearer ${expectedSecret}`) {
+  if (!isAgentAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

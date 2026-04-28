@@ -1,23 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createServerClient } from '@supabase/supabase-js'
-
-function createServiceClient() {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
-
-function authorize(request: NextRequest): boolean {
-  const authHeader = request.headers.get('authorization')
-  const expectedSecret = process.env.AGENT_SECRET
-  return !!expectedSecret && authHeader === `Bearer ${expectedSecret}`
-}
+import { createServiceClient } from '@/lib/supabase/service'
+import { isAgentAuthorized, authorizeAgent } from '@/lib/agent-auth'
 
 // POST /api/agent/foxy-prompts — Content Writer creates prompt queue entries
 // Body: { profile_id, prompts: [{ draft_id, content_description, aspect_ratio? }] }
 export async function POST(request: NextRequest) {
-  if (!authorize(request)) {
+  if (!isAgentAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -71,7 +59,7 @@ export async function POST(request: NextRequest) {
 // PUT /api/agent/foxy-prompts — Prompt Writer updates queue entries with actual prompts
 // Body: { prompts: [{ queue_id, prompt, example_id?, aspect_ratio? }] }
 export async function PUT(request: NextRequest) {
-  if (!authorize(request)) {
+  if (!isAgentAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -121,16 +109,11 @@ export async function PUT(request: NextRequest) {
 
 // GET /api/agent/foxy-prompts?profile_id=...&status=pending — Prompt Writer reads queue
 export async function GET(request: NextRequest) {
-  if (!authorize(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const authResult = authorizeAgent(request, request.nextUrl.searchParams)
+  if (authResult instanceof NextResponse) return authResult
+  const { profileId } = authResult
 
-  const profileId = request.nextUrl.searchParams.get('profile_id')
   const status = request.nextUrl.searchParams.get('status') ?? 'pending'
-
-  if (!profileId) {
-    return NextResponse.json({ error: 'profile_id required' }, { status: 400 })
-  }
 
   const supabase = createServiceClient()
 

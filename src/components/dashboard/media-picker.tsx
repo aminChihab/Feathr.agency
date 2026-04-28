@@ -2,20 +2,20 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
+import { createClient } from '@/lib/supabase/client'
 import { Check, Image, Play } from 'lucide-react'
 
 type MediaItem = Database['public']['Tables']['content_library']['Row']
 
 interface MediaPickerProps {
-  supabase: SupabaseClient<Database>
   userId: string
   selected: string[]
   onSelectionChange: (ids: string[]) => void
 }
 
-export function MediaPicker({ supabase, userId, selected, onSelectionChange }: MediaPickerProps) {
+export function MediaPicker({ userId, selected, onSelectionChange }: MediaPickerProps) {
+  const supabase = createClient()
   const [items, setItems] = useState<(MediaItem & { signedUrl: string | null })[]>([])
   const [loading, setLoading] = useState(true)
 

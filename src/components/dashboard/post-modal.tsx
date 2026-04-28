@@ -2,8 +2,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -29,7 +29,6 @@ type CalendarItem = Database['public']['Tables']['content_calendar']['Row']
 interface PostModalProps {
   open: boolean
   onClose: () => void
-  supabase: SupabaseClient<Database>
   userId: string
   editPost?: CalendarItem | null
   onSaved: () => void
@@ -59,7 +58,8 @@ function getSchedulePresets(): { label: string; value: string }[] {
   ]
 }
 
-export function PostModal({ open, onClose, supabase, userId, editPost, onSaved }: PostModalProps) {
+export function PostModal({ open, onClose, userId, editPost, onSaved }: PostModalProps) {
+  const supabase = createClient()
   const [accounts, setAccounts] = useState<PlatformAccount[]>([])
   const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([])
   const [caption, setCaption] = useState('')
@@ -188,7 +188,6 @@ export function PostModal({ open, onClose, supabase, userId, editPost, onSaved }
           <div className="space-y-2">
             <label className="text-xs font-semibold uppercase tracking-widest text-primary">Media</label>
             <MediaPicker
-              supabase={supabase}
               userId={userId}
               selected={mediaIds}
               onSelectionChange={setMediaIds}

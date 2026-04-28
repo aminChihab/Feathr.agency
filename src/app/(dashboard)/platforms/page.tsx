@@ -381,7 +381,6 @@ export default function PlatformsPage() {
             checkTokens()
           }
         }}
-        supabase={supabase}
         userId={userId}
         connectedPlatformIds={accounts.map((a) => a.platform_id)}
         reconnectPlatform={reconnectPlatform}

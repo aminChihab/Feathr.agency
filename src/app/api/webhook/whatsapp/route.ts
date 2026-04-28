@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
-import { createClient as createServerClient } from '@supabase/supabase-js'
-
-function createServiceClient() {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
+import { createServiceClient } from '@/lib/supabase/service'
 
 // GET — Meta webhook verification (same as Instagram)
 export async function GET(request: NextRequest) {
@@ -37,7 +30,7 @@ export async function POST(request: NextRequest) {
   if (signature && appSecret) {
     const expectedSig = 'sha256=' + createHmac('sha256', appSecret).update(rawBody).digest('hex')
     if (signature !== expectedSig) {
-      console.warn('[webhook-whatsapp] Signature mismatch — allowing through')
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
   }
 

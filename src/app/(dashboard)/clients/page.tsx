@@ -247,7 +247,6 @@ export default function ClientsPage() {
       <ClientModal
         open={modalOpen}
         onClose={() => { setModalOpen(false); setEditClient(null) }}
-        supabase={supabase}
         userId={userId}
         editClient={editClient}
         onSaved={() => loadClients(userId!)}

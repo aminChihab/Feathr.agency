@@ -1,12 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createServerClient } from '@supabase/supabase-js'
-
-function createServiceClient() {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
+import { createServiceClient } from '@/lib/supabase/service'
 
 // POST /api/agent/trigger — Create a task in Paperclip for an agent
 // Body: { agent: "media-analyst" | "research" | "content-writer", profile_id: "uuid", title?: "...", media_ids?: string[] }

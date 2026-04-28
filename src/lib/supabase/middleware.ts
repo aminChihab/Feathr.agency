@@ -37,32 +37,28 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Logged in on login/signup → redirect based on profile status
-  if (user && (path === '/login' || path === '/signup')) {
+  // All remaining checks require a logged-in user with a profile
+  if (user) {
+    const isAuthPage = path === '/login' || path === '/signup'
+    const isOnboarding = path.startsWith('/onboarding')
+
+    // Fetch profile once for all redirect decisions
     const { data: profile } = await supabase
       .from('profiles')
       .select('status')
       .eq('id', user.id)
       .single()
 
-    const url = request.nextUrl.clone()
-    if (profile?.status === 'active' || profile?.status === 'paused') {
-      url.pathname = '/'
-    } else {
-      url.pathname = '/onboarding'
+    const isActive = profile?.status === 'active' || profile?.status === 'paused'
+    const needsOnboarding = profile?.status === 'onboarding' || profile?.status === 'setup'
+
+    if (isAuthPage) {
+      const url = request.nextUrl.clone()
+      url.pathname = isActive ? '/' : '/onboarding'
+      return NextResponse.redirect(url)
     }
-    return NextResponse.redirect(url)
-  }
 
-  // Logged in but not yet active → redirect to onboarding (except on onboarding itself)
-  if (user && !path.startsWith('/onboarding') && path !== '/login' && path !== '/signup') {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('status')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.status === 'onboarding' || profile?.status === 'setup') {
+    if (needsOnboarding && !isOnboarding) {
       const url = request.nextUrl.clone()
       url.pathname = '/onboarding'
       return NextResponse.redirect(url)
