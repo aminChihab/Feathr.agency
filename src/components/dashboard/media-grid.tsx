@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import NextImage from 'next/image'
 import { createClient } from '@/lib/supabase/client'
+import { useSwipe } from '@/lib/use-swipe'
 import type { SignedMediaItem } from '@/lib/storage'
 import { FileDropzone } from '@/components/ui/file-dropzone'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
@@ -197,9 +198,17 @@ function LightboxPreview({
   const hasDescription = !!description
   const displayUrl = item.previewUrl ?? item.thumbnailUrl ?? ''
 
+  const swipeHandlers = useSwipe({
+    onSwipeLeft: index < total - 1 ? onNext : undefined,
+    onSwipeRight: index > 0 ? onPrev : undefined,
+  })
+
   return (
     <div className="flex flex-col">
-      <div className="relative bg-black min-h-[280px] flex items-center justify-center">
+      <div
+        className="relative bg-black min-h-[280px] flex items-center justify-center"
+        {...swipeHandlers}
+      >
         {item.fileType === 'photo' ? (
           <img
             src={displayUrl}
@@ -216,21 +225,21 @@ function LightboxPreview({
           />
         ) : null}
 
-        {index > 0 && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onPrev() }}
-            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-2.5 text-white backdrop-blur-sm transition-colors hover:bg-black/80"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-        )}
-        {index < total - 1 && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onNext() }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-2.5 text-white backdrop-blur-sm transition-colors hover:bg-black/80"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
+        {total > 1 && (
+          <>
+            <button
+              onClick={(e) => { e.stopPropagation(); onPrev() }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-2.5 text-white backdrop-blur-sm transition-colors hover:bg-black/80"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onNext() }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-2.5 text-white backdrop-blur-sm transition-colors hover:bg-black/80"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </>
         )}
 
         <div className="absolute bottom-3 right-3 rounded-full bg-black/60 px-2.5 py-1 text-xs text-white backdrop-blur-sm">
@@ -238,10 +247,10 @@ function LightboxPreview({
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 p-4 overflow-y-auto max-h-[40vh] md:max-h-none">
+      <div className="flex flex-col gap-3 p-4 overflow-y-auto max-h-[40vh] md:max-h-none overflow-x-hidden">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-on-surface">{item.fileName}</p>
+          <div className="min-w-0 overflow-hidden">
+            <p className="text-sm font-medium text-on-surface truncate max-w-[200px] md:max-w-none">{item.fileName}</p>
             <div className="mt-1 flex items-center gap-3 text-xs text-on-surface-variant">
               <span className="uppercase font-medium">{item.fileType}</span>
               {item.fileSize != null && <span>{formatFileSize(item.fileSize)}</span>}
