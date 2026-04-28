@@ -17,7 +17,7 @@ const CATEGORY_FILE_MAP: Record<string, string> = {
 async function fetchCoverUrls(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
   const urls: Record<string, string> = {}
 
-  const paths = CATEGORIES.map(cat => `${userId}/category-covers/${CATEGORY_FILE_MAP[cat]}`)
+  const paths = CATEGORIES.map(cat => `${userId}/category-covers/thumbs/${CATEGORY_FILE_MAP[cat]}`)
   const { data } = await supabase.storage.from('media').createSignedUrls(paths, 3600)
 
   if (data) {
