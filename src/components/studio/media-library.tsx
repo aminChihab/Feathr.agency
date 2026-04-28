@@ -8,17 +8,22 @@ import { Upload } from 'lucide-react'
 
 interface MediaLibraryProps {
   userId: string
-  initialItems: SignedMediaItem[]
-  initialCursor: string | null
-  totalCount: number
-  creditBalance: number | null
+  initialUploads: SignedMediaItem[]
+  initialUploadsCursor: string | null
+  uploadsCount: number
+  initialAiCreations: SignedMediaItem[]
+  initialAiCreationsCursor: string | null
+  aiCreationsCount: number
 }
 
 export function MediaLibrary({
   userId,
-  initialItems,
-  initialCursor,
-  totalCount,
+  initialUploads,
+  initialUploadsCursor,
+  uploadsCount,
+  initialAiCreations,
+  initialAiCreationsCursor,
+  aiCreationsCount,
 }: MediaLibraryProps) {
   const [innerTab, setInnerTab] = useState<'uploads' | 'ai_creations'>('uploads')
   const [uploadOpen, setUploadOpen] = useState(false)
@@ -65,9 +70,9 @@ export function MediaLibrary({
         key={innerTab}
         userId={userId}
         sourceFilter={innerTab === 'ai_creations' ? 'ai_generated' : 'upload'}
-        initialItems={innerTab === 'uploads' ? initialItems : []}
-        initialCursor={innerTab === 'uploads' ? initialCursor : null}
-        totalCount={innerTab === 'uploads' ? totalCount : 0}
+        initialItems={innerTab === 'uploads' ? initialUploads : initialAiCreations}
+        initialCursor={innerTab === 'uploads' ? initialUploadsCursor : initialAiCreationsCursor}
+        totalCount={innerTab === 'uploads' ? uploadsCount : aiCreationsCount}
         externalFiles={pendingFiles.length > 0 ? pendingFiles : undefined}
         onExternalFilesConsumed={() => setPendingFiles([])}
       />

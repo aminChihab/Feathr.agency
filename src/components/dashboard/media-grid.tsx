@@ -754,7 +754,7 @@ export function MediaGrid({
         <DialogContent className="bg-surface-container-low border-outline-variant/15 md:max-w-4xl p-0 overflow-hidden">
           {preview && (
             <LightboxPreview
-              item={preview.item}
+              item={{ ...preview.item, previewUrl: preview.previewUrl }}
               total={filteredItems.length}
               index={filteredItems.findIndex((i) => i.id === preview.item.id)}
               onClose={() => setPreview(null)}
