@@ -22,8 +22,7 @@ async function buildResearchContext(supabase: ReturnType<typeof createServiceCli
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
   const { data: scrapedData } = await supabase
     .from('research_scraped')
-    .select('id, platform, data_type, handle, term, display_name, bio, followers, following, post_count, scraped_at, research_scraped_posts(caption, permalink, media_type, likes, comments, views, hashtags, posted_at)')
-    .eq('profile_id', profileId)
+    .select('id, platform, data_type, handle, term, display_name, bio, followers, following, post_count, niche_tags, city, scraped_at, research_scraped_posts(caption, permalink, media_type, likes, comments, views, hashtags, posted_at)')
     .gte('scraped_at', weekAgo)
     .order('scraped_at', { ascending: false })
     .limit(30)

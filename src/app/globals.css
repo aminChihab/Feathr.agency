@@ -130,6 +130,28 @@ h1, h2, h3, h4, h5, h6 {
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   pointer-events: none;
+  z-index: 1;
+}
+
+/* Stronger colored shine for featured cards */
+.shine-border {
+  position: relative;
+  overflow: hidden;
+}
+.shine-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(135deg, rgba(182, 133, 255, 0.5), rgba(155, 106, 232, 0.2) 30%, transparent 50%, rgba(182, 133, 255, 0.1) 70%, rgba(182, 133, 255, 0.4));
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+.shine-border:hover::before {
+  background: linear-gradient(135deg, rgba(182, 133, 255, 0.7), rgba(155, 106, 232, 0.3) 30%, transparent 50%, rgba(182, 133, 255, 0.2) 70%, rgba(182, 133, 255, 0.6));
 }
 
 /* Ambient glow behind nav bar */
