@@ -1,6 +1,7 @@
 // src/components/dashboard/post-card-view.tsx
 'use client'
 
+import Image from 'next/image'
 import { Check, Pencil, X } from 'lucide-react'
 import { StatusBadge } from '@/components/dashboard/status-badge'
 import type { PostWithPlatform } from '@/lib/calendar'
@@ -32,9 +33,9 @@ export function PostCardView({ post, variant, mediaThumbs, actions }: PostCardVi
     return (
       <div className="flex items-center gap-4 p-4 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors group">
         {/* Small thumbnail */}
-        <div className="w-16 h-16 rounded-lg overflow-hidden bg-surface-container shrink-0">
+        <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-surface-container shrink-0">
           {firstThumb ? (
-            <img src={firstThumb.url} alt="" className="w-full h-full object-cover" />
+            <Image src={firstThumb.url} alt="" fill sizes="64px" className="object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-on-surface-variant/20 text-[9px] uppercase">No img</div>
           )}
@@ -76,10 +77,12 @@ export function PostCardView({ post, variant, mediaThumbs, actions }: PostCardVi
       <div className="aspect-[4/3] relative overflow-hidden bg-surface-container">
         {firstThumb ? (
           <>
-            <img
+            <Image
               src={firstThumb.url}
               alt=""
-              className={`w-full h-full object-cover${actions ? ' opacity-80 group-hover:opacity-100 transition-opacity' : ''}`}
+              fill
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className={`object-cover${actions ? ' opacity-80 group-hover:opacity-100 transition-opacity' : ''}`}
             />
             {ids && ids.length > 1 && actions && (
               <span className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">+{ids.length - 1}</span>
