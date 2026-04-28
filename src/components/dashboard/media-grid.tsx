@@ -197,6 +197,7 @@ function LightboxPreview({
   const tags = item.tags ?? []
   const hasDescription = !!description
   const displayUrl = item.previewUrl ?? item.thumbnailUrl ?? ''
+  const [descExpanded, setDescExpanded] = useState(false)
 
   const swipeHandlers = useSwipe({
     onSwipeLeft: index < total - 1 ? onNext : undefined,
@@ -204,7 +205,7 @@ function LightboxPreview({
   })
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       <div
         className="relative bg-black shrink-0 h-[45vh] md:h-[60vh] flex items-center justify-center"
         {...swipeHandlers}
@@ -247,7 +248,7 @@ function LightboxPreview({
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 p-4 pb-20 overflow-y-auto flex-1 min-h-0 overflow-x-hidden">
+      <div className="flex flex-col gap-3 p-4 overflow-x-hidden">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 overflow-hidden">
             <p className="text-sm font-medium text-on-surface truncate max-w-[200px] md:max-w-none">{item.fileName}</p>
@@ -265,9 +266,17 @@ function LightboxPreview({
 
         <div className="rounded-lg bg-surface-container-high px-3 py-2.5">
           <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">AI Description</p>
-          <p className={`text-sm leading-relaxed ${hasDescription ? 'text-on-surface-variant' : 'italic text-on-surface-variant'}`}>
+          <p className={`text-sm leading-relaxed ${hasDescription ? 'text-on-surface-variant' : 'italic text-on-surface-variant'} ${!descExpanded && hasDescription ? 'line-clamp-3' : ''}`}>
             {description ?? 'Pending analysis...'}
           </p>
+          {hasDescription && description && description.length > 120 && (
+            <button
+              onClick={() => setDescExpanded(!descExpanded)}
+              className="text-xs text-primary mt-1 hover:opacity-70"
+            >
+              {descExpanded ? 'Show less' : 'Read more'}
+            </button>
+          )}
         </div>
 
         {tags.length > 0 && (
@@ -739,7 +748,7 @@ export function MediaGrid({
 
       {/* Preview lightbox */}
       <Dialog open={!!preview} onOpenChange={(open) => !open && setPreview(null)}>
-        <DialogContent className="bg-surface-container-low border-outline-variant/15 md:max-w-4xl p-0 overflow-hidden h-full md:h-auto md:max-h-[90vh]">
+        <DialogContent className="bg-surface-container-low border-outline-variant/15 md:max-w-4xl p-0 overflow-hidden">
           {preview && (
             <LightboxPreview
               item={preview.item}
