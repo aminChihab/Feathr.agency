@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import NextImage from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { useSwipe } from '@/lib/use-swipe'
@@ -379,6 +379,21 @@ export function MediaGrid({
     setLoadingMore(false)
   }
 
+  // Infinite scroll
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el || !cursor) return
+
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) loadMoreItems() },
+      { rootMargin: '200px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [cursor, loadingMore])
+
   // Keyboard navigation for lightbox
   const navigatePreview = useCallback((direction: 'prev' | 'next') => {
     if (!preview) return
@@ -728,22 +743,17 @@ export function MediaGrid({
         </section>
       )}
 
-      {/* Load more footer */}
-      {filteredItems.length > 0 && (
-        <footer className="flex justify-between items-center pt-8 border-t border-outline-variant/10">
-          <div className="text-xs text-on-surface-variant/40">
-            Showing {filteredItems.length} of {totalCount} files
-          </div>
-          {cursor && (
-            <button
-              onClick={loadMoreItems}
-              disabled={loadingMore}
-              className="px-4 py-2 bg-primary text-on-primary-container text-xs font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-            >
-              {loadingMore ? 'Loading…' : `Showing ${filteredItems.length} of ${totalCount} — Load more`}
-            </button>
-          )}
-        </footer>
+      {/* Infinite scroll sentinel */}
+      {cursor && <div ref={sentinelRef} className="h-1" />}
+      {loadingMore && (
+        <div className="flex justify-center py-6">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      )}
+      {filteredItems.length > 0 && !cursor && !loadingMore && (
+        <p className="text-center text-xs text-on-surface-variant/40 pt-6">
+          {filteredItems.length} of {totalCount} files
+        </p>
       )}
 
       {/* Preview lightbox */}
