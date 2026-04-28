@@ -82,7 +82,7 @@ export async function PUT(request: NextRequest) {
       continue
     }
 
-    const update: Record<string, any> = {}
+    const update: Record<string, any> = { status: 'ready' }
     if (prompt) update.prompt = prompt
     if (example_id) update.example_id = example_id
     if (aspect_ratio) update.aspect_ratio = aspect_ratio

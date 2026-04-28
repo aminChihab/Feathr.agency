@@ -218,10 +218,11 @@ function LightboxPreview({
           />
         ) : item.fileType === 'video' ? (
           <video
-            key={item.id}
+            key={displayUrl}
             src={displayUrl}
             controls
             autoPlay
+            playsInline
             className="w-full h-full object-contain"
           />
         ) : null}
