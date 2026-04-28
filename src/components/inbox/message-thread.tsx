@@ -25,11 +25,14 @@ interface MessageThreadProps {
   onMessageSent: () => void
   onApproveMessage: (id: string) => void
   onRejectMessage: (id: string) => void
+  hasOlderMessages?: boolean
+  onLoadOlder?: () => void
 }
 
 export function MessageThread({
   conversation, messages, userId,
   onMessageSent, onApproveMessage, onRejectMessage,
+  hasOlderMessages, onLoadOlder,
 }: MessageThreadProps) {
   const supabase = createClient()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -113,6 +116,14 @@ export function MessageThread({
 
       {/* Message History */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-6">
+        {hasOlderMessages && onLoadOlder && (
+          <button
+            onClick={onLoadOlder}
+            className="w-full py-2 text-xs text-on-surface-variant hover:text-on-surface transition-colors"
+          >
+            Load older messages
+          </button>
+        )}
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <span className="material-symbols-outlined text-[36px] text-on-surface-variant/20 mb-2">chat</span>
