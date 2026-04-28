@@ -2,8 +2,8 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
+import { createClient } from '@/lib/supabase/client'
 import { MessageBubble } from './message-bubble'
 import { ReplyBox } from './reply-box'
 
@@ -21,7 +21,6 @@ type Conversation = {
 interface MessageThreadProps {
   conversation: Conversation
   messages: Message[]
-  supabase: SupabaseClient<Database>
   userId: string
   onMessageSent: () => void
   onApproveMessage: (id: string) => void
@@ -29,9 +28,10 @@ interface MessageThreadProps {
 }
 
 export function MessageThread({
-  conversation, messages, supabase, userId,
+  conversation, messages, userId,
   onMessageSent, onApproveMessage, onRejectMessage,
 }: MessageThreadProps) {
+  const supabase = createClient()
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {

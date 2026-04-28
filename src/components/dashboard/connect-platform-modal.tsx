@@ -2,8 +2,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
+import { createClient } from '@/lib/supabase/client'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -26,7 +26,6 @@ const PLATFORM_VISUALS: Record<string, { bg: string; icon: string }> = {
 interface ConnectPlatformModalProps {
   open: boolean
   onClose: () => void
-  supabase: SupabaseClient<Database>
   userId: string
   connectedPlatformIds: string[]
   reconnectPlatform?: { platformSlug: string; authType: string; platformName: string } | null
@@ -34,8 +33,9 @@ interface ConnectPlatformModalProps {
 }
 
 export function ConnectPlatformModal({
-  open, onClose, supabase, userId, connectedPlatformIds, reconnectPlatform, onConnected,
+  open, onClose, userId, connectedPlatformIds, reconnectPlatform, onConnected,
 }: ConnectPlatformModalProps) {
+  const supabase = createClient()
   const [platforms, setPlatforms] = useState<Platform[]>([])
   const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null)
   const [credentials, setCredentials] = useState({ username: '', password: '' })

@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
+import { createClient } from '@/lib/supabase/client'
 import { FileDropzone } from '@/components/ui/file-dropzone'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Play, X, ChevronLeft, ChevronRight, Search, Image, Video, Eye, Trash2, Upload, Tag, Download, Share2, Zap } from 'lucide-react'
+import { generateImageThumbnail, generateVideoFrames } from '@/lib/media'
 
 type MediaItem = Database['public']['Tables']['content_library']['Row'] & {
   signedUrl: string | null
@@ -13,7 +14,6 @@ type MediaItem = Database['public']['Tables']['content_library']['Row'] & {
 }
 
 interface MediaGridProps {
-  supabase: SupabaseClient<Database>
   userId: string
   sourceFilter?: 'upload' | 'ai_generated' | 'all'
 }
@@ -47,7 +47,8 @@ function getExtBadge(item: MediaItem): string {
   return ext || 'FILE'
 }
 
-export function MediaGrid({ supabase, userId, sourceFilter = 'all' }: MediaGridProps) {
+export function MediaGrid({ userId, sourceFilter = 'all' }: MediaGridProps) {
+  const supabase = createClient()
   const [items, setItems] = useState<MediaItem[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
@@ -714,86 +715,4 @@ export function MediaGrid({ supabase, userId, sourceFilter = 'all' }: MediaGridP
       </Dialog>
     </div>
   )
-}
-
-// Generate high-quality image thumbnail (600px)
-async function generateImageThumbnail(file: File): Promise<Blob | null> {
-  if (!file.type.startsWith('image/')) return null
-  return new Promise((resolve) => {
-    const img = new globalThis.Image()
-    const url = URL.createObjectURL(file)
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      const maxSize = 600
-      const ratio = Math.min(maxSize / img.width, maxSize / img.height, 1)
-      canvas.width = img.width * ratio
-      canvas.height = img.height * ratio
-      const ctx = canvas.getContext('2d')!
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-      URL.revokeObjectURL(url)
-      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.85)
-    }
-    img.onerror = () => { URL.revokeObjectURL(url); resolve(null) }
-    img.src = url
-  })
-}
-
-// Generate multiple video frames at evenly spaced intervals
-async function generateVideoFrames(file: File, count: number): Promise<(Blob | null)[]> {
-  return new Promise((resolve) => {
-    const video = document.createElement('video')
-    const url = URL.createObjectURL(file)
-    video.preload = 'auto'
-    video.muted = true
-    video.playsInline = true
-
-    const frames: (Blob | null)[] = []
-
-    function captureCurrentFrame(): Promise<Blob | null> {
-      return new Promise((res) => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            try {
-              const canvas = document.createElement('canvas')
-              const maxSize = 600
-              const vw = video.videoWidth || 640
-              const vh = video.videoHeight || 360
-              const ratio = Math.min(maxSize / vw, maxSize / vh, 1)
-              canvas.width = vw * ratio
-              canvas.height = vh * ratio
-              const ctx = canvas.getContext('2d')!
-              ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-              canvas.toBlob((blob) => res(blob), 'image/jpeg', 0.85)
-            } catch {
-              res(null)
-            }
-          })
-        })
-      })
-    }
-
-    video.onloadedmetadata = async () => {
-      const duration = video.duration
-      for (let i = 0; i < count; i++) {
-        const time = (duration * (i + 1)) / (count + 1)
-        video.currentTime = time
-
-        await new Promise<void>((seekDone) => {
-          video.onseeked = () => seekDone()
-        })
-
-        const blob = await captureCurrentFrame()
-        frames.push(blob)
-      }
-
-      URL.revokeObjectURL(url)
-      resolve(frames)
-    }
-
-    video.onerror = () => { URL.revokeObjectURL(url); resolve([]) }
-    setTimeout(() => { URL.revokeObjectURL(url); resolve(frames) }, 30000)
-
-    video.src = url
-    video.load()
-  })
 }

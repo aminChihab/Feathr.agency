@@ -16,6 +16,8 @@ import {
   User, Mic, Link2, ListChecks, Calendar, Bell, Shield, CreditCard,
   Upload, FileText, Trash2, Sparkles, Loader2, Camera, Check,
 } from 'lucide-react'
+import { extractParticipants } from '@/lib/chat'
+import { DEFAULT_RESEARCH_TERMS, DEFAULT_COMPETITOR_HANDLES } from '@/lib/research-defaults'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
 type PlatformAccount = {
@@ -85,22 +87,6 @@ export default function SettingsPage() {
   const [selectedParticipant, setSelectedParticipant] = useState<string>('')
 
   // Research settings
-  const DEFAULT_TERMS = [
-    '"taking bookings" Amsterdam',
-    '"hosting incall" Netherlands',
-    'GFE available',
-    '"dinner date" companion',
-    '"outcall hotel"',
-    'OnlyFans companion Amsterdam',
-    'touring Europe availability',
-    '"high class" companion Netherlands',
-    '#GFE #companion',
-    '"accepting bookings"',
-  ]
-  const DEFAULT_HANDLES = [
-    'QualityEscort', 'escortamster', '247escortgirl', 'DutchEscort',
-    'msveradijkmans', 'luxydutch', 'EllieLeen1', 'OFxxxKaylee', 'AlinaAbramsX',
-  ]
   const [researchTerms, setResearchTerms] = useState<string[]>([])
   const [competitorHandles, setCompetitorHandles] = useState<string[]>([])
   const [newTerm, setNewTerm] = useState('')
@@ -134,8 +120,8 @@ export default function SettingsPage() {
         setVoiceSample(profileData.voice_sample ?? '')
 
         const settings = (profileData.settings as any) ?? {}
-        setResearchTerms(settings.research_terms ?? DEFAULT_TERMS)
-        setCompetitorHandles(settings.competitor_handles ?? DEFAULT_HANDLES)
+        setResearchTerms(settings.research_terms ?? DEFAULT_RESEARCH_TERMS)
+        setCompetitorHandles(settings.competitor_handles ?? DEFAULT_COMPETITOR_HANDLES)
         setNotifNewMessages(settings.notif_new_messages ?? true)
         setNotifDraftReady(settings.notif_draft_ready ?? true)
         setNotifLeadQualified(settings.notif_lead_qualified ?? true)
@@ -219,25 +205,6 @@ export default function SettingsPage() {
     }).eq('id', userId)
     setSaving(false)
     flashSaved()
-  }
-
-  function extractParticipants(text: string): string[] {
-    const names = new Set<string>()
-    const patterns = [
-      /^\d{1,2}\/\d{1,2}\/\d{2,4},?\s*\d{1,2}[:.]\d{2}(?:[:.]\d{2})?\s*[-–]\s*(.+?):\s/gm,
-      /^\[\d{1,2}\/\d{1,2}\/\d{2,4},?\s*\d{1,2}[:.]\d{2}(?:[:.]\d{2})?\]\s*(.+?):\s/gm,
-      /^\d{1,2}-\d{1,2}-\d{2,4}\s+\d{1,2}[:.]\d{2}(?:[:.]\d{2})?\s*[-–]\s*(.+?):\s/gm,
-    ]
-    for (const pattern of patterns) {
-      let match
-      while ((match = pattern.exec(text)) !== null) {
-        const name = match[1].trim()
-        if (name && name.length < 40 && !name.includes('changed') && !name.includes('created')) {
-          names.add(name)
-        }
-      }
-    }
-    return Array.from(names)
   }
 
   async function handleChatUpload(e: React.ChangeEvent<HTMLInputElement>) {

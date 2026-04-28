@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createServerClient } from '@supabase/supabase-js'
 import { createHmac } from 'crypto'
-
-function createServiceClient() {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
+import { createServiceClient } from '@/lib/supabase/service'
+import { INSTAGRAM_API_VERSION } from '@/lib/instagram'
 
 // GET — Meta webhook verification
 // Meta sends hub.mode, hub.challenge, hub.verify_token
@@ -38,9 +32,7 @@ export async function POST(request: NextRequest) {
   if (signature && appSecret) {
     const expectedSig = 'sha256=' + createHmac('sha256', appSecret).update(rawBody).digest('hex')
     if (signature !== expectedSig) {
-      // Known issue: Meta may use a different secret for signing
-      // Allow through but log warning
-      console.warn('[webhook-instagram] Signature mismatch — allowing through')
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
   }
 
@@ -144,7 +136,7 @@ export async function POST(request: NextRequest) {
             if (creds.access_token) {
               try {
                 const userRes = await fetch(
-                  `https://graph.instagram.com/v25.0/${senderId}?fields=name,username&access_token=${creds.access_token}`
+                  `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${senderId}?fields=name,username&access_token=${creds.access_token}`
                 )
                 if (userRes.ok) {
                   const userData = await userRes.json()
@@ -179,7 +171,7 @@ export async function POST(request: NextRequest) {
           if (accessToken) {
             try {
               const userRes = await fetch(
-                `https://graph.instagram.com/v25.0/${senderId}?fields=name,username&access_token=${accessToken}`
+                `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${senderId}?fields=name,username&access_token=${accessToken}`
               )
               if (userRes.ok) {
                 const userData = await userRes.json()

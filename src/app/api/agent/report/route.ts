@@ -1,21 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createServerClient } from '@supabase/supabase-js'
+import { createServiceClient } from '@/lib/supabase/service'
+import { isAgentAuthorized } from '@/lib/agent-auth'
 import { createNotification } from '@/lib/notify'
-
-function createServiceClient() {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
 
 // POST /api/agent/report — Agent saves a research report with sections
 // Body: { profile_id, report_type, title, summary, sections: [{ section_type, title, content }] }
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  const expectedSecret = process.env.AGENT_SECRET
-
-  if (!expectedSecret || authHeader !== `Bearer ${expectedSecret}`) {
+  if (!isAgentAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

@@ -2,8 +2,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,7 +15,6 @@ type Client = Database['public']['Tables']['clients']['Row']
 interface LinkClientModalProps {
   open: boolean
   onClose: () => void
-  supabase: SupabaseClient<Database>
   userId: string
   conversationId: string
   contactName: string | null
@@ -24,8 +23,9 @@ interface LinkClientModalProps {
 }
 
 export function LinkClientModal({
-  open, onClose, supabase, userId, conversationId, contactName, contactHandle, onLinked,
+  open, onClose, userId, conversationId, contactName, contactHandle, onLinked,
 }: LinkClientModalProps) {
+  const supabase = createClient()
   const [clients, setClients] = useState<Client[]>([])
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)

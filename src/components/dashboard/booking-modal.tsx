@@ -2,8 +2,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/types/database'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,14 +12,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 interface BookingModalProps {
   open: boolean
   onClose: () => void
-  supabase: SupabaseClient<Database>
   userId: string
   clientId: string
   clientName: string
   onSaved: () => void
 }
 
-export function BookingModal({ open, onClose, supabase, userId, clientId, clientName, onSaved }: BookingModalProps) {
+export function BookingModal({ open, onClose, userId, clientId, clientName, onSaved }: BookingModalProps) {
+  const supabase = createClient()
   const [date, setDate] = useState('')
   const [duration, setDuration] = useState('')
   const [notes, setNotes] = useState('')

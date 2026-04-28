@@ -1,11 +1,4 @@
-import { createClient as createServerClient } from '@supabase/supabase-js'
-
-function getServiceClient() {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
+import { createServiceClient } from '@/lib/supabase/service'
 
 export async function createNotification(
   profileId: string,
@@ -13,7 +6,7 @@ export async function createNotification(
   title: string,
   body?: Record<string, any>,
 ) {
-  const supabase = getServiceClient()
+  const supabase = createServiceClient()
   await supabase.from('notifications').insert({
     profile_id: profileId,
     type,

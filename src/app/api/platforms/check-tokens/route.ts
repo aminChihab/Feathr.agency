@@ -1,14 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { decryptCredentials } from '@/lib/crypto'
-import { createClient as createServiceClient } from '@supabase/supabase-js'
-
-function getServiceClient() {
-  return createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
+import { createServiceClient } from '@/lib/supabase/service'
+import { INSTAGRAM_API_VERSION } from '@/lib/instagram'
 
 // POST /api/platforms/check-tokens — Validate all connected platform tokens
 // Returns list of expired platforms and auto-updates their status
@@ -17,7 +11,7 @@ export async function POST() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const service = getServiceClient()
+  const service = createServiceClient()
 
   const { data: accounts } = await service
     .from('platform_accounts')
@@ -74,7 +68,7 @@ export async function POST() {
         // Test Instagram token
         const token = creds.access_token
         if (token) {
-          const res = await fetch(`https://graph.instagram.com/v22.0/me?access_token=${token}`)
+          const res = await fetch(`https://graph.instagram.com/${INSTAGRAM_API_VERSION}/me?access_token=${token}`)
           isValid = res.ok
         }
       }

@@ -92,7 +92,6 @@ export function MediaLibrary({ supabase, userId, creditBalance, onCreditsChanged
       {/* The actual media grid — reusing the existing full-featured component */}
       <MediaGrid
         key={innerTab}
-        supabase={supabase}
         userId={userId}
         sourceFilter={innerTab === 'ai_generated' ? 'ai_generated' : 'upload'}
       />
