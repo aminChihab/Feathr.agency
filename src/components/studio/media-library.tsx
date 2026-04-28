@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import type { SignedMediaItem } from '@/lib/storage'
 import { MediaGrid } from '@/components/dashboard/media-grid'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
@@ -22,6 +22,14 @@ export function MediaLibrary({
 }: MediaLibraryProps) {
   const [innerTab, setInnerTab] = useState<'uploads' | 'ai_creations'>('uploads')
   const [uploadOpen, setUploadOpen] = useState(false)
+  const [pendingFiles, setPendingFiles] = useState<File[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  function handleFilesChosen(files: FileList | null) {
+    if (!files || files.length === 0) return
+    setPendingFiles(Array.from(files))
+    setUploadOpen(false)
+  }
 
   return (
     <div className="space-y-6">
@@ -60,16 +68,30 @@ export function MediaLibrary({
         initialItems={innerTab === 'uploads' ? initialItems : []}
         initialCursor={innerTab === 'uploads' ? initialCursor : null}
         totalCount={innerTab === 'uploads' ? totalCount : 0}
+        externalFiles={pendingFiles.length > 0 ? pendingFiles : undefined}
+        onExternalFilesConsumed={() => setPendingFiles([])}
       />
 
+      {/* Upload modal */}
       <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
         <DialogContent className="max-w-lg">
           <h3 className="text-lg font-medium text-white mb-4">Upload Media</h3>
-          <div className="h-48 rounded-xl border border-dashed border-outline-variant/30 bg-surface-container-lowest flex flex-col items-center justify-center hover:bg-surface-container-low hover:border-primary/40 cursor-pointer transition-all">
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".jpg,.jpeg,.png,.webp,.mp4,.mov"
+            className="hidden"
+            onChange={(e) => handleFilesChosen(e.target.files)}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full h-48 rounded-xl border border-dashed border-outline-variant/30 bg-surface-container-lowest flex flex-col items-center justify-center hover:bg-surface-container-low hover:border-primary/40 cursor-pointer transition-all"
+          >
             <Upload className="h-10 w-10 text-primary/40 mb-3" />
             <p className="text-sm text-on-surface-variant">Drop files here or click to browse</p>
             <p className="text-xs text-on-surface-variant/40 mt-1">JPG, PNG, WebP, MP4, MOV up to 500MB</p>
-          </div>
+          </button>
         </DialogContent>
       </Dialog>
     </div>

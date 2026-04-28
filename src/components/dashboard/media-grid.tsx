@@ -15,6 +15,8 @@ interface MediaGridProps {
   initialItems: SignedMediaItem[]
   initialCursor: string | null
   totalCount: number
+  externalFiles?: File[]
+  onExternalFilesConsumed?: () => void
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -293,6 +295,8 @@ export function MediaGrid({
   initialItems,
   initialCursor,
   totalCount: initialTotalCount,
+  externalFiles,
+  onExternalFilesConsumed,
 }: MediaGridProps) {
   const supabase = createClient()
 
@@ -309,6 +313,14 @@ export function MediaGrid({
   const [preview, setPreview] = useState<PreviewState | null>(null)
   const [duplicates, setDuplicates] = useState<{ file: File; existing: SignedMediaItem }[]>([])
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
+
+  // Handle files passed from parent (upload modal)
+  useEffect(() => {
+    if (externalFiles && externalFiles.length > 0) {
+      handleFilesSelected(externalFiles)
+      onExternalFilesConsumed?.()
+    }
+  }, [externalFiles])
 
   // Fetch on mount when no initial data (e.g. AI generated tab)
   useEffect(() => {
