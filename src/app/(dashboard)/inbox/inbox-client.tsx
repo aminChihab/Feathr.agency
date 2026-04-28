@@ -298,7 +298,7 @@ function ConversationListView({
   return (
     <>
       <PageHeader title="Inbox" subtitle="Conversations and leads">
-        <div className="flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-4">
           <div className="relative hidden lg:block">
             <input
               className="bg-surface-container-low border-none rounded-full py-2 pl-4 pr-10 text-sm w-64 focus:ring-1 focus:ring-primary/30 transition-all outline-none font-body text-on-surface placeholder:text-on-surface-variant/50"
@@ -347,7 +347,7 @@ function MessageView({
   onBack, onMessageSent, onApproveMessage, onRejectMessage, onLoadOlder,
 }: MessageViewProps) {
   return (
-    <div className="flex flex-col" style={{ height: 'calc(100vh - 5rem)' }}>
+    <div className="flex flex-col" style={{ height: 'calc(100vh - 5rem - env(safe-area-inset-bottom, 0px))' }}>
       <div className="flex items-center gap-3 px-4 py-3 border-b border-outline-variant/15">
         <button
           onClick={onBack}

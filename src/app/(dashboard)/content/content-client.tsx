@@ -460,7 +460,7 @@ export function ContentClient({
   return (
     <div className="space-y-0">
       <PageHeader title="Content" subtitle="Review, approve, and schedule posts">
-        <div className="flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-4">
           <div className="relative hidden lg:block">
             <input
               type="text"
@@ -495,12 +495,12 @@ export function ContentClient({
         </div>
       </PageHeader>
 
-      <div className="px-10 pt-6 pb-2 flex items-center gap-2">
+      <div className="px-4 md:px-10 pt-6 pb-2 flex items-center gap-2 overflow-x-auto">
         {(['drafts', 'calendar', 'posted'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setContentTab(tab)}
-            className={`px-4 py-2 rounded-full text-sm font-body transition-colors ${
+            className={`px-4 py-2 rounded-full text-sm font-body transition-colors whitespace-nowrap shrink-0 ${
               contentTab === tab
                 ? 'bg-surface-container-high text-on-surface font-medium'
                 : 'text-on-surface-variant hover:text-on-surface'
@@ -511,7 +511,7 @@ export function ContentClient({
         ))}
       </div>
 
-      <div className="p-10 space-y-6">
+      <div className="px-4 md:px-10 py-6 space-y-6">
         {contentTab === 'drafts' && (
           <section className="max-w-7xl mx-auto space-y-6">
             <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-3'}>

@@ -14,10 +14,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { PageHeader } from '@/components/ui/page-header'
 import {
   User, Mic, Link2, ListChecks, Calendar, Bell, Shield, CreditCard,
-  Upload, FileText, Trash2, Sparkles, Loader2, Camera, Check,
+  Upload, FileText, Trash2, Sparkles, Loader2, Camera,
 } from 'lucide-react'
 import { extractParticipants } from '@/lib/chat'
 import { DEFAULT_RESEARCH_TERMS, DEFAULT_COMPETITOR_HANDLES } from '@/lib/research-defaults'
+import { ReferencePhotoUpload } from '@/components/settings/reference-photo-upload'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
 type PlatformAccount = {
@@ -69,8 +70,6 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [referencePhotoIds, setReferencePhotoIds] = useState<string[]>([])
-  const [allMedia, setAllMedia] = useState<Array<{ id: string; signedUrl: string | null; file_name: string }>>([])
 
   // Profile form state
   const [name, setName] = useState('')
@@ -127,27 +126,6 @@ export default function SettingsPage() {
         setNotifLeadQualified(settings.notif_lead_qualified ?? true)
         setNotifListingExpiring(settings.notif_listing_expiring ?? true)
 
-        if (profileData.reference_photo_ids) {
-          setReferencePhotoIds(profileData.reference_photo_ids)
-        }
-      }
-
-      const { data: mediaData } = await supabase
-        .from('content_library')
-        .select('id, file_name, storage_path, thumbnail_path')
-        .eq('profile_id', user.id)
-        .eq('source', 'upload')
-        .order('created_at', { ascending: false })
-
-      if (mediaData) {
-        const withUrls = await Promise.all(
-          mediaData.map(async (item) => {
-            const path = item.thumbnail_path ?? item.storage_path
-            const { data: signed } = await supabase.storage.from('media').createSignedUrl(path, 3600)
-            return { id: item.id, signedUrl: signed?.signedUrl ?? null, file_name: item.file_name }
-          })
-        )
-        setAllMedia(withUrls)
       }
 
       const { data: accountsData } = await supabase
@@ -302,12 +280,6 @@ export default function SettingsPage() {
     flashSaved()
   }
 
-  async function saveReferencePhotos() {
-    if (!userId) return
-    await supabase.from('profiles').update({ reference_photo_ids: referencePhotoIds }).eq('id', userId)
-    flashSaved()
-  }
-
   async function updateSchedule(accountId: string, frequency: string) {
     await supabase.from('platform_accounts').update({ schedule_json: { frequency } }).eq('id', accountId)
     setAccounts((prev) =>
@@ -343,14 +315,14 @@ export default function SettingsPage() {
     <>
       <PageHeader title="Settings" subtitle="Manage your account and preferences" />
 
-      <div className="p-10 space-y-6">
+      <div className="px-4 md:px-10 py-6 space-y-6">
       {/* Sub-navigation pills */}
-      <nav className="flex flex-wrap gap-1">
+      <nav className="flex overflow-x-auto gap-1 pb-1">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
+            className={`flex items-center gap-2 px-4 py-2 text-sm transition-colors whitespace-nowrap shrink-0 ${
               activeTab === tab.id
                 ? 'bg-surface-container-low rounded-lg text-on-surface font-medium'
                 : 'text-on-surface-variant hover:text-on-surface'
@@ -611,49 +583,9 @@ export default function SettingsPage() {
           <div className="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/10 space-y-6">
             <div>
               <label className="text-[10px] uppercase tracking-widest text-on-surface-variant font-body block mb-2">Reference Photos</label>
-              <p className="text-sm text-on-surface-variant">Select 15-20 diverse photos showing different angles, lighting, and outfits. Face not required.</p>
-              <p className="text-xs text-on-surface-variant/60 mt-1">{referencePhotoIds.length} photos selected</p>
+              <p className="text-sm text-on-surface-variant">Upload 3 reference photos for AI image generation. Your face photo will also be used as your profile avatar.</p>
             </div>
-
-            {allMedia.length === 0 ? (
-              <p className="text-sm text-on-surface-variant/60">Upload media first in Content &gt; Media Library.</p>
-            ) : (
-              <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
-                {allMedia.map((item) => {
-                  const selected = referencePhotoIds.includes(item.id)
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        setReferencePhotoIds(prev =>
-                          selected ? prev.filter(id => id !== item.id) : [...prev, item.id]
-                        )
-                      }}
-                      className={`aspect-square rounded-xl overflow-hidden relative border-2 transition-colors ${
-                        selected ? 'border-primary' : 'border-transparent hover:border-outline-variant/30'
-                      }`}
-                    >
-                      {item.signedUrl ? (
-                        <img src={item.signedUrl} alt={item.file_name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-surface-container flex items-center justify-center text-on-surface-variant/20 text-xs">?</div>
-                      )}
-                      {selected && (
-                        <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                          <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                            <Check className="h-4 w-4 text-on-primary" />
-                          </div>
-                        </div>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-
-            <button onClick={saveReferencePhotos} className="gradient-cta text-on-primary font-semibold px-6 py-2.5 rounded-full text-sm">
-              Save Reference Photos
-            </button>
+            <ReferencePhotoUpload userId={userId} />
           </div>
         )}
 
