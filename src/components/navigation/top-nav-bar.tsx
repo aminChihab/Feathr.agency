@@ -24,7 +24,7 @@ export function TopNavBar({ avatarUrl, onAvatarClick, badges = {}, creditBalance
 
   return (
     <div className="hidden md:block fixed top-0 left-0 right-0 z-40 px-5 pt-4">
-      <nav className="mx-auto flex h-[72px] max-w-full items-center justify-between rounded-2xl bg-surface-container-high px-8 nav-glow shimmer-border">
+      <nav className="mx-auto flex h-[72px] max-w-full items-center justify-between rounded-full bg-surface-container-high/90 backdrop-blur-xl px-8 nav-glow shimmer-border">
         {/* Logo */}
         <Link href="/explore" className="flex items-center">
           <img src="/logo.png" alt="Feathr" className="h-12 transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(182,133,255,0.4)]" />
