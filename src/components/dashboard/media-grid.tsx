@@ -204,9 +204,9 @@ function LightboxPreview({
   })
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col h-full">
       <div
-        className="relative bg-black h-[50vh] md:h-[60vh] flex items-center justify-center"
+        className="relative bg-black shrink-0 h-[45vh] md:h-[60vh] flex items-center justify-center"
         {...swipeHandlers}
       >
         {item.fileType === 'photo' ? (
@@ -247,7 +247,7 @@ function LightboxPreview({
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 p-4 pb-8 overflow-y-auto max-h-[40vh] md:max-h-none overflow-x-hidden">
+      <div className="flex flex-col gap-3 p-4 pb-8 overflow-y-auto flex-1 min-h-0 overflow-x-hidden">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 overflow-hidden">
             <p className="text-sm font-medium text-on-surface truncate max-w-[200px] md:max-w-none">{item.fileName}</p>
