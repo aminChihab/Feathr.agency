@@ -111,29 +111,18 @@ function MediaThumbnail({
         </div>
 
         {isVideo && item.thumbnailUrl && (
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <Play className="h-14 w-14 text-white/40 group-hover:text-primary transition-colors" fill="currentColor" />
           </div>
         )}
 
-        {!isVideo && (
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
-            <div className="flex gap-2">
-              <button
-                onClick={(e) => { e.stopPropagation(); onClick() }}
-                className="p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-primary transition-colors"
-              >
-                <Download className="h-3.5 w-3.5 text-white" />
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); onDelete() }}
-                className="p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-primary transition-colors"
-              >
-                <Trash2 className="h-3.5 w-3.5 text-white" />
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Delete button — always visible on mobile, hover on desktop */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete() }}
+          className="absolute top-3 right-3 p-2 bg-black/50 backdrop-blur-md rounded-full text-white hover:bg-red-500 transition-colors md:opacity-0 md:group-hover:opacity-100"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
       </div>
 
       <div className="p-4 space-y-3">
@@ -197,6 +186,7 @@ function LightboxPreview({
   const tags = item.tags ?? []
   const hasDescription = !!description
   const displayUrl = item.previewUrl ?? item.thumbnailUrl ?? ''
+  const isVideoReady = item.fileType === 'video' && item.previewUrl && item.previewUrl !== item.thumbnailUrl
   const [descExpanded, setDescExpanded] = useState(false)
 
   const swipeHandlers = useSwipe({
@@ -210,13 +200,7 @@ function LightboxPreview({
         className="relative bg-black shrink-0 h-[55vh] md:h-[50vh] flex items-center justify-center"
         {...swipeHandlers}
       >
-        {item.fileType === 'photo' ? (
-          <img
-            src={displayUrl}
-            alt={item.fileName}
-            className="w-full h-full object-contain"
-          />
-        ) : item.fileType === 'video' ? (
+        {item.fileType === 'video' && isVideoReady ? (
           <video
             key={displayUrl}
             src={displayUrl}
@@ -225,7 +209,15 @@ function LightboxPreview({
             playsInline
             className="w-full h-full object-contain"
           />
-        ) : null}
+        ) : (
+          <NextImage
+            src={displayUrl}
+            alt={item.fileName}
+            fill
+            className="object-contain"
+            unoptimized
+          />
+        )}
 
         {total > 1 && (
           <>
