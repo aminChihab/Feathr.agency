@@ -213,7 +213,7 @@ function LightboxPreview({
           <img
             src={displayUrl}
             alt={item.fileName}
-            className="w-full max-h-[70vh] object-contain"
+            className="w-full h-full object-contain"
           />
         ) : item.fileType === 'video' ? (
           <video
@@ -221,7 +221,7 @@ function LightboxPreview({
             src={displayUrl}
             controls
             autoPlay
-            className="w-full max-h-[70vh]"
+            className="w-full h-full object-contain"
           />
         ) : null}
 
