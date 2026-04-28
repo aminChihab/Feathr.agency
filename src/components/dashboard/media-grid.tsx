@@ -573,38 +573,22 @@ export function MediaGrid({
 
   return (
     <div className="space-y-10">
-      {/* Upload Section */}
-      <section>
-        <FileDropzone
-          accept=".jpg,.jpeg,.png,.webp,.mp4,.mov,.tiff,.cr2,.raw"
-          maxFiles={50}
-          maxSizeMB={500}
-          onFilesAdded={handleFilesSelected}
-          className="group relative h-48 rounded-xl border border-dashed border-outline-variant/30 bg-surface-container-lowest flex flex-col items-center justify-center transition-all hover:bg-surface-container-low hover:border-primary/40 cursor-pointer"
-        >
-          {uploading ? (
-            <div className="flex flex-col items-center gap-3">
-              <Upload className="h-8 w-8 text-primary/40 animate-bounce" />
-              <p className="text-sm text-on-surface-variant">
-                Uploading {uploadProgress.current} of {uploadProgress.total} files...
-              </p>
-              <div className="w-64 h-1.5 rounded-full bg-surface-container-high overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-primary transition-all duration-300 ease-out"
-                  style={{ width: `${progressPct}%` }}
-                />
-              </div>
-              <span className="text-xs text-on-surface-variant">{Math.round(progressPct)}% complete</span>
-            </div>
-          ) : (
-            <>
-              <Upload className="h-10 w-10 text-primary/40 mb-3 group-hover:scale-110 transition-transform" />
-              <p className="font-display text-xl text-on-surface-variant italic">Drop your vision here</p>
-              <p className="text-xs text-on-surface-variant/40 mt-1">RAW, TIFF, or MP4 up to 500MB</p>
-            </>
-          )}
-        </FileDropzone>
-      </section>
+      {/* Upload progress (only shown while uploading) */}
+      {uploading && (
+        <section className="flex flex-col items-center gap-3 py-6">
+          <Upload className="h-8 w-8 text-primary/40 animate-bounce" />
+          <p className="text-sm text-on-surface-variant">
+            Uploading {uploadProgress.current} of {uploadProgress.total} files...
+          </p>
+          <div className="w-64 h-1.5 rounded-full bg-surface-container-high overflow-hidden">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-300 ease-out"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+          <span className="text-xs text-on-surface-variant">{Math.round(progressPct)}% complete</span>
+        </section>
+      )}
 
       {/* Duplicate warning */}
       {duplicates.length > 0 && (
