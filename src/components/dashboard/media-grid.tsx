@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { SignedMediaItem } from '@/lib/storage'
 import { FileDropzone } from '@/components/ui/file-dropzone'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
-import { Play, X, ChevronLeft, ChevronRight, Image, Video, Trash2, Upload, Tag, Download, Zap } from 'lucide-react'
+import { Play, X, ChevronLeft, ChevronRight, Image, Video, Trash2, Upload, Tag, Download } from 'lucide-react'
 import { generateImageThumbnail, generateVideoFrames } from '@/lib/media'
 
 interface MediaGridProps {
@@ -413,10 +413,6 @@ export function MediaGrid({
     return result
   }, [items, search, sortBy, activeTag])
 
-  const totalSizeGB = useMemo(() => {
-    return '0.0' // File size not available in SignedMediaItem; Storage Insight computed server-side
-  }, [])
-
   const progressPct = uploadProgress.total > 0
     ? (uploadProgress.current / uploadProgress.total) * 100
     : 0
@@ -578,57 +574,36 @@ export function MediaGrid({
   return (
     <div className="space-y-10">
       {/* Upload Section */}
-      <section className="grid grid-cols-12 gap-8">
-        <div className="col-span-8">
-          <FileDropzone
-            accept=".jpg,.jpeg,.png,.webp,.mp4,.mov,.tiff,.cr2,.raw"
-            maxFiles={50}
-            maxSizeMB={500}
-            onFilesAdded={handleFilesSelected}
-            className="group relative h-48 rounded-xl border border-dashed border-outline-variant/30 bg-surface-container-lowest flex flex-col items-center justify-center transition-all hover:bg-surface-container-low hover:border-primary/40 cursor-pointer"
-          >
-            {uploading ? (
-              <div className="flex flex-col items-center gap-3">
-                <Upload className="h-8 w-8 text-primary/40 animate-bounce" />
-                <p className="text-sm text-on-surface-variant">
-                  Uploading {uploadProgress.current} of {uploadProgress.total} files...
-                </p>
-                <div className="w-64 h-1.5 rounded-full bg-surface-container-high overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all duration-300 ease-out"
-                    style={{ width: `${progressPct}%` }}
-                  />
-                </div>
-                <span className="text-xs text-on-surface-variant">{Math.round(progressPct)}% complete</span>
+      <section>
+        <FileDropzone
+          accept=".jpg,.jpeg,.png,.webp,.mp4,.mov,.tiff,.cr2,.raw"
+          maxFiles={50}
+          maxSizeMB={500}
+          onFilesAdded={handleFilesSelected}
+          className="group relative h-48 rounded-xl border border-dashed border-outline-variant/30 bg-surface-container-lowest flex flex-col items-center justify-center transition-all hover:bg-surface-container-low hover:border-primary/40 cursor-pointer"
+        >
+          {uploading ? (
+            <div className="flex flex-col items-center gap-3">
+              <Upload className="h-8 w-8 text-primary/40 animate-bounce" />
+              <p className="text-sm text-on-surface-variant">
+                Uploading {uploadProgress.current} of {uploadProgress.total} files...
+              </p>
+              <div className="w-64 h-1.5 rounded-full bg-surface-container-high overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-300 ease-out"
+                  style={{ width: `${progressPct}%` }}
+                />
               </div>
-            ) : (
-              <>
-                <Upload className="h-10 w-10 text-primary/40 mb-3 group-hover:scale-110 transition-transform" />
-                <p className="font-display text-xl text-on-surface-variant italic">Drop your vision here</p>
-                <p className="text-xs text-on-surface-variant/40 mt-1">RAW, TIFF, or MP4 up to 500MB</p>
-              </>
-            )}
-          </FileDropzone>
-        </div>
-
-        <div className="col-span-4 flex flex-col justify-between p-6 bg-surface-container-high rounded-xl">
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-widest text-primary mb-4">Storage Insight</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-end">
-                <span className="text-2xl font-display italic">{totalSizeGB} GB</span>
-                <span className="text-xs opacity-40">of 50 GB used</span>
-              </div>
-              <div className="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
-                <div className="bg-primary h-full transition-all" style={{ width: `${Math.min(parseFloat(totalSizeGB) / 50 * 100, 100)}%` }} />
-              </div>
+              <span className="text-xs text-on-surface-variant">{Math.round(progressPct)}% complete</span>
             </div>
-          </div>
-          <button className="flex items-center justify-center gap-2 text-xs py-2 border border-outline-variant/20 rounded-lg hover:bg-surface-bright transition-colors mt-4">
-            <Zap className="h-3.5 w-3.5" />
-            Upgrade Atelier Space
-          </button>
-        </div>
+          ) : (
+            <>
+              <Upload className="h-10 w-10 text-primary/40 mb-3 group-hover:scale-110 transition-transform" />
+              <p className="font-display text-xl text-on-surface-variant italic">Drop your vision here</p>
+              <p className="text-xs text-on-surface-variant/40 mt-1">RAW, TIFF, or MP4 up to 500MB</p>
+            </>
+          )}
+        </FileDropzone>
       </section>
 
       {/* Duplicate warning */}
@@ -670,15 +645,15 @@ export function MediaGrid({
 
       {/* Filter Bar */}
       <section className="flex justify-between items-center pb-2">
-        <div className="flex gap-8">
+        <div className="flex gap-2">
           {(['all', 'photo', 'video'] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`text-sm font-medium pb-2 transition-all ${
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 filter === f
-                  ? 'text-primary border-b-2 border-primary'
-                  : 'text-on-surface/40 hover:text-on-surface/80'
+                  ? 'bg-surface-container-high text-on-surface'
+                  : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
               {f === 'all' ? 'All Assets' : f === 'photo' ? 'Photos' : 'Videos'}
@@ -686,7 +661,6 @@ export function MediaGrid({
           ))}
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-on-surface-variant/60">Sort by</span>
           <button
             onClick={() => setSortBy(sortBy === 'updated' ? 'name' : 'updated')}
             className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors"
