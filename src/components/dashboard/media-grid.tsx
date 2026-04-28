@@ -207,7 +207,7 @@ function LightboxPreview({
   return (
     <div className="flex flex-col">
       <div
-        className="relative bg-black shrink-0 h-[45vh] md:h-[60vh] flex items-center justify-center"
+        className="relative bg-black shrink-0 h-[55vh] md:h-[50vh] flex items-center justify-center"
         {...swipeHandlers}
       >
         {item.fileType === 'photo' ? (
@@ -280,7 +280,7 @@ function LightboxPreview({
         </div>
 
         {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
             {tags.map((tag) => (
               <button
                 key={tag}
