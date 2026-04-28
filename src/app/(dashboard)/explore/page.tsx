@@ -68,7 +68,7 @@ export default function ExplorePage() {
       />
 
       {/* Mobile: toggle + filter button */}
-      <div className="flex items-center justify-between px-6 mt-6 md:hidden">
+      <div className="flex items-center justify-between px-4 mt-6 md:hidden">
         <div className="flex bg-surface-container-low rounded-full p-1">
           <button
             onClick={() => setActiveTab('ideas')}
@@ -97,7 +97,7 @@ export default function ExplorePage() {
       </div>
 
       {/* Main content area: sidebar + grid */}
-      <div className="flex gap-8 px-6 md:px-10 mt-6 pb-10">
+      <div className="flex gap-4 md:gap-8 px-4 md:px-10 mt-6 pb-10">
         <ExploreSidebar
           activeTab={activeTab}
           onTabChange={setActiveTab}

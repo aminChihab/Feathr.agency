@@ -644,8 +644,8 @@ export function MediaGrid({
       )}
 
       {/* Filter Bar */}
-      <section className="flex justify-between items-center pb-2">
-        <div className="flex gap-2">
+      <section className="flex flex-wrap justify-between items-center gap-2 pb-2">
+        <div className="flex flex-wrap gap-2">
           {(['all', 'photo', 'video'] as const).map((f) => (
             <button
               key={f}
@@ -702,7 +702,7 @@ export function MediaGrid({
           </div>
         </div>
       ) : (
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <section className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {filteredItems.map((item) => (
             <MediaThumbnail
               key={item.id}
