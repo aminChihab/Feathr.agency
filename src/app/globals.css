@@ -81,20 +81,124 @@ h1, h2, h3, h4, h5, h6 {
   font-style: italic;
 }
 
+/* ── Visual Effects ──────────────────────────────────────────────── */
+
 .glass-panel {
-  background: linear-gradient(135deg, rgba(42, 42, 42, 0.4) 0%, rgba(14, 14, 14, 0.6) 100%);
+  background: linear-gradient(135deg, rgba(46, 46, 46, 0.6) 0%, rgba(20, 20, 20, 0.8) 100%);
   backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .gradient-cta {
   background: linear-gradient(135deg, #B685FF, #9B6AE8);
+  box-shadow: 0 4px 20px rgba(182, 133, 255, 0.25);
+  transition: box-shadow 0.3s ease, transform 0.15s ease;
+}
+.gradient-cta:hover {
+  box-shadow: 0 6px 30px rgba(182, 133, 255, 0.4);
+  transform: translateY(-1px);
+}
+.gradient-cta:active {
+  transform: translateY(0) scale(0.98);
 }
 
 .ghost-border {
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Hide all scrollbars globally but keep scroll functionality */
+/* Glow effect for cards and interactive elements */
+.glow-card {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
+}
+.glow-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 40px rgba(182, 133, 255, 0.12), 0 0 0 1px rgba(182, 133, 255, 0.08);
+}
+
+/* Subtle shimmer border for premium elements */
+.shimmer-border {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(182, 133, 255, 0.3), transparent 40%, transparent 60%, rgba(182, 133, 255, 0.15));
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Ambient glow behind nav bar */
+.nav-glow {
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+}
+
+/* ── Animations ──────────────────────────────────────────────────── */
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(182, 133, 255, 0); }
+  50% { box-shadow: 0 0 20px 4px rgba(182, 133, 255, 0.15); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease both;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Stagger children — apply to parent, each child gets delayed */
+.stagger-children > * {
+  animation: fade-in-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 350ms; }
+.stagger-children > *:nth-child(n+9) { animation-delay: 400ms; }
+
+/* ── Scrollbar ───────────────────────────────────────────────────── */
+
 *::-webkit-scrollbar {
   display: none !important;
 }
