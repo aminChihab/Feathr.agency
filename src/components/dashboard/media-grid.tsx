@@ -206,7 +206,7 @@ function LightboxPreview({
   return (
     <div className="flex flex-col">
       <div
-        className="relative bg-black min-h-[280px] flex items-center justify-center"
+        className="relative bg-black h-[50vh] md:h-[60vh] flex items-center justify-center"
         {...swipeHandlers}
       >
         {item.fileType === 'photo' ? (
