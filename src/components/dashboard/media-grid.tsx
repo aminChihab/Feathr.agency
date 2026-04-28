@@ -238,7 +238,7 @@ function LightboxPreview({
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 p-4">
+      <div className="flex flex-col gap-3 p-4 overflow-y-auto max-h-[40vh] md:max-h-none">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-on-surface">{item.fileName}</p>
