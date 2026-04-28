@@ -739,7 +739,7 @@ export function MediaGrid({
 
       {/* Preview lightbox */}
       <Dialog open={!!preview} onOpenChange={(open) => !open && setPreview(null)}>
-        <DialogContent className="bg-surface-container-low border-outline-variant/15 md:max-w-4xl p-0 overflow-hidden">
+        <DialogContent className="bg-surface-container-low border-outline-variant/15 md:max-w-4xl p-0 overflow-hidden h-full md:h-auto md:max-h-[90vh]">
           {preview && (
             <LightboxPreview
               item={preview.item}
