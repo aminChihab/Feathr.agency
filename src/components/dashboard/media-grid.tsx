@@ -216,21 +216,21 @@ function LightboxPreview({
           />
         ) : null}
 
-        {total > 1 && (
-          <>
-            <button
-              onClick={(e) => { e.stopPropagation(); onPrev() }}
-              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-2.5 text-white backdrop-blur-sm transition-colors hover:bg-black/80"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); onNext() }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-2.5 text-white backdrop-blur-sm transition-colors hover:bg-black/80"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </>
+        {index > 0 && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onPrev() }}
+            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-2.5 text-white backdrop-blur-sm transition-colors hover:bg-black/80"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+        )}
+        {index < total - 1 && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onNext() }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-2.5 text-white backdrop-blur-sm transition-colors hover:bg-black/80"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
         )}
 
         <div className="absolute bottom-3 right-3 rounded-full bg-black/60 px-2.5 py-1 text-xs text-white backdrop-blur-sm">
