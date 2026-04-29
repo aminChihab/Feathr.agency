@@ -7,7 +7,6 @@ import { CategoryCarousel } from '@/components/explore/category-carousel'
 import { ExploreSidebar, MobileFilterSheet } from '@/components/explore/explore-sidebar'
 import { ExploreGrid } from '@/components/explore/explore-grid'
 import {
-  PLACEHOLDER_IDEAS,
   PLACEHOLDER_TRENDING,
   type Category,
   type ExploreIdea,
@@ -16,16 +15,17 @@ import {
 
 interface ExploreClientProps {
   coverUrls: Record<string, string>
+  ideas: ExploreIdea[]
 }
 
-export function ExploreClient({ coverUrls }: ExploreClientProps) {
+export function ExploreClient({ coverUrls, ideas }: ExploreClientProps) {
   const [activeTab, setActiveTab] = useState<'ideas' | 'trending'>('ideas')
   const [activeCategory, setActiveCategory] = useState<Category | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
 
   const filteredIdeas = useMemo(() => {
-    let items = PLACEHOLDER_IDEAS
+    let items = ideas
     if (activeCategory) {
       items = items.filter((i) => i.category === activeCategory)
     }
