@@ -28,7 +28,7 @@ export function ReplyBox({ onSend, disabled }: ReplyBoxProps) {
   }
 
   return (
-    <div className="shrink-0 px-3 py-3 md:px-6 md:py-4 bg-surface-container-low/30 backdrop-blur-xl border-t border-outline-variant/10 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+    <div className="shrink-0 px-3 py-2 md:px-6 md:py-3 bg-surface-container-low/30 backdrop-blur-xl border-t border-outline-variant/10">
       <div className="flex items-end gap-3 bg-surface-container-highest/50 p-2 rounded-2xl border border-outline-variant/10 focus-within:border-primary/30 transition-all">
         <button className="p-2 text-on-surface-variant hover:text-primary transition-colors" type="button">
           <span className="material-symbols-outlined">add_circle</span>

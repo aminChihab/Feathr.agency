@@ -347,7 +347,7 @@ function MessageView({
   onBack, onMessageSent, onApproveMessage, onRejectMessage, onLoadOlder,
 }: MessageViewProps) {
   return (
-    <div className="flex flex-col h-[calc(100dvh-4rem)] md:h-[calc(100vh-6rem)]">
+    <div className="flex flex-col h-[calc(100dvh-5rem)] md:h-[calc(100vh-6rem)]">
       {/* Fixed header */}
       <div className="shrink-0 flex items-center gap-3 px-4 md:px-6 h-16 bg-surface-container-low/50 backdrop-blur-xl border-b border-outline-variant/10">
         <button
