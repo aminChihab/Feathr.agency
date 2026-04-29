@@ -28,9 +28,9 @@ export function MessageBubble({
 
   if (isInbound) {
     return (
-      <div className="flex flex-col items-start max-w-[80%]">
+      <div className="flex flex-col items-start max-w-[75%]">
         <div className={cn(
-          'bg-surface-container-high px-4 py-3 rounded-2xl rounded-tl-none text-sm leading-relaxed text-on-surface shadow-sm',
+          'bg-surface-container-high px-3 py-2 rounded-2xl rounded-tl-sm text-sm leading-snug text-on-surface',
           isPendingApproval && 'ring-2 ring-status-draft/50'
         )}>
           {aiGenerated && (
@@ -65,9 +65,9 @@ export function MessageBubble({
 
   // Outbound message
   return (
-    <div className="flex flex-col items-end ml-auto max-w-[80%]">
+    <div className="flex flex-col items-end ml-auto max-w-[75%]">
       <div className={cn(
-        'bg-gradient-to-br from-primary/80 to-primary-container text-on-primary-container px-4 py-3 rounded-2xl rounded-tr-none text-sm leading-relaxed font-medium',
+        'bg-primary/20 text-on-surface px-3 py-2 rounded-2xl rounded-tr-sm text-sm leading-snug',
         isPendingApproval && 'ring-2 ring-status-draft/50'
       )}>
         {aiGenerated && (

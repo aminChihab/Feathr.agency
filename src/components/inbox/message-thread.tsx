@@ -77,7 +77,8 @@ export function MessageThread({
   return (
     <section className="h-full flex flex-col bg-surface">
       {/* Message History */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 md:px-0 space-y-2">
+        <div className="max-w-2xl mx-auto space-y-2">
         {hasOlderMessages && onLoadOlder && (
           <button
             onClick={onLoadOlder}
@@ -100,8 +101,8 @@ export function MessageThread({
             return (
               <div key={msg.id}>
                 {showDateDivider && (
-                  <div className="flex justify-center mb-6">
-                    <span className="text-[10px] text-on-surface-variant/30 uppercase tracking-[0.2em] font-semibold">
+                  <div className="flex justify-center py-3">
+                    <span className="text-[10px] text-on-surface-variant/30 uppercase tracking-[0.2em] font-semibold bg-surface-container-low px-3 py-1 rounded-full">
                       {dateLabel}
                     </span>
                   </div>
@@ -119,10 +120,13 @@ export function MessageThread({
             )
           })
         )}
+        </div>
       </div>
 
       {/* Text Input Area */}
-      <ReplyBox onSend={handleSend} />
+      <div className="max-w-2xl mx-auto w-full">
+        <ReplyBox onSend={handleSend} />
+      </div>
     </section>
   )
 }
