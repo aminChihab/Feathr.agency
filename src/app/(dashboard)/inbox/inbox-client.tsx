@@ -347,19 +347,32 @@ function MessageView({
   onBack, onMessageSent, onApproveMessage, onRejectMessage, onLoadOlder,
 }: MessageViewProps) {
   return (
-    <div className="flex flex-col" style={{ height: 'calc(100vh - 5rem - env(safe-area-inset-bottom, 0px))' }}>
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-outline-variant/15">
+    <div className="flex flex-col h-[100dvh] md:h-[calc(100vh-5rem)]">
+      {/* Fixed header */}
+      <div className="shrink-0 flex items-center gap-3 px-4 md:px-6 h-14 bg-surface-container-low/50 backdrop-blur-xl border-b border-outline-variant/10">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors"
+          className="p-1.5 -ml-1.5 text-on-surface-variant hover:text-on-surface transition-colors"
         >
           <ArrowLeft size={20} />
-          <span className="text-sm">Back to Inbox</span>
         </button>
-        <span className="text-sm text-on-surface font-medium ml-auto">
-          {activeConv.contact_name || activeConv.contact_handle || 'Unknown'}
-        </span>
+        <div
+          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-on-primary-container shrink-0"
+          style={{ backgroundColor: activeConv.platform_color + '40' }}
+        >
+          {(activeConv.contact_name ?? '?')[0]?.toUpperCase()}
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-on-surface truncate">
+            {activeConv.contact_name || activeConv.contact_handle || 'Unknown'}
+          </p>
+          <p className="text-[10px] text-on-surface-variant/50">
+            {activeConv.platform_name}
+          </p>
+        </div>
       </div>
+
+      {/* Scrollable messages + fixed input — MessageThread handles this */}
       <div className="flex-1 min-h-0">
         <MessageThread
           conversation={activeConv}
@@ -370,6 +383,7 @@ function MessageView({
           onRejectMessage={onRejectMessage}
           hasOlderMessages={hasOlderMessages}
           onLoadOlder={onLoadOlder}
+          hideHeader
         />
       </div>
     </div>

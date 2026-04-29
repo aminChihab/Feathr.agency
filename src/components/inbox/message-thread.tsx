@@ -27,12 +27,13 @@ interface MessageThreadProps {
   onRejectMessage: (id: string) => void
   hasOlderMessages?: boolean
   onLoadOlder?: () => void
+  hideHeader?: boolean
 }
 
 export function MessageThread({
   conversation, messages, userId,
   onMessageSent, onApproveMessage, onRejectMessage,
-  hasOlderMessages, onLoadOlder,
+  hasOlderMessages, onLoadOlder, hideHeader,
 }: MessageThreadProps) {
   const supabase = createClient()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -74,48 +75,9 @@ export function MessageThread({
   let lastDateLabel = ''
 
   return (
-    <section className="flex-1 flex flex-col bg-surface overflow-hidden">
-      {/* Chat Header */}
-      <header className="h-16 px-6 flex items-center justify-between border-b border-outline-variant/5 bg-surface-container-low/30">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            {/* Avatar placeholder with platform color */}
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-on-primary-container"
-              style={{ backgroundColor: conversation.platform_color + '40' }}
-            >
-              {(conversation.contact_name ?? '?')[0]?.toUpperCase()}
-            </div>
-            <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-tertiary-container border-2 border-surface" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold tracking-tight">
-              {conversation.contact_name ?? 'Unknown'}
-              {conversation.contact_handle && (
-                <span className="text-on-surface-variant/40 font-normal ml-1">{conversation.contact_handle}</span>
-              )}
-            </h3>
-            <p className="text-[10px] text-on-surface-variant/60 flex items-center gap-1">
-              <span className="material-symbols-outlined text-[12px] text-tertiary">bolt</span>
-              Active on {conversation.platform_name}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <button className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors">
-            <span className="material-symbols-outlined">call</span>
-          </button>
-          <button className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors">
-            <span className="material-symbols-outlined">video_call</span>
-          </button>
-          <button className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors">
-            <span className="material-symbols-outlined">more_vert</span>
-          </button>
-        </div>
-      </header>
-
+    <section className="h-full flex flex-col bg-surface overflow-hidden">
       {/* Message History */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-6">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
         {hasOlderMessages && onLoadOlder && (
           <button
             onClick={onLoadOlder}
