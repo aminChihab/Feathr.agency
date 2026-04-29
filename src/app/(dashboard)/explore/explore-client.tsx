@@ -34,7 +34,7 @@ export function ExploreClient({ coverUrls, ideas }: ExploreClientProps) {
       items = items.filter((i) => i.caption.toLowerCase().includes(q))
     }
     return items
-  }, [activeCategory, searchQuery])
+  }, [ideas, activeCategory, searchQuery])
 
   const filteredTrending = useMemo(() => {
     let items = PLACEHOLDER_TRENDING

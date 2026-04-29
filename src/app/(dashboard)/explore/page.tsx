@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { CATEGORIES } from '@/lib/explore-data'
 import type { ExploreIdea } from '@/lib/explore-data'
 import { ExploreClient } from './explore-client'
@@ -30,7 +31,8 @@ async function fetchCoverUrls(supabase: Awaited<ReturnType<typeof createClient>>
   return urls
 }
 
-async function fetchIdeas(supabase: Awaited<ReturnType<typeof createClient>>): Promise<ExploreIdea[]> {
+async function fetchIdeas(): Promise<ExploreIdea[]> {
+  const supabase = createServiceClient()
   const paths = signatureData.map((s: { thumbPath: string }) => s.thumbPath)
 
   // Sign in batches of 100
@@ -61,7 +63,7 @@ export default async function ExplorePage() {
 
   const [coverUrls, ideas] = await Promise.all([
     fetchCoverUrls(supabase, user.id),
-    fetchIdeas(supabase),
+    fetchIdeas(),
   ])
 
   return <ExploreClient coverUrls={coverUrls} ideas={ideas} />
