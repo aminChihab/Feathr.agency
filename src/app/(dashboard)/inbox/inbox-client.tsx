@@ -349,8 +349,8 @@ function MessageView({
   return (
     <div className="flex flex-col h-[calc(100dvh-5rem)] md:h-[calc(100vh-6rem)]">
       {/* Fixed header — centered to match chat content */}
-      <div className="shrink-0 border-b border-outline-variant/10 bg-surface-container-low/30 backdrop-blur-xl">
-        <div className="max-w-2xl mx-auto flex items-center gap-3 px-4 h-14">
+      <div className="shrink-0">
+        <div className="max-w-2xl mx-auto flex items-center gap-3 px-4 h-14 border-b border-outline-variant/10">
           <button
             onClick={onBack}
             className="p-1.5 -ml-1.5 text-on-surface-variant hover:text-on-surface transition-colors"
