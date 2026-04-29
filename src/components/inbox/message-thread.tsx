@@ -75,7 +75,7 @@ export function MessageThread({
   let lastDateLabel = ''
 
   return (
-    <section className="h-full flex flex-col bg-surface overflow-hidden">
+    <section className="h-full flex flex-col bg-surface">
       {/* Message History */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
         {hasOlderMessages && onLoadOlder && (

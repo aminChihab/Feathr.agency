@@ -212,7 +212,7 @@ export function InboxClient({
   const activeConv = conversations.find((c) => c.id === activeConvId)
 
   return (
-    <div>
+    <div className={activeConvId ? 'overflow-hidden' : ''}>
       {!activeConvId ? (
         <ConversationListView
           conversations={conversations}
@@ -347,9 +347,9 @@ function MessageView({
   onBack, onMessageSent, onApproveMessage, onRejectMessage, onLoadOlder,
 }: MessageViewProps) {
   return (
-    <div className="flex flex-col h-[100dvh] md:h-[calc(100vh-5rem)]">
+    <div className="flex flex-col h-[calc(100dvh-4rem)] md:h-[calc(100vh-6rem)]">
       {/* Fixed header */}
-      <div className="shrink-0 flex items-center gap-3 px-4 md:px-6 h-14 bg-surface-container-low/50 backdrop-blur-xl border-b border-outline-variant/10">
+      <div className="shrink-0 flex items-center gap-3 px-4 md:px-6 h-16 bg-surface-container-low/50 backdrop-blur-xl border-b border-outline-variant/10">
         <button
           onClick={onBack}
           className="p-1.5 -ml-1.5 text-on-surface-variant hover:text-on-surface transition-colors"
