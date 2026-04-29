@@ -1,7 +1,7 @@
-// src/components/inbox/reply-box.tsx
 'use client'
 
 import { useState } from 'react'
+import { Send, Plus, Smile } from 'lucide-react'
 
 interface ReplyBoxProps {
   onSend: (body: string) => Promise<void>
@@ -28,10 +28,10 @@ export function ReplyBox({ onSend, disabled }: ReplyBoxProps) {
   }
 
   return (
-    <div className="shrink-0 px-3 py-2 md:px-6 md:py-3 bg-surface-container-low/30 backdrop-blur-xl border-t border-outline-variant/10">
-      <div className="flex items-end gap-3 bg-surface-container-highest/50 p-2 rounded-2xl border border-outline-variant/10 focus-within:border-primary/30 transition-all">
-        <button className="p-2 text-on-surface-variant hover:text-primary transition-colors" type="button">
-          <span className="material-symbols-outlined">add_circle</span>
+    <div className="shrink-0 px-3 py-3 md:px-4 md:py-4">
+      <div className="flex items-end gap-2 bg-surface-container-high/60 backdrop-blur-xl px-3 py-2 rounded-2xl border border-outline-variant/15 focus-within:border-primary/30 transition-all">
+        <button className="p-1.5 text-on-surface-variant/40 hover:text-primary transition-colors shrink-0" type="button">
+          <Plus size={20} />
         </button>
         <textarea
           value={text}
@@ -39,21 +39,20 @@ export function ReplyBox({ onSend, disabled }: ReplyBoxProps) {
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
           disabled={disabled}
-          className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 resize-none h-10 max-h-32 custom-scrollbar placeholder:text-on-surface-variant/30 text-on-surface"
+          rows={1}
+          className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none text-sm py-1.5 resize-none min-h-[28px] max-h-28 placeholder:text-on-surface-variant/30 text-on-surface"
         />
-        <div className="flex items-center gap-1 pr-2 pb-1">
-          <button className="p-2 text-on-surface-variant hover:text-primary transition-colors" type="button">
-            <span className="material-symbols-outlined">mood</span>
-          </button>
-          <button
-            onClick={handleSend}
-            disabled={!text.trim() || sending || disabled}
-            className="p-2.5 bg-primary text-on-primary-container rounded-xl shadow-lg shadow-primary/10 transition-transform active:scale-95 disabled:opacity-40"
-            type="button"
-          >
-            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>send</span>
-          </button>
-        </div>
+        <button className="p-1.5 text-on-surface-variant/40 hover:text-primary transition-colors shrink-0" type="button">
+          <Smile size={18} />
+        </button>
+        <button
+          onClick={handleSend}
+          disabled={!text.trim() || sending || disabled}
+          className="p-2 bg-primary text-on-primary rounded-xl transition-all active:scale-95 disabled:opacity-30 shrink-0"
+          type="button"
+        >
+          <Send size={16} />
+        </button>
       </div>
     </div>
   )

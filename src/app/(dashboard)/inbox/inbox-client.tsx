@@ -348,31 +348,33 @@ function MessageView({
 }: MessageViewProps) {
   return (
     <div className="flex flex-col h-[calc(100dvh-5rem)] md:h-[calc(100vh-6rem)]">
-      {/* Fixed header */}
-      <div className="shrink-0 flex items-center gap-3 px-4 md:px-6 h-16 bg-surface-container-low/50 backdrop-blur-xl border-b border-outline-variant/10">
-        <button
-          onClick={onBack}
-          className="p-1.5 -ml-1.5 text-on-surface-variant hover:text-on-surface transition-colors"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <div
-          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-on-primary-container shrink-0"
-          style={{ backgroundColor: activeConv.platform_color + '40' }}
-        >
-          {(activeConv.contact_name ?? '?')[0]?.toUpperCase()}
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-on-surface truncate">
-            {activeConv.contact_name || activeConv.contact_handle || 'Unknown'}
-          </p>
-          <p className="text-[10px] text-on-surface-variant/50">
-            {activeConv.platform_name}
-          </p>
+      {/* Fixed header — centered to match chat content */}
+      <div className="shrink-0 border-b border-outline-variant/10 bg-surface-container-low/30 backdrop-blur-xl">
+        <div className="max-w-2xl mx-auto flex items-center gap-3 px-4 h-14">
+          <button
+            onClick={onBack}
+            className="p-1.5 -ml-1.5 text-on-surface-variant hover:text-on-surface transition-colors"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div
+            className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-on-primary-container shrink-0"
+            style={{ backgroundColor: activeConv.platform_color + '40' }}
+          >
+            {(activeConv.contact_name ?? '?')[0]?.toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-on-surface truncate">
+              {activeConv.contact_name || activeConv.contact_handle || 'Unknown'}
+            </p>
+            <p className="text-[10px] text-on-surface-variant/50">
+              {activeConv.platform_name}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Scrollable messages + fixed input — MessageThread handles this */}
+      {/* Scrollable messages + fixed input */}
       <div className="flex-1 min-h-0">
         <MessageThread
           conversation={activeConv}
